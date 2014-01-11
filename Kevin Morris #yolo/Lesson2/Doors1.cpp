@@ -7,7 +7,7 @@ int main()
     char door1, door2;
     int x;
 
-    cout <<"Pick either door 1 or door 2 by entering a 1 or a 2";
+    cout <<"Pick either door 1 or door 2 by entering a 1 or a 2" << endl;
     cin >> x;
 
     if (x == 1)

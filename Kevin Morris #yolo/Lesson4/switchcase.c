@@ -17,7 +17,7 @@ int main()
         cout <<"Choose a door, 1 or 2.";
         cin >> a;
 
-    if (a == 1)
+    switch (a)
     {
         if (potions == yellow)
             cout <<"You found a pony.";
