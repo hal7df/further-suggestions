@@ -2,3 +2,5 @@
 *.o
 *.out
 
+# Build directory
+PPC603gnu/
