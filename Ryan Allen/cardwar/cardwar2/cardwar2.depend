@@ -1,0 +1,27 @@
+# depslib dependency file v1.0
+1361042353 source:c:\users\robo18\desktop\cards.cpp
+	"cards.h"
+
+1360882668 c:\users\robo18\desktop\cards.h
+	<string>
+	<iostream>
+	<ctime>
+	<cstdlib>
+
+1361042692 source:c:\users\robo18\desktop\cardwar\cardwar2\cardwar.cpp
+	"../../cards.h"
+
+1361042354 source:d:\c++ programs\cards.cpp
+	"cards.h"
+
+1361312034 d:\c++ programs\cards.h
+	<string>
+	<iostream>
+	<ctime>
+	<cstdlib>
+	<iostream>
+	<iomanip>
+
+1361314160 source:d:\c++ programs\cardwar\cardwar2\cardwar.cpp
+	"../../cards.h"
+
