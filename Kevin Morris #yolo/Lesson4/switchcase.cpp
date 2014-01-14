@@ -13,10 +13,7 @@ int main()
             b = 1;
         else if (potions == "green")
             b = 2;
-        else {
-            cout <<"You have died" << endl;
-            return 0;
-        }
+
         cout <<"Choose a door, 1 or 2." << endl;
         cin >> door;
 
@@ -29,10 +26,12 @@ int main()
         case 2:
             cout <<"You were eaten by rainbow zombies!";
             break;
+        default:
+            cout <<"You have died" << endl;
         }
     }
 
-    if (door == 2)
+    else if (door == 2)
     {
         switch (b) {
         case 1:
@@ -41,8 +40,11 @@ int main()
         case 2:
             cout <<"You find a plane and fly to Florida.";
             break;
+        default:
+            cout <<"You have died" << endl;
         }
     }
-    if (door != 1 && door != 2)
+    else
         cout <<"You have failed to enter a door, and instead decided to run into a door.";
+        return 0;
 }
