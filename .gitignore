@@ -1,6 +1,7 @@
 # Built files
 *.o
 *.out
+*.exe
 
 # Build directory
 PPC603gnu/
