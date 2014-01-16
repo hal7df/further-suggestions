@@ -18,7 +18,8 @@ int main()
 
     for(a = 1; a <= 26; a++)
     {
-       cout <<f+1<<"F"
+        f = f+10;
+        cout<<f<<"F"<<" | "<<celsius(f)<<"C"<<endl;
     };
-
+    return 0;
 }
