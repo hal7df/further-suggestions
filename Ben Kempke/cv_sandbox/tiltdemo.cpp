@@ -1,4 +1,4 @@
-#include "libfreenect.h"
+#include "libfreenect/libfreenect.h"
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
