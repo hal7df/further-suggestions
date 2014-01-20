@@ -55,6 +55,8 @@
 // Def for Practice Robot
 #ifdef PracticeBot
         #define PLATE_P -0.05
+        #define PLATE_I 0.0
+        #define PLATE_D 0.0
         #define PLATE_PYRAMID_THREE_POINT 626.0
         #define PLATE_PYRAMID_AUTON 626.0
         #define PLATE_FEEDER_THREE_POINT 592
@@ -68,6 +70,8 @@
 // Def for Competition Robot
 #ifdef CompetitionBot
         #define PLATE_P -0.03
+        #define PLATE_I 0.0
+        #define PLATE_D 0.0
         #define PLATE_PYRAMID_THREE_POINT 623.0 //589.0
         #define PLATE_PYRAMID_AUTON 631.0
         #define PLATE_FEEDER_THREE_POINT 587.0
