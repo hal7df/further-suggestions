@@ -6,7 +6,7 @@ float joystickAdjust (float input)
     if(input < 0.2) {
         output = 0.0;
     } else {
-        output = 1/0.8*(input-0.2)^2;
+        output = 1 / 0.8^2 * (input - 0.2)^2;
     }
     
     return output;
@@ -48,8 +48,8 @@ class BuiltinDefaultCode : public IterativeRobot
     
     // ----- Robot Controller -----
     RobotDrive* m_drive;       // Control Drive
-    
 
+    
 public:
 	BuiltinDefaultCode()	{
         m_driver = new Joystick(DRIVER);
