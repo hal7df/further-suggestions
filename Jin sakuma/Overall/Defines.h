@@ -1,4 +1,6 @@
 // ----- Joystick -----
+#define DRIVER 1
+#define OPERATOR 2
 // Button
 #define BUTTON_A 1
 #define BUTTON_B 2
@@ -44,7 +46,7 @@
 #define CLIMBER_POTEN
 
 // Limit Switch
-#define CLIMBER_LIM_SWITCH
+#define CLIMBER_LIM_SWITCH;
 #define FEEDER_LIM_SWITCH
 
 
@@ -65,6 +67,8 @@
         #define PLATE_CLOSE_SHOT 648
         #define PLATE_LOW_LIMIT 162
         #define PLATE_HIGH_LIMIT 686
+        
+        #define LAUNCHER_SAFTY_TIME 2.0
 #endif
 
 // Def for Competition Robot
@@ -80,4 +84,6 @@
         #define PLATE_LOW_LIMIT 1.18
         #define PLATE_HIGH_LIMIT 4.0
         #define PLATE_CLOSE_SHOT 3.8
+        
+        #define LAUNCHER_SAFTY_TIME 2.0
 #endif
