@@ -24,6 +24,7 @@
 // Victor
 #define lDRIVE 1
 #define rDRIVE 2
+#define CLIMBER 3
 #define LAUNCHER1 4
 #define LAUNCHER2 5
 #define LAUNCHER3 6
@@ -46,7 +47,7 @@
 #define CLIMBER_POTEN
 
 // Limit Switch
-#define CLIMBER_LIM_SWITCH;
+#define CLIMBER_LIM_SWITCH
 #define FEEDER_LIM_SWITCH
 
 
@@ -87,3 +88,4 @@
         
         #define LAUNCHER_SAFTY_TIME 2.0
 #endif
+
