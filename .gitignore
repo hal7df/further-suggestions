@@ -3,5 +3,9 @@
 *.out
 *.exe
 
+# Project files
+*.cbp
+*.layout
+
 # Build directory
 PPC603gnu/
