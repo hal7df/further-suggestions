@@ -103,6 +103,10 @@ public:
         launcherStatus = "Stopped";
         feederStatus = "Stopped";
         plateStatus = "Manual";
+		
+		enum ClimberStat {
+			EXTEND, STOP, CLOSE
+		} climberStat;
 	}
 	
 	
@@ -212,46 +216,57 @@ public:
         
         // ----- Climber -----
         // it is messed up now.
-        if(jyostcik)
-        if(joystickAdjust(m_operator->GetRawAxis(LEFT_Y)) < 0.0) {
-        	if(m_climberTimer->Get() == 0) {
-        		m_climerTimer->Start();
-        	}
-        } else if(joystickAdjust(m_operator->GetRawAxis(LEFT_Y)) == 0.0) {
-        	
-        	m_climbRachet->Set(Relay::kReverse);
-        } else {
-        	
-        }
-        
-        if(m_climberTimer->Get() < 0.125) {
-        	m_climber->Set(-0.3);
-        	m_climbRachet->Set(Relay::kForward);
-        } else {
-        	
-        }
-        if(m_operator->GetRawButton(BUTTON_RB) && m_climberTimer->Get() = 0.0) {
-        	// ----- Unlock -----
-        	m_climberTimer->Start();
-        }
-        
-        if(m_climberTimer->Get() < 0.125) {
-        	m_climber->Set(-0.3);
-        	m_climbRachet->Set(Relay::kForward);
-        	
-        	climberStatus = "Unlocking";
-        } else {
-        	m_climber->Set(0.0);
-        	m_climbRachet->Set(Relay::kOff);
-        	
-        	climberStatus = "Unlocked";
-        }
-        
-        if(m_operator->GetRawButton(BUTTON_LB)) {
-        	m_climbRachet->Set(Relay::kReverse);
-        	climberStatus = "Locked";
-        }
-        
+		if (joysticAdjust(m_operator->GetRawAxis(LEFT_Y)) > 0.0) {
+			if (climberStat != EXTEND) {
+				cliberStat = EXTEND;
+
+				climberTimer->Stop();
+				climberTimer->Reset();
+				climberTimer->Start();
+			}
+		}
+		else if (joysticAdjust(m_operator->GetRawAxis(LEFT_Y)) == 0.0) {
+			// STOP
+			if (climberStat != STOP) {
+				cliberStat = STOP;
+
+				climberTimer->Stop();
+				climberTimer->Reset();
+				climberTimer->Start();
+			}
+		}
+		else if (joysticAdjust(m_operator->GetRawAxis(LEFT_Y)) < 0.0) {
+			// CLOSE
+			if (climberStat != CLOSE) {
+				cliberStat = CLOSE;
+			}
+		}
+ 
+		switch (climberStat)  {
+		case EXTEND:
+			if (climberTimer->Get() < 0.125) {
+				climberRachet->Set(Relay::kForward);
+				climber->Set(-0.3);
+			}
+			else {
+				climber->Set(joystickAdjust(m_operator->GetRawAxis(LEFT_Y)));
+			}
+			break;
+		case STOP:
+			if (climberTimer->Get() > 0.125) {
+				climer->Set(0.0);
+				climerRachet->Set(Relay::kReverse);
+			}
+			break;
+		case CLOSE:
+			if (climberTimer->Get() > 0.125) {
+				climerRachet->Set(Relay::kReverse);
+			}
+			else {
+				climber->Set(joystickAdjust(m_operator->GetRawAxis(LEFT_Y)));
+			}
+			break;
+		}
         
         
         // ----- Display -----
