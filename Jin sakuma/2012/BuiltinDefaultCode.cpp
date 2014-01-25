@@ -128,6 +128,9 @@ public:
 		if(m_operater->GetRawButton(BUTTON_A)) {
 			m_light->Set(Relay::kForward);
 		}
+		if (m_operater->GetRawButton(BUTTON_B)) {
+			m_light->Set(Relay::kOff);
+		}
 		
         // ----- Drive -----
 		m_robotDrive->ArcadeDrive(-joystickAdjust(m_driver->GetRawAxis(LEFT_Y)), -joystickAdjust(m_driver->GetRawAxis(RIGHT_X)));
