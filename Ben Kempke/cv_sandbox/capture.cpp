@@ -9,7 +9,8 @@
 
 #define WEBCAM
 //#define KINECT
-#define ARDUINO
+//#define ARDUINO
+
 
 #ifdef KINECT
 #include "libfreenect/libfreenect_cv.h"
@@ -130,6 +131,21 @@ int main(int argc, char* argv[])
 		getchar();								// getchar() to pause for user see message . . .
 		return(-1);								// exit program
 	}
+        double cam_w = cvGetCaptureProperty(p_capWebcam, CV_CAP_PROP_FRAME_WIDTH);
+        double cam_h = cvGetCaptureProperty(p_capWebcam, CV_CAP_PROP_FRAME_HEIGHT);
+        double fps = 30;//cvGetCaptureProperty(p_capWebcam, CV_CAP_PROP_FPS);    
+        printf("* Capture properties: %f x %f, %f fps\n", cam_w, cam_h, fps); 
+    
+        cvNamedWindow("Grayscale video", CV_WINDOW_AUTOSIZE);
+    
+        CvVideoWriter* writer = NULL;
+        writer = cvCreateVideoWriter("out.avi", CV_FOURCC('x','v','i','d'), 25, cvSize((int)cam_w,(int)cam_h) );
+        if (writer == NULL)
+        {
+            printf("!!! ERROR: cvCreateVideoWriter\n");
+            return -1;
+        }
+
 #endif
 											            // declare 2 windows
 	cvNamedWindow("Original", CV_WINDOW_AUTOSIZE);		// original image from webcam
@@ -158,6 +174,7 @@ int main(int argc, char* argv[])
 #endif
 #ifdef WEBCAM
 		p_imgOriginal = cvQueryFrame(p_capWebcam);		// get frame from webcam
+                cvWriteFrame(writer, p_imgOriginal);
 #endif
 		cvResize(p_imgOriginal, p_imgResized);
 		
@@ -286,6 +303,7 @@ int main(int argc, char* argv[])
 	}	// end while
 
 #ifdef WEBCAM
+        cvReleaseVideoWriter(&writer);
 	cvReleaseCapture(&p_capWebcam);					// release memory as applicable
 #endif
 
