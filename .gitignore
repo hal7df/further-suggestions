@@ -6,9 +6,6 @@
 # Project files
 *.cbp
 *.layout
-*.cproject
-*.wrmakefile
-*.wrproject
 
 # Build directory
 PPC603gnu/
