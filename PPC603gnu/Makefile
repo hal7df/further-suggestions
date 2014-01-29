@@ -32,7 +32,7 @@ MODE_DIR := NonDebug
 endif
 OBJ_DIR := .
 WS_ROOT_DIR := C:/WindRiver/workspace
-PRJ_ROOT_DIR := $(WS_ROOT_DIR)/BuiltinDefaultCode
+PRJ_ROOT_DIR := $(WS_ROOT_DIR)/further-suggestions
 
 
 
@@ -162,16 +162,16 @@ BuiltinDefaultCode_partialImage/$(MODE_DIR)/% : LIBPATH =
 BuiltinDefaultCode_partialImage/$(MODE_DIR)/% : LIBS = 
 BuiltinDefaultCode_partialImage/$(MODE_DIR)/% : OBJ_DIR := BuiltinDefaultCode_partialImage/$(MODE_DIR)
 
-BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/BuiltinDefaultCode/BuiltinDefaultCode.o : $(PRJ_ROOT_DIR)/BuiltinDefaultCode.cpp $(FORCE_FILE_BUILD)
+BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/further-suggestions/DriveWrapper.o : $(PRJ_ROOT_DIR)/DriveWrapper.cpp $(FORCE_FILE_BUILD)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
-BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/BuiltinDefaultCode/DriveWrapper.o : $(PRJ_ROOT_DIR)/DriveWrapper.cpp $(FORCE_FILE_BUILD)
+BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/further-suggestions/further-suggestions.o : $(PRJ_ROOT_DIR)/further-suggestions.cpp $(FORCE_FILE_BUILD)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
-OBJECTS_BuiltinDefaultCode_partialImage = BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/BuiltinDefaultCode/BuiltinDefaultCode.o \
-	 BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/BuiltinDefaultCode/DriveWrapper.o
+OBJECTS_BuiltinDefaultCode_partialImage = BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/further-suggestions/DriveWrapper.o \
+	 BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/further-suggestions/further-suggestions.o
 
 BuiltinDefaultCode_partialImage/$(MODE_DIR)/BuiltinDefaultCode_partialImage.o : $(OBJECTS_BuiltinDefaultCode_partialImage)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc -r -nostdlib -Wl,-X  -o "$@" $(OBJECTS_BuiltinDefaultCode_partialImage) $(LIBPATH) $(LIBS) $(ADDED_LIBPATH) $(ADDED_LIBS)  && if [ "$(EXPAND_DBG)" = "1" ]; then plink "$@";fi
@@ -185,7 +185,7 @@ BuiltinDefaultCode_partialImage/$(MODE_DIR)/BuiltinDefaultCode_partialImage_clea
 
 force : 
 
-DEP_FILES := BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/BuiltinDefaultCode/BuiltinDefaultCode.d BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/BuiltinDefaultCode/DriveWrapper.d
+DEP_FILES := BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/further-suggestions/DriveWrapper.d BuiltinDefaultCode_partialImage/$(MODE_DIR)/Objects/further-suggestions/further-suggestions.d
 -include $(DEP_FILES)
 
 
