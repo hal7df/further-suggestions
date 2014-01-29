@@ -148,22 +148,14 @@ int main(int argc, char* argv[])
 #endif
 
 	// Setup OpenCV variables and structures
-	CvSize size640x480 = cvSize(640, 480);			// use a 640 x 480 size for all windows, also make sure your webcam is set to 640x480 !!
-#ifdef WEBCAM
-	CvCapture* p_capWebcam;						// we will assign our web cam video stream to this later . . .
-#endif
-	IplImage* p_imgOriginal;			// pointer to an image structure, this will be the input image from webcam
-	IplImage* p_imgResized;			// pointer to an image structure, this will be the processed image
-	IplImage* p_imgProcessed;			// pointer to an image structure, this will be the processed image
-	IplImage* p_imgHSV;                 // pointer to an image structure, this will hold the image after the color has been changed from RGB to HSV
+	Mat p_imgOriginal;			// pointer to an image structure, this will be the input image from webcam
+	Mat p_imgResized;			// pointer to an image structure, this will be the processed image
+	Mat p_imgProcessed;			// pointer to an image structure, this will be the processed image
+	Mat p_imgHSV;                 // pointer to an image structure, this will hold the image after the color has been changed from RGB to HSV
 										// IPL is short for Intel Image Processing Library, this is the structure used in OpenCV 1.x to work with images
-
-	CvMemStorage* p_strStorage;			// necessary storage variable to pass into cvHoughCircles()
-
-	CvSeq* p_seqCircles;				// pointer to an OpenCV sequence, will be returned by cvHough Circles() and will contain all circles
-										// call cvGetSeqElem(p_seqCircles, i) will return a 3 element array of the ith circle (see next variable)
+	vector<Vec3f> circles;
 	
-	float* p_fltXYRadius;				// pointer to a 3 element array of floats
+	Vec3i p_fltXYRadius;				// pointer to a 3 element array of floats
 										// [0] => x position of detected object
 										// [1] => y position of detected object
 									// [2] => radius of detected object
@@ -171,42 +163,31 @@ int main(int argc, char* argv[])
 	int i;								// loop counter
 	char charCheckForEscKey;			// char for checking key press (Esc exits program)
 #ifdef WEBCAM
-	p_capWebcam = cvCaptureFromCAM(1);	// 0 => use 1st webcam, may have to change to a different number if you have multiple cameras
+	VideoCapture p_capWebcam(1);	// 0 => use 1st webcam, may have to change to a different number if you have multiple cameras
 
-	if(p_capWebcam == NULL) {			// if capture was not successful . . .
-		printf("error: capture is NULL \n");	// error message to standard out . . .
+	if(!p_capWebcam.isOpened()) {			// if capture was not successful . . .
+		printf("error: webcam not found \n");	// error message to standard out . . .
 		getchar();								// getchar() to pause for user see message . . .
 		return(-1);								// exit program
 	}
-        double cam_w = cvGetCaptureProperty(p_capWebcam, CV_CAP_PROP_FRAME_WIDTH);
-        double cam_h = cvGetCaptureProperty(p_capWebcam, CV_CAP_PROP_FRAME_HEIGHT);
+        double cam_w = p_capWebcam.get(CV_CAP_PROP_FRAME_WIDTH);
+        double cam_h = p_capWebcam.get(CV_CAP_PROP_FRAME_HEIGHT);
         double fps = 30;//cvGetCaptureProperty(p_capWebcam, CV_CAP_PROP_FPS);    
         printf("* Capture properties: %f x %f, %f fps\n", cam_w, cam_h, fps); 
     
-        cvNamedWindow("Grayscale video", CV_WINDOW_AUTOSIZE);
+        namedWindow("Grayscale video", CV_WINDOW_AUTOSIZE);
     
-        CvVideoWriter* writer = NULL;
-        writer = cvCreateVideoWriter("out.avi", CV_FOURCC('x','v','i','d'), 25, cvSize((int)cam_w,(int)cam_h) );
-        if (writer == NULL)
+        VideoWriter writer("out.avi", CV_FOURCC('x','v','i','d'), 25, cvSize((int)cam_w,(int)cam_h) );
+        if (!writer.isOpened())
         {
-            printf("!!! ERROR: cvCreateVideoWriter\n");
+            printf("!!! ERROR: unable to open VideoWriter\n");
             return -1;
         }
 
 #endif
 											            // declare 2 windows
-	cvNamedWindow("Original", CV_WINDOW_AUTOSIZE);		// original image from webcam
-	cvNamedWindow("Processed", CV_WINDOW_AUTOSIZE);		// the processed image we will use for detecting circles
-
-	p_imgOriginal = cvQueryFrame(p_capWebcam);		// get frame from webcam
-	p_imgResized = cvCreateImage(size640x480,					// 1 channel (grayscale), if this was a color image, use 3
-								   p_imgOriginal->depth,		// 8-bit color depth
-								   p_imgOriginal->nChannels);					// 1 channel (grayscale), if this was a color image, use 3
-	p_imgProcessed = cvCreateImage(size640x480,			// 640 x 480 pixels (CvSize struct from earlier)
-								   IPL_DEPTH_8U,		// 8-bit color depth
-								   1);					// 1 channel (grayscale), if this was a color image, use 3
-
-	p_imgHSV = cvCreateImage(size640x480, IPL_DEPTH_8U, 3); 
+	namedWindow("Original", CV_WINDOW_AUTOSIZE);		// original image from webcam
+	namedWindow("Processed", CV_WINDOW_AUTOSIZE);		// the processed image we will use for detecting circles
 
 	// Variables for Arduino Control
 	int servoPosition = 90;
@@ -217,43 +198,42 @@ int main(int argc, char* argv[])
 	while(1) {								// for each frame . . .
 #ifdef KINECT
 		p_imgOriginal = freenect_sync_get_rgb_cv(0);
-		cvCvtColor(p_imgOriginal, p_imgOriginal, CV_RGB2BGR);
+		cvtColor(p_imgOriginal, p_imgOriginal, CV_RGB2BGR);
 #endif
 #ifdef WEBCAM
-		p_imgOriginal = cvQueryFrame(p_capWebcam);		// get frame from webcam
-                cvWriteFrame(writer, p_imgOriginal);
-#endif
-		cvResize(p_imgOriginal, p_imgResized);
-		
-		if(p_imgOriginal == NULL) {					// if frame was not captured successfully . . .
-			printf("error: frame is NULL \n");		// error message to std out
-			getchar();
+		bool success = p_capWebcam.read(p_imgOriginal);		// get frame from webcam
+		if(!success){
+			printf("!!! ERROR: Cannot read image from webcam\n");
 			break;
 		}
 
+                writer.write(p_imgOriginal);
+#endif
+		resize(p_imgOriginal, p_imgResized, Size(640.480));
+
 		maskRGBImage(p_imgResized, mask, p_imgProcessed);
 										// smooth the processed image, this will make it easier for the next function to pick out the circles
-		cvSmooth(p_imgProcessed,		// function input
+		GaussianBlur(p_imgProcessed,		// function input
 				 p_imgProcessed,		// function output
-				 CV_GAUSSIAN,			// use Gaussian filter (average nearby pixels, with closest pixels weighted more)
+				 Size(0,0),			// use Gaussian filter (average nearby pixels, with closest pixels weighted more)
 				 9,						// smoothing filter window width
 				 9);					// smoothing filter window height
 
 													// fill sequential structure with all circles in processed image
-		p_seqCircles = cvHoughCircles(p_imgProcessed,		// input image, nothe that this has to be grayscale (no color)
-									  p_strStorage,			// provide function with memory storage, makes function return a pointer to a CvSeq
-									  CV_HOUGH_GRADIENT,	// two-pass algorithm for detecting circles, this is the only choice available
-									  2,					// size of image / 2 = "accumulator resolution", i.e. accum = res = size of image / 2
-									  p_imgProcessed->height / 4,	// min distance in pixels between the centers of the detected circles
-									  100,						// high threshold of Canny edge detector, called by cvHoughCircles
-									  50,						// low threshold of Canny edge detector, called by cvHoughCircles
-									  10,	 //10					// min circle radius, in pixels
-									  400);						// max circle radius, in pixels
+		HoughCircles(p_imgProcessed,		// input image, nothe that this has to be grayscale (no color)
+		             circles,			// provide function with memory storage, makes function return a pointer to a CvSeq
+		             CV_HOUGH_GRADIENT,	// two-pass algorithm for detecting circles, this is the only choice available
+		             2,					// size of image / 2 = "accumulator resolution", i.e. accum = res = size of image / 2
+		             p_imgProcessed->height / 4,	// min distance in pixels between the centers of the detected circles
+		             100,						// high threshold of Canny edge detector, called by cvHoughCircles
+		             50,						// low threshold of Canny edge detector, called by cvHoughCircles
+		             10,	 //10					// min circle radius, in pixels
+		             400);						// max circle radius, in pixels
 
 		// Run this if the camera can see at least one circle
-		for(i=0; i < p_seqCircles->total; i++) {		// for each element in sequential circles structure (i.e. for each object detected)
+		for(i=0; i < circles.size(); i++) {		// for each element in sequential circles structure (i.e. for each object detected)
 
-			p_fltXYRadius = (float*)cvGetSeqElem(p_seqCircles, i);	// from the sequential structure, read the ith value into a pointer to a float
+			p_fltXYRadius = circles[i];	// from the sequential structure, read the ith value into a pointer to a float
 
 			printf("ball position x = %f, y = %f, r = %f \n", p_fltXYRadius[0],		// x position of center point of circle
 															  p_fltXYRadius[1],		// y position of center point of circle
@@ -309,40 +289,30 @@ int main(int argc, char* argv[])
 			}
 #endif 
 										// draw a small green circle at center of detected object
-			cvCircle(p_imgOriginal,										// draw on the original image
-					 cvPoint(cvRound(p_fltXYRadius[0]), cvRound(p_fltXYRadius[1])),		// center point of circle
-					 3,													// 3 pixel radius of circle
-					 CV_RGB(0,255,0),									// draw pure green
-					 CV_FILLED);										// thickness, fill in the circle
+			circle(p_imgOriginal,										// draw on the original image
+			       Point(cvRound(p_fltXYRadius[0]), cvRound(p_fltXYRadius[1])),		// center point of circle
+			       3,													// 3 pixel radius of circle
+			       Scalar(0,255,0),									// draw pure green
+			       CV_FILLED);										// thickness, fill in the circle
 			
 										// draw a red circle around the detected object
-			cvCircle(p_imgOriginal,										// draw on the original image
-					 cvPoint(cvRound(p_fltXYRadius[0]), cvRound(p_fltXYRadius[1])),		// center point of circle
-					 cvRound(p_fltXYRadius[2]),							// radius of circle in pixels
-					 CV_RGB(255,0,0),									// draw pure red
-					 3);												// thickness of circle in pixels
+			circle(p_imgOriginal,										// draw on the original image
+			       Point(cvRound(p_fltXYRadius[0]), cvRound(p_fltXYRadius[1])),		// center point of circle
+			       cvRound(p_fltXYRadius[2]),							// radius of circle in pixels
+			       Scalar(255,0,0),									// draw pure red
+			       3);												// thickness of circle in pixels
 		}	// end for
 
-		cvShowImage("Original", p_imgOriginal);			// original image with detectec ball overlay
-		cvShowImage("Processed", p_imgProcessed);		// image after processing
+		imshow("Original", p_imgOriginal);			// original image with detectec ball overlay
+		imshow("Processed", p_imgProcessed);		// image after processing
 
-		cvReleaseMemStorage(&p_strStorage);				// deallocate necessary storage variable to pass into cvHoughCircles
-
-		charCheckForEscKey = cvWaitKey(10);				// delay (in ms), and get key press, if any
+		charCheckForEscKey = waitKey(10);				// delay (in ms), and get key press, if any
 		if(charCheckForEscKey == 27) break;				// if Esc key (ASCII 27) was pressed, jump out of while loop
 	}	// end while
-
-#ifdef WEBCAM
-        cvReleaseVideoWriter(&writer);
-	cvReleaseCapture(&p_capWebcam);					// release memory as applicable
-#endif
 
 #ifdef ARDUINO
 	close(fd);
 #endif
-
-	cvDestroyWindow("Original");
-	cvDestroyWindow("Processed");
 
 	// This closes the Serial Port
 //DEBUG    CloseHandle(hSerial);
