@@ -50,6 +50,20 @@
 #define CLIMBER_LIM_SWITCH
 #define FEEDER_LIM_SWITCH
 
+// ----- Status -----
+enum ClimberStatus {
+	EXPENDING, STOPPED, CLOSING
+};
+enum LauncherStatus {
+	STOPPED, STARTING, RUNNING
+};
+enum FeederStatus {
+	RUNNING, STOPPED
+};
+enum PlateStatus {
+	MANUAL, PYRAMID_THREE, FEEDER_THREE, FEEDER_TWO
+};
+
 
 // We are using Competition Robot.
 //#define PracticeBot
