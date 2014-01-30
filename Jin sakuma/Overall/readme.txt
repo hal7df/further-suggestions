@@ -7,7 +7,6 @@ Drive
 Plate
 - BUTTON_A: Pyramid Three Points
 - BUTTON_B: Feeder Three Points
-- BUTTON_X: Feeder Two Points
 - TRIGGERS: Manual Control
 
 Launcher (Operator)

@@ -44,24 +44,24 @@
 
 // Potentiometer
 #define PLATE_POTEN 1
-#define CLIMBER_POTEN
+#define CLIMBER_POTEN 2
 
 // Limit Switch
-#define CLIMBER_LIM_SWITCH
-#define FEEDER_LIM_SWITCH
+#define CLIMBER_LIM_SWITCH 7
+#define FEEDER_LIM_SWITCH 9
 
 // ----- Status -----
-enum ClimberStatus {
-	EXPENDING, STOPPED, CLOSING
-};
-enum LauncherStatus {
-	STOPPED, STARTING, RUNNING
+enum PlateStatus {
+	pMANUAL, pPYRAMID_THREE, pFEEDER_THREE, pFEEDER_TWO
 };
 enum FeederStatus {
-	RUNNING, STOPPED
+	fRUNNING, fSTOPPED
 };
-enum PlateStatus {
-	MANUAL, PYRAMID_THREE, FEEDER_THREE, FEEDER_TWO
+enum LauncherStatus {
+	lSTARTING, lRUNNING, lSTOPPED
+};
+enum ClimberStatus {
+	cEXTENDING, cSTOPPED, cCLOSING
 };
 
 
