@@ -1,0 +1,8 @@
+# Executable files
+*.o
+*.out
+*.exe
+
+# Code::Blocks stuff
+*.cbp
+*.layout
