@@ -1,5 +1,7 @@
 #include <iostream>
+#include <vector>
 
+#include <opencv2/opencv.hpp>
 #include<opencv/cvaux.h>
 #include<opencv/highgui.h>
 #include<opencv/cxcore.h>
@@ -9,7 +11,7 @@
 
 #define WEBCAM
 //#define KINECT
-//#define ARDUINO
+#define ARDUINO
 
 
 #ifdef KINECT
@@ -22,21 +24,24 @@
 #include <unistd.h>
 #include <math.h>
 
+using namespace std;
 using namespace cv;
 
-void maskRGBImage(Mat& in_image, unsigned char lut[256][256][256], Mat& out_image){
+unsigned char mask[256][256][256];
+
+void maskRGBImage(Mat& in_image, Mat& out_image){
 	Vec3b *in_p;
-	Vec3b *out_p;
+	uchar *out_p;
 	for(int ii=0; ii < in_image.rows; ii++){
 		in_p = in_image.ptr<Vec3b>(ii);
-		out_p = out_image.ptr<Vec3b>(ii);
+		out_p = out_image.ptr<uchar>(ii);
 		for(int jj=0; jj < in_image.cols; jj++){
-			out_p[jj] = lut[in_p[jj][0]][in_p[jj][1]][in_p[jj][2]];
+			out_p[jj] = mask[in_p[jj][2]][in_p[jj][1]][in_p[jj][0]];
 		}
 	}
 }
 
-void initializeRGCLUT(double o_min, double o_max, double s_min, double s_max, unsigned char lut[256][256][256]){
+void initializeRGCLUT(double o_min, double o_max, double s_min, double s_max){
 	double one_third = (double)(1)/3;
 
 	//Following formula described at: www.ikaros-project.org/articles/2007/colortracking/
@@ -44,8 +49,8 @@ void initializeRGCLUT(double o_min, double o_max, double s_min, double s_max, un
 		for(int G=0; G < 256; G++){
 			for(int B=0; B < 256; B++){
 				//Compute chromaticity value for this color
-				double r = (double)(R)/(R+G+B)/255;
-				double g = (double)(G)/(R+G+B)/255;
+				double r = (double)(R)/(R+G+B);
+				double g = (double)(G)/(R+G+B);
 				
 				//Compute magnitude and phase in RG chromaticity plane
 				double o = atan((r-one_third)/(g-one_third));
@@ -53,9 +58,9 @@ void initializeRGCLUT(double o_min, double o_max, double s_min, double s_max, un
 
 				//Make sure the color falls within the specified bounds
 				if((o >= o_min) && (o <= o_max) && (s >= s_min) && (s <= s_max)){
-					lut[R][G][B] = 255;
+					mask[R][G][B] = 255;
 				} else {
-					lut[R][G][B] = 0;
+					mask[R][G][B] = 0;
 				}
 			}
 		}
@@ -129,8 +134,7 @@ int main(int argc, char* argv[])
 	double o_max = -0.9;
 	double s_min = 0.2;
 	double s_max = 0.5;
-	unsigned char mask[256][256][256];
-	initializeRGCLUT(o_min, o_max, s_min, s_max, mask);
+	initializeRGCLUT(o_min, o_max, s_min, s_max);
 #ifdef ARDUINO
 	char *portname = "/dev/ttyACM0";
 	char outputChars[2];
@@ -150,12 +154,12 @@ int main(int argc, char* argv[])
 	// Setup OpenCV variables and structures
 	Mat p_imgOriginal;			// pointer to an image structure, this will be the input image from webcam
 	Mat p_imgResized;			// pointer to an image structure, this will be the processed image
-	Mat p_imgProcessed;			// pointer to an image structure, this will be the processed image
+	Mat p_imgProcessed(480,640, CV_8UC(1));			// pointer to an image structure, this will be the processed image
 	Mat p_imgHSV;                 // pointer to an image structure, this will hold the image after the color has been changed from RGB to HSV
 										// IPL is short for Intel Image Processing Library, this is the structure used in OpenCV 1.x to work with images
 	vector<Vec3f> circles;
 	
-	Vec3i p_fltXYRadius;				// pointer to a 3 element array of floats
+	Vec3f p_fltXYRadius;				// pointer to a 3 element array of floats
 										// [0] => x position of detected object
 										// [1] => y position of detected object
 									// [2] => radius of detected object
@@ -163,7 +167,11 @@ int main(int argc, char* argv[])
 	int i;								// loop counter
 	char charCheckForEscKey;			// char for checking key press (Esc exits program)
 #ifdef WEBCAM
-	VideoCapture p_capWebcam(1);	// 0 => use 1st webcam, may have to change to a different number if you have multiple cameras
+	VideoCapture p_capWebcam;
+	if(argc == 1)
+		p_capWebcam.open(1);	// 0 => use 1st webcam, may have to change to a different number if you have multiple cameras
+	else
+		p_capWebcam.open("in.avi");
 
 	if(!p_capWebcam.isOpened()) {			// if capture was not successful . . .
 		printf("error: webcam not found \n");	// error message to standard out . . .
@@ -185,6 +193,7 @@ int main(int argc, char* argv[])
         }
 
 #endif
+
 											            // declare 2 windows
 	namedWindow("Original", CV_WINDOW_AUTOSIZE);		// original image from webcam
 	namedWindow("Processed", CV_WINDOW_AUTOSIZE);		// the processed image we will use for detecting circles
@@ -209,26 +218,52 @@ int main(int argc, char* argv[])
 
                 writer.write(p_imgOriginal);
 #endif
-		resize(p_imgOriginal, p_imgResized, Size(640.480));
+		resize(p_imgOriginal, p_imgResized, Size(640,480));
 
-		maskRGBImage(p_imgResized, mask, p_imgProcessed);
+		maskRGBImage(p_imgResized, p_imgProcessed);
+		erode(p_imgProcessed, p_imgProcessed, Mat(), Point(-1, -1), 1);
 										// smooth the processed image, this will make it easier for the next function to pick out the circles
-		GaussianBlur(p_imgProcessed,		// function input
+		/*GaussianBlur(p_imgProcessed,		// function input
 				 p_imgProcessed,		// function output
 				 Size(0,0),			// use Gaussian filter (average nearby pixels, with closest pixels weighted more)
 				 9,						// smoothing filter window width
 				 9);					// smoothing filter window height
-
+		*/
+		vector<vector<Point> > contours;
+		vector<Vec4i> hierarchy;
+		Mat temp;
+		p_imgProcessed.copyTo(temp);
+		findContours(temp, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+		circles.clear();
+		for(int index = 0; index >=0; index = hierarchy[index][0]){
+			Point2f center;
+			float radius;
+			minEnclosingCircle(contours[index], center, radius);
+			Moments moment = moments((Mat)contours[index]);
+			double area = moment.m00;
+			double x = moment.m10/area;
+			double y = moment.m01/area;
+			float fraction_circle = area/radius/radius/M_PI;
+			if(area > 1000.0 && fraction_circle > 0.6){
+				Vec3f circle;
+				circle[0] = center.x;
+				circle[1] = center.y;
+				circle[2] = radius;
+				circles.push_back(circle);
+				printf("center = (%f,%f), radius = %f, area = %f, x = %f, y = %f, fraction_circle = %f\n", center.x, center.y, radius, area, x, y, fraction_circle);
+			}
+		}
 													// fill sequential structure with all circles in processed image
-		HoughCircles(p_imgProcessed,		// input image, nothe that this has to be grayscale (no color)
+		/*HoughCircles(p_imgProcessed,		// input image, nothe that this has to be grayscale (no color)
 		             circles,			// provide function with memory storage, makes function return a pointer to a CvSeq
 		             CV_HOUGH_GRADIENT,	// two-pass algorithm for detecting circles, this is the only choice available
 		             2,					// size of image / 2 = "accumulator resolution", i.e. accum = res = size of image / 2
-		             p_imgProcessed->height / 4,	// min distance in pixels between the centers of the detected circles
+		             p_imgProcessed.rows / 4,	// min distance in pixels between the centers of the detected circles
 		             100,						// high threshold of Canny edge detector, called by cvHoughCircles
 		             50,						// low threshold of Canny edge detector, called by cvHoughCircles
 		             10,	 //10					// min circle radius, in pixels
 		             400);						// max circle radius, in pixels
+		*/
 
 		// Run this if the camera can see at least one circle
 		for(i=0; i < circles.size(); i++) {		// for each element in sequential circles structure (i.e. for each object detected)
@@ -244,7 +279,7 @@ int main(int argc, char* argv[])
 			servoOrientation = 0;
 
 			// Check whether camera should turn to its left if the circle gets near the right end of the screen
-			if (p_fltXYRadius[0] > 390)
+			if (p_fltXYRadius[0] > 340)
 			{
 				outputChars[0] = 'l';
 				write(fd, outputChars, strlen(outputChars));
@@ -256,7 +291,7 @@ int main(int argc, char* argv[])
 			}
 
 			// Check whether camera should turn to its right if the circle gets near the left end of the screen
-			if (p_fltXYRadius[0] < 250)
+			if (p_fltXYRadius[0] < 300)
 			{
 				outputChars[0] = 'r';
 				write(fd, outputChars, strlen(outputChars));
@@ -267,7 +302,7 @@ int main(int argc, char* argv[])
 					servoPosition = 0;
 			}
 
-			if (p_fltXYRadius[1] > 280){
+			if (p_fltXYRadius[1] > 260){
 				outputChars[0] = 'd';
 				write(fd, outputChars, strlen(outputChars));
 
@@ -277,7 +312,7 @@ int main(int argc, char* argv[])
 					servoPositionV = 180;
 			}
 
-			if (p_fltXYRadius[1] < 200)
+			if (p_fltXYRadius[1] < 220)
 			{
 				outputChars[0] = 'u';
 				write(fd, outputChars, strlen(outputChars));
