@@ -1,29 +1,25 @@
 #include "WPILib.h"
 #include "Defines.h"
+#include "cmath"
 
 class BuiltinDefaultCode : public IterativeRobot
 {
-	
-		
-public:
-	Joystick *m_BUTTON_A;
-	Joystick *m_BUTTON_B;
+
+	Joystick *m_gamepad1;
 	DriverStationLCD* m_dsLCD;
 	Timer *m_timer;
-	Float x;
-	
+	double x;
+	double y;	
+		
+public:
+
 	BuiltinDefaultCode()	{
 	
 	m_timer = new Timer();
-	m_BUTTON_A = new Joystick (1);
-	m_BUTTON_B = new Joystick (2);
+	m_gamepad1 = new Joystick (1);
     m_dsLCD = DriverStationLCD::GetInstance();
+    x = 0.00;
 	}
-	
-	
-	/********************************** Init Routines *************************************/
-
-
 	void RobotInit() {
 	  
 	}
@@ -52,26 +48,28 @@ public:
 
 	
 	void TeleopPeriodic() {
-	    if (m_timer->HasPeriodPassed(1.5)) {
-	    	if (m_BUTTON_A->GetRawButton(1)) {
-	    		void SmartDashboard::PutBoolean("A Button Pressed!");
-	    	    SmartDashboard::PutNumber("Counter: ",x++);
+	    if (m_timer->HasPeriodPassed(.1)) {
+	    	if (m_gamepad1->GetRawButton(1)) {
+	    		m_timer->Start();
+	    		x+=1;
 	    	    m_timer->Stop();
-	    	    m_timer->Start();
 	    	    m_timer->Reset();
 	    	}
 	    }
-	   if (m_timer->HasPeriodPassed(1.5)) {
-	    	if (m_BUTTON_B->GetRawButton(1)) {
-	    		void SmartDashboard::PutBoolean("B Button Pressed!");
-	    	    SmartDashboard::PutNumber("Counter: ",x--);
-	    	    m_timer->Stop();
+	   if (m_timer->HasPeriodPassed(.1)) {
+	    	if (m_gamepad1->GetRawButton(1)) {
 	    	    m_timer->Start();
+	    	    x-=1;
+	    	    m_timer->Stop();
 	    	    m_timer->Reset();
 	    	}
-	    }
-	    m_dsLCD->UpdateLCD();
-	  
+	   }
+	   SmartDashboard::PutNumber("Button: ", x);
+	   
+	   if (fabs(m_gamepad1 -> GetRawAxis(LEFT_Y)) > 0.2) {
+		   y += -m_gamepad1 -> GetRawAxis(LEFT_Y);
+	   }
+	   SmartDashboard::PutNumber("Stick: ", y);
 	} // TeleopPeriodic()
 
 /********************************** Miscellaneous Routines *************************************/
