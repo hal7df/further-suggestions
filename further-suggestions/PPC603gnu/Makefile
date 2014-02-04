@@ -32,7 +32,7 @@ MODE_DIR := NonDebug
 endif
 OBJ_DIR := .
 WS_ROOT_DIR := C:/WindRiver/workspace
-PRJ_ROOT_DIR := $(WS_ROOT_DIR)/further-suggestions
+PRJ_ROOT_DIR := $(WS_ROOT_DIR)/further-suggestions/further-suggestions
 
 
 

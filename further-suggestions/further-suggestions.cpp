@@ -73,6 +73,10 @@ public:
 	//Declare driver station
 	DriverStationLCD* m_dsLCD;
 	
+	//Declare ramrod servos and encoder
+	Servo *m_rServo1;
+	Servo *m_rServo2;
+	Encoder m_rEncoder;
 	
 	
 /**
@@ -103,6 +107,14 @@ public:
 		
 		//Grab driver station object
 		m_dsLCD = DriverStationLCD::GetInstance();
+	
+	 	//Initialize ramrod servo and encoder
+		m_rServo1 = new Servo (9);
+		m_rServo2 = new Servo (10),;
+		m_rEncoder = new Encoder (8,9,false)
+		m_rEncoder->SetDistancePerPulse(1);
+		m_rEncoder->SetMaxPeriod(1.0);
+		m_rEncoder->Start();
 	}
 	
 	
