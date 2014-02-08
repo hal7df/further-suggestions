@@ -89,6 +89,10 @@ public:
 	//Declare bGrabber solenoids
 	Solenoid* m_catch;
 	Solenoid* m_bArm;
+	//Declare ramrod servos, motor, and encoder
+	Servo *m_ramServo;
+	Talon *m_ramMotor;
+	Encoder *m_ramEncoder;
 	
 	//Declare bGrabber PWM
 	Talon* m_roller;
@@ -145,6 +149,14 @@ public:
 		
 		//initialize bGrabber PWM
 		m_roller = new Talon (8);
+	
+	 	//Initialize ramrod servo, motor, and encoder
+		m_ramServo = new Servo (9);
+		m_ramMotor = new Talon (5);
+		m_ramEncoder = new Encoder (7,8,false);
+		m_ramEncoder->SetDistancePerPulse(1);
+		m_ramEncoder->SetMaxPeriod(1.0);
+		m_ramEncoder->Start();
 	}
 	
 	
@@ -184,6 +196,7 @@ public:
 	
 	void TeleopPeriodic() {
 	  TeleopDrive();
+	  
 	} // TeleopPeriodic()
 	
 	void TestPeriodic () {
@@ -259,6 +272,24 @@ public:
 		}
 	}
 
+	
+	void TestRamMotion()
+	{
+		if (m_driver->GetRawButton(BUTTON_LB))
+			m_ramMotor->Set(.8);
+		else if (m_driver->GetRawButton(BUTTON_RB))
+			m_ramMotor->Set(-.2);
+		else
+			m_ramMotor->Set(0);
+	}
+	
+	void TestRamLock()
+	{
+		if (fabs(m_driver->GetRawAxis(TRIGGERS)) < .2)
+			m_ramServo->SetAngle(0);
+		else if (fabs(m_driver->GetRawAxis(TRIGGERS)) > .2)
+			m_ramServo->SetAngle(90);
+	}
 };
 
 START_ROBOT_CLASS(BuiltinDefaultCode);
