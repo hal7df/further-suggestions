@@ -58,6 +58,9 @@ private:
 	Talon* m_lDrive2; //Two motors
 	Talon* m_rDrive2; //One motor
 
+	//Drivetrain Encodes
+	Encoder *m_rEncode;
+	Encoder *m_lEncode;
 	//Declare arm motors
 	Talon* m_rArm;			// PWM 6
 	Talon* m_lArm;			// PWM 7
@@ -115,6 +118,17 @@ public:
 		m_rDrive2 = new Talon (2);
 		m_lDrive1 = new Talon (3);
 		m_lDrive2 = new Talon (4);
+		
+		//Drive encoders
+		m_rEncode = new Encoder (1,2,true);
+			m_rEncode->SetDistancePerPulse(1);
+			m_rEncode->SetMaxPeriod(1.0);
+			m_rEncode->Start();
+		m_lEncode = new Encoder (3,4,false);
+			m_lEncode->SetDistancePerPulse(1);
+			m_lEncode->SetMaxPeriod(1.0);
+			m_lEncode->Start();
+	
 		
 		//Initialize ramrod motor
 		m_ramMotor = new Talon (5);
@@ -224,13 +238,22 @@ public:
 			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
 		else
 			m_robotDrive->ArcadeDrive(0.0,0.0);
+		if (m_driver -> GetRawButton(BUTTON_LB)){
+			m_shifters -> Set(true);
+		}
+		else {
+			m_shifters -> Set(false);
+		}
 	}
 	
 	/*************************** TEST FUNCTIONS *****************************/
 	
 	void TestDrive(){
-		TeleopDrive();
 		
+		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2)
+			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
+		else
+			m_robotDrive->ArcadeDrive(0.0,0.0);
 		if (m_driver -> GetRawButton(BUTTON_A)){
 			m_shifters -> Set(true);
 		}
@@ -314,6 +337,11 @@ public:
 			m_compressor->Stop();
 		} else {
 			m_compressor->Start();
+		}
+	}
+	void AutonStraighDrive(){
+		if (m_lEncode -> GetDistance() > 200 && m_rEncode -> GetDistance() > 200){
+			m_robotDrive->TankDrive(.8 + ((m_rEncode -> GetRate()) - (m_lEncode -> GetRate())), .8 + ((m_lEncode -> GetRate()) - (m_rEncode -> GetRate())));
 		}
 	}
 };
