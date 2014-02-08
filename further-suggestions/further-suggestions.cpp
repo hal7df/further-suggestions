@@ -73,10 +73,10 @@ public:
 	//Declare driver station
 	DriverStationLCD* m_dsLCD;
 	
-	//Declare ramrod servos and encoder
-	Servo *m_rServo1;
-	Servo *m_rServo2;
-	Encoder m_rEncoder;
+	//Declare ramrod servos, motor, and encoder
+	Servo *m_ramServo;
+	Talon *m_ramMotor;
+	Encoder *m_ramEncoder;
 	
 	
 /**
@@ -108,13 +108,13 @@ public:
 		//Grab driver station object
 		m_dsLCD = DriverStationLCD::GetInstance();
 	
-	 	//Initialize ramrod servo and encoder
-		m_rServo1 = new Servo (9);
-		m_rServo2 = new Servo (10),;
-		m_rEncoder = new Encoder (8,9,false)
-		m_rEncoder->SetDistancePerPulse(1);
-		m_rEncoder->SetMaxPeriod(1.0);
-		m_rEncoder->Start();
+	 	//Initialize ramrod servo, motor, and encoder
+		m_ramServo = new Servo (9);
+		m_ramMotor = new Talon (5);
+		m_ramEncoder = new Encoder (7,8,false);
+		m_ramEncoder->SetDistancePerPulse(1);
+		m_ramEncoder->SetMaxPeriod(1.0);
+		m_ramEncoder->Start();
 	}
 	
 	
@@ -150,6 +150,7 @@ public:
 	
 	void TeleopPeriodic() {
 	  TeleopDrive();
+	  
 	} // TeleopPeriodic()
 
 /********************************** Miscellaneous Routines *************************************/
@@ -160,6 +161,24 @@ public:
 			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
 	}
 	
+	
+	void TestRamMotion()
+	{
+		if (m_driver->GetRawButton(BUTTON_LB))
+			m_ramMotor->Set(.8);
+		else if (m_driver->GetRawButton(BUTTON_RB))
+			m_ramMotor->Set(-.2);
+		else
+			m_ramMotor->Set(0);
+	}
+	
+	void TestRamLock()
+	{
+		if (fabs(m_driver->GetRawAxis(TRIGGERS)) < .2)
+			m_ramServo->SetAngle(0);
+		else if (fabs(m_driver->GetRawAxis(TRIGGERS)) > .2)
+			m_ramServo->SetAngle(90);
+	}
 };
 
 START_ROBOT_CLASS(BuiltinDefaultCode);
