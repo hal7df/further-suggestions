@@ -12,6 +12,12 @@ void DriveWrapper::Set (float speed, uint8_t syncGroup=0)
 	m_drive2 -> Set(speed,syncGroup);
 }
 
+void DriveWrapper::Set (float speed1, float speed2, uint8_t syncGroup=0)
+{
+	m_drive1 -> Set(speed1,syncGroup);
+	m_drive2 -> Set(speed2,syncGroup);
+}
+
 float DriveWrapper::Get ()
 {
 	return m_drive1->Get();
