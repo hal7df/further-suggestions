@@ -257,22 +257,33 @@ public:
 	}
 	
 	void TestBGrabber()
-	{
-		if (m_operator->GetRawAxis(TRIGGERS) > 0.4)
-			m_roller->Set(0.5);
-		else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
-			m_roller->Set(-0.5);
-		else {
-			m_roller->Set(0.0);
-		}	
-		if (m_operator->GetRawButton(BUTTON_A)) {
-			m_catch->Set(true); 
+		{
+			//ROLLERS	
+			if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
+				m_roller->Set(0.5);
+			}
+			else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
+				m_roller->Set(0.5);
+			else {
+				m_roller->Set(0.0);
+			}	
+			
+			//BALL CATCH (#Sweg)
+			if (m_operator->GetRawButton(BUTTON_A)) {
+				m_catch->Set(true); 
+			}
+			else if (m_operator->GetRawButton(BUTTON_B)) {
+				m_catch->Set(false);
+			}
+			
+			//bArm OPEN / CLOSE
+			if (m_operator->GetRawButton(BUTTON_X)) {
+				m_bArm->Set(true);
+			}
+			else if (m_operator->GetRawButton(BUTTON_Y)) {
+				m_bArm->Set(false);
+			}
 		}
-		else if (m_operator->GetRawButton(BUTTON_B)) {
-			m_catch->Set(false);
-		}
-		
-	}
 	
 	void TestRamMotion()
 	{
