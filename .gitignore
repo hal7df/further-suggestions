@@ -3,6 +3,9 @@
 *.out
 *.exe
 
+# Built .d files
+*.d
+
 # Code::Blocks stuff
 *.cbp
 *.layout
