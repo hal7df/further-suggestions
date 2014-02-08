@@ -51,32 +51,46 @@
  */
 class BuiltinDefaultCode : public IterativeRobot
 {
-	
-		
-public:
-	
+private:
 	//Declare drive motors
 	Talon* m_lDrive1; //Two motors
 	Talon* m_rDrive1; //One motor
 	Talon* m_lDrive2; //Two motors
 	Talon* m_rDrive2; //One motor
+
+	//Declare arm motors
+	Talon* m_rArm;			// PWM 6
+	Talon* m_lArm;			// PWM 7
 	
-	// shifters
-	Solenoid *m_shifters;
+	//Declare ramrod motor
+	Talon *m_ramMotor;
+	
+	//Declare bGrabber motor
+	Talon* m_roller;
+	
+	//Declare ramrod servo
+	Servo *m_ramServo;
 	
 	//Declare drive objects
 	DriveWrapper* m_rDrive;
 	DriveWrapper* m_lDrive;
 	RobotDrive* m_robotDrive;
 	
-	//Declare arm
-	Talon* m_lArm;			// PWM 7
-	Talon* m_rArm;			// PWM 6
-	Encoder* m_armAngle;	// Digital Input 5, 6
-	
 	//Declare Compressor
 	Compressor* m_compressor;
 	
+	// shifters
+	Solenoid *m_shifters;
+	
+	//Declare bGrabber solenoids
+	Solenoid* m_catch;
+	Solenoid* m_bArm;
+	
+	//Declare arm encoder
+	Encoder* m_armAngle;	// Digital Input 5, 6
+	
+	//Declare ramrod encoder
+	Encoder *m_ramEncoder;
 	
 	//Declare joysticks
 	Joystick* m_driver;
@@ -84,21 +98,8 @@ public:
 	
 	//Declare driver station
 	DriverStationLCD* m_dsLCD;
-
-	
-	//Declare bGrabber solenoids
-	Solenoid* m_catch;
-	Solenoid* m_bArm;
-	//Declare ramrod servos, motor, and encoder
-	Servo *m_ramServo;
-	Talon *m_ramMotor;
-	Encoder *m_ramEncoder;
-	
-	//Declare bGrabber PWM
-	Talon* m_roller;
-	
-	
-	
+		
+public:
 	
 /**
  * Constructor for this "BuiltinDefaultCode" Class.
@@ -115,6 +116,19 @@ public:
 		m_lDrive1 = new Talon (3);
 		m_lDrive2 = new Talon (4);
 		
+		//Initialize ramrod motor
+		m_ramMotor = new Talon (5);
+		
+		//Initialize Arm
+		m_rArm = new Talon (6);
+		m_lArm = new Talon (7);
+		
+		//initialize bGrabber motor
+		m_roller = new Talon (8);
+		
+		//Initialize ramrod servo
+		m_ramServo = new Servo (9);
+		
 		//Initialize drive wrappers
 		m_rDrive = new DriveWrapper (m_rDrive1, m_rDrive2);
 		m_lDrive = new DriveWrapper (m_lDrive1, m_lDrive2);
@@ -122,41 +136,34 @@ public:
 		//Initialize robot drive
 		m_robotDrive = new RobotDrive (m_lDrive, m_rDrive);
 		
-		//Initialize Arm
-		m_lArm = new Talon (7);
-		m_rArm = new Talon (6);
+		//Initialize arm encoder
 		m_armAngle = new Encoder (5, 6, true);
 		m_armAngle->SetDistancePerPulse(1);
 		m_armAngle->SetMaxPeriod(1.0);
 		m_armAngle->Start();
+		
+		//Initialize ramrod encoder
+		m_ramEncoder = new Encoder (7,8,false);
+		m_ramEncoder->SetDistancePerPulse(1);
+		m_ramEncoder->SetMaxPeriod(1.0);
+		m_ramEncoder->Start();
 		
 		//Initialize Compressor
 		m_compressor = new Compressor(9, 1);
 		
 		//shifters
 		m_shifters = new Solenoid(1);
+		
+		//Initialize bGrabber Solenoids
+		m_bArm = new Solenoid (2);
+		m_catch = new Solenoid (3);
 
 		//Initialize joysticks
 		m_driver = new Joystick (1);
 		m_operator = new Joystick (2);
 		
 		//Grab driver station object
-		m_dsLCD = DriverStationLCD::GetInstance();
-		
-		//Initialize bGrabber Solenoids
-		m_catch = new Solenoid (3);
-		m_bArm = new Solenoid (2);
-		
-		//initialize bGrabber PWM
-		m_roller = new Talon (8);
-	
-	 	//Initialize ramrod servo, motor, and encoder
-		m_ramServo = new Servo (9);
-		m_ramMotor = new Talon (5);
-		m_ramEncoder = new Encoder (7,8,false);
-		m_ramEncoder->SetDistancePerPulse(1);
-		m_ramEncoder->SetMaxPeriod(1.0);
-		m_ramEncoder->Start();
+		m_dsLCD = DriverStationLCD::GetInstance();		
 	}
 	
 	
@@ -180,8 +187,7 @@ public:
 	}
 	
 	void TestInit () {
-		// Start Compressor
-		m_compressor->Start();
+		
 	}
 
 	/********************************** Periodic Routines *************************************/
@@ -202,7 +208,10 @@ public:
 	void TestPeriodic () {
 		ManageCompressor();
 		TestArm();
-		
+		TestDrive();
+		TestBGrabber();
+		TestRamMotion();
+		TestRamLock();
 	}
 
 /********************************** Miscellaneous Routines *************************************/
@@ -211,11 +220,13 @@ public:
 	{
 		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2)
 			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
+		else
+			m_robotDrive->ArcadeDrive(0.0,0.0);
 	}
+	
 	void TestDrive(){
-		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2){
-					m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
-		}
+		TeleopDrive();
+		
 		if (m_driver -> GetRawButton(BUTTON_A)){
 			m_shifters -> Set(true);
 		}
@@ -243,15 +254,15 @@ public:
 		// Display to Driver
 		SmartDashboard::PutNumber("Arm Angle: ", (double)m_armAngle->Get());
 		SmartDashboard::PutNumber("Arm Speed: ", m_armAngle->GetRate());
-	void TestbGrabber()
+	}
+	
+	void TestBGrabber()
 	{
-		if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
-			m_roller->Set(0.75);
-		}
-		else if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
-			m_roller->Set(-0.75);
-		}
-		else; {
+		if (m_operator->GetRawAxis(TRIGGERS) > 0.4)
+			m_roller->Set(0.5);
+		else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
+			m_roller->Set(-0.5);
+		else {
 			m_roller->Set(0.0);
 		}	
 		if (m_operator->GetRawButton(BUTTON_A)) {
@@ -262,16 +273,6 @@ public:
 		}
 		
 	}
-	}
-	
-	void ManageCompressor () {
-		if (m_compressor->GetPressureSwitchValue()) {
-			m_compressor->Stop();
-		} else {
-			m_compressor->Start();
-		}
-	}
-
 	
 	void TestRamMotion()
 	{
@@ -289,6 +290,14 @@ public:
 			m_ramServo->SetAngle(0);
 		else if (fabs(m_driver->GetRawAxis(TRIGGERS)) > .2)
 			m_ramServo->SetAngle(90);
+	}
+	
+	void ManageCompressor () {
+		if (m_compressor->GetPressureSwitchValue()) {
+			m_compressor->Stop();
+		} else {
+			m_compressor->Start();
+		}
 	}
 };
 
