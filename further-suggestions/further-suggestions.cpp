@@ -83,6 +83,14 @@ public:
 	DriverStationLCD* m_dsLCD;
 
 	
+	//Declare bGrabber solenoids
+	Solenoid* m_catch;
+	Solenoid* m_bArm;
+	
+	//Declare bGrabber PWM
+	Talon* m_roller;
+	
+	
 	
 	
 /**
@@ -124,6 +132,13 @@ public:
 		
 		//Grab driver station object
 		m_dsLCD = DriverStationLCD::GetInstance();
+		
+		//Initialize bGrabber Solenoids
+		m_catch = new Solenoid (3);
+		m_bArm = new Solenoid (2);
+		
+		//initialize bGrabber PWM
+		m_roller = new Talon (8);
 	}
 	
 	
@@ -199,6 +214,25 @@ public:
 		// Display to Driver
 		SmartDashboard::PutNumber("Arm Angle: ", (double)m_armAngle->Get());
 		SmartDashboard::PutNumber("Arm Speed: ", m_armAngle->GetRate());
+	void TestbGrabber()
+	{
+		if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
+			m_roller->Set(0.75);
+		}
+		else if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
+			m_roller->Set(-0.75);
+		}
+		else; {
+			m_roller->Set(0.0);
+		}	
+		if (m_operator->GetRawButton(BUTTON_A)) {
+			m_catch->Set(true); 
+		}
+		else if (m_operator->GetRawButton(BUTTON_B)) {
+			m_catch->Set(false);
+		}
+		
+	}
 	}
 	
 	void ManageCompressor () {
