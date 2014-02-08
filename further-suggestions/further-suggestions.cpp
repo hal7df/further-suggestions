@@ -216,6 +216,8 @@ public:
 
 /********************************** Miscellaneous Routines *************************************/
 	
+	/*********************** TELEOP FUNCTIONS **************************/
+	
 	void TeleopDrive()
 	{
 		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2)
@@ -223,6 +225,8 @@ public:
 		else
 			m_robotDrive->ArcadeDrive(0.0,0.0);
 	}
+	
+	/*************************** TEST FUNCTIONS *****************************/
 	
 	void TestDrive(){
 		TeleopDrive();
@@ -302,6 +306,8 @@ public:
 		else if (fabs(m_driver->GetRawAxis(TRIGGERS)) > .2)
 			m_ramServo->SetAngle(90);
 	}
+	
+	/************** UNIVERSAL FUNCTIONS ***************/
 	
 	void ManageCompressor () {
 		if (m_compressor->GetPressureSwitchValue()) {
