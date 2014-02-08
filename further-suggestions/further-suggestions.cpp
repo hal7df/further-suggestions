@@ -71,6 +71,10 @@ public:
 	Talon* m_rArm;			// PWM 6
 	Encoder* m_armAngle;	// Digital Input 5, 6
 	
+	//Declare Compressor
+	Compressor* m_compressor;
+	
+	
 	//Declare joysticks
 	Joystick* m_driver;
 	Joystick* m_operator;
@@ -111,6 +115,9 @@ public:
 		m_armAngle->SetMaxPeriod(1.0);
 		m_armAngle->Start();
 		
+		//Initialize Compressor
+		m_compressor = new Compressor(9, 1);
+		
 		//Initialize joysticks
 		m_driver = new Joystick (1);
 		m_operator = new Joystick (2);
@@ -138,6 +145,11 @@ public:
 	void TeleopInit() {
 	  
 	}
+	
+	void TestInit () {
+		// Start Compressor
+		m_compressor->Start();
+	}
 
 	/********************************** Periodic Routines *************************************/
 	
@@ -153,6 +165,12 @@ public:
 	void TeleopPeriodic() {
 	  TeleopDrive();
 	} // TeleopPeriodic()
+	
+	void TestPeriodic () {
+		ManageCompressor();
+		TestArm();
+		
+	}
 
 /********************************** Miscellaneous Routines *************************************/
 	
@@ -162,12 +180,12 @@ public:
 			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
 	}
 	
-	void TeleopArm ()
+	void TestArm ()
 	{
 		// Control Arm
 		if (fabs(m_operator->GetRawAxis(LEFT_Y)) > 0.2) {
-			m_lArm->Set(m_operator->GetRawAxis(LEFT_Y));
-			m_rArm->Set(m_operator->GetRawAxis(LEFT_Y));
+			m_lArm->Set(m_operator->GetRawAxis(LEFT_Y) * 0.5);
+			m_rArm->Set(m_operator->GetRawAxis(LEFT_Y) * 0.5);
 		} else {
 			m_lArm->Set(0.0);
 			m_rArm->Set(0.0);
@@ -182,6 +200,15 @@ public:
 		SmartDashboard::PutNumber("Arm Angle: ", (double)m_armAngle->Get());
 		SmartDashboard::PutNumber("Arm Speed: ", m_armAngle->GetRate());
 	}
+	
+	void ManageCompressor () {
+		if (m_compressor->GetPressureSwitchValue()) {
+			m_compressor->Stop();
+		} else {
+			m_compressor->Start();
+		}
+	}
+
 };
 
 START_ROBOT_CLASS(BuiltinDefaultCode);
