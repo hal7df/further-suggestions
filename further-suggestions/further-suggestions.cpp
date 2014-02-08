@@ -55,28 +55,29 @@ class BuiltinDefaultCode : public IterativeRobot
 		
 public:
 	
-	// Declare drive motors
+	//Declare drive motors
 	Talon* m_lDrive1; //Two motors
 	Talon* m_rDrive1; //One motor
 	Talon* m_lDrive2; //Two motors
 	Talon* m_rDrive2; //One motor
 	
-	// Declare drive objects
+	//Declare drive objects
 	DriveWrapper* m_rDrive;
 	DriveWrapper* m_lDrive;
 	RobotDrive* m_robotDrive;
 	
-	// Declare arm
+	//Declare arm
 	Talon* m_lArm;			// PWM 7
 	Talon* m_rArm;			// PWM 6
 	Encoder* m_armAngle;	// Digital Input 5, 6
 	
-	// Declare joysticks
+	//Declare joysticks
 	Joystick* m_driver;
 	Joystick* m_operator;
 	
-	// Declare driver station
+	//Declare driver station
 	DriverStationLCD* m_dsLCD;
+
 	
 	
 	
@@ -89,20 +90,20 @@ public:
  */
 	
 	BuiltinDefaultCode()	{
-		// Initialze drive controllers
+		//Initialze drive controllers
 		m_rDrive1 = new Talon (1);
 		m_rDrive2 = new Talon (2);
 		m_lDrive1 = new Talon (3);
 		m_lDrive2 = new Talon (4);
 		
-		// Initialize drive wrappers
+		//Initialize drive wrappers
 		m_rDrive = new DriveWrapper (m_rDrive1, m_rDrive2);
 		m_lDrive = new DriveWrapper (m_lDrive1, m_lDrive2);
 		
-		// Initialize robot drive
+		//Initialize robot drive
 		m_robotDrive = new RobotDrive (m_lDrive, m_rDrive);
 		
-		// Initialize Arm
+		//Initialize Arm
 		m_lArm = new Talon (7);
 		m_rArm = new Talon (6);
 		m_armAngle = new Encoder (5, 6, true);
@@ -110,11 +111,11 @@ public:
 		m_armAngle->SetMaxPeriod(1.0);
 		m_armAngle->Start();
 		
-		// Initialize joysticks
+		//Initialize joysticks
 		m_driver = new Joystick (1);
 		m_operator = new Joystick (2);
 		
-		// Grab driver station object
+		//Grab driver station object
 		m_dsLCD = DriverStationLCD::GetInstance();
 	}
 	
@@ -167,6 +168,9 @@ public:
 		if (fabs(m_operator->GetRawAxis(LEFT_Y)) > 0.2) {
 			m_lArm->Set(m_operator->GetRawAxis(LEFT_Y));
 			m_rArm->Set(m_operator->GetRawAxis(LEFT_Y));
+		} else {
+			m_lArm->Set(0.0);
+			m_rArm->Set(0.0);
 		}
 		
 		// Reset Arm Encoder
