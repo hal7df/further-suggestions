@@ -61,6 +61,9 @@ public:
 	Talon* m_lDrive2; //Two motors
 	Talon* m_rDrive2; //One motor
 	
+	// shifters
+	Solenoid *m_shifters;
+	
 	//Declare drive objects
 	DriveWrapper* m_rDrive;
 	DriveWrapper* m_lDrive;
@@ -97,6 +100,9 @@ public:
 		//Initialize robot drive
 		m_robotDrive = new RobotDrive (m_lDrive, m_rDrive);
 		
+		//shifters
+		m_shifters = new Solenoid(1);
+
 		//Initialize joysticks
 		m_driver = new Joystick (1);
 		m_operator = new Joystick (2);
@@ -126,7 +132,6 @@ public:
 	}
 
 	/********************************** Periodic Routines *************************************/
-	
 	void DisabledPeriodic()  {
 	  
 	}
@@ -146,6 +151,17 @@ public:
 	{
 		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2)
 			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
+	}
+	void TestDrive(){
+		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2){
+					m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
+		}
+		if (m_driver -> GetRawButton(BUTTON_A)){
+			m_shifters -> Set(true);
+		}
+		else {
+			m_shifters -> Set(false);
+		}
 	}
 	
 };
