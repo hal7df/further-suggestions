@@ -1,4 +1,5 @@
 #include "WPILib.h"
+#include "JoystickWrapper.h"
 #include "DriveWrapper.h"
 #include "Defines.h"
 #include <cmath>
@@ -89,6 +90,10 @@ private:
 	Solenoid* m_catch;
 	Solenoid* m_bArm;
 	
+	//Declare drive encoders
+	Encoder* m_lEncode;
+	Encoder* m_rEncode;
+	
 	//Declare arm encoder
 	Encoder* m_armAngle;	// Digital Input 5, 6
 	
@@ -101,7 +106,10 @@ private:
 	
 	//Declare driver station
 	DriverStationLCD* m_dsLCD;
-		
+	
+	// Counter
+	int countLoop;
+	int armCount;
 public:
 	
 /**
@@ -150,6 +158,18 @@ public:
 		//Initialize robot drive
 		m_robotDrive = new RobotDrive (m_lDrive, m_rDrive);
 		
+		//Initialize right drive encoder
+		m_rEncode = new Encoder (1,2, true);
+		m_rEncode->SetDistancePerPulse(1);
+		m_rEncode->SetMaxPeriod(1.0);
+		m_rEncode->Start();
+		
+		//Initialize left drive encoder
+		m_lEncode = new Encoder (3,4, false);
+		m_lEncode->SetDistancePerPulse(1);
+		m_lEncode->SetMaxPeriod(1.0);
+		m_lEncode->Start();
+		
 		//Initialize arm encoder
 		m_armAngle = new Encoder (5, 6, true);
 		m_armAngle->SetDistancePerPulse(1);
@@ -178,6 +198,9 @@ public:
 		
 		//Grab driver station object
 		m_dsLCD = DriverStationLCD::GetInstance();		
+		
+		countLoop = 0;
+		armCount = 0;
 	}
 	
 	
@@ -215,8 +238,7 @@ public:
 
 	
 	void TeleopPeriodic() {
-	  TeleopDrive();
-	  
+	  TestPeriodic();
 	} // TeleopPeriodic()
 	
 	void TestPeriodic () {
@@ -226,6 +248,12 @@ public:
 		TestBGrabber();
 		TestRamMotion();
 		TestRamLock();
+		
+		countLoop++;
+		
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"Count: %d", countLoop);
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"Got here!");
+		m_dsLCD->UpdateLCD();
 	}
 
 /********************************** Miscellaneous Routines *************************************/
@@ -260,14 +288,18 @@ public:
 		else {
 			m_shifters -> Set(false);
 		}
+		
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Right encoder count: %d",m_rEncode->Get());
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"Left encoder count: %d",m_lEncode->Get());
 	}
 	
 	void TestArm ()
 	{
 		// Control Arm
 		if (fabs(m_operator->GetRawAxis(LEFT_Y)) > 0.2) {
-			m_lArm->Set(m_operator->GetRawAxis(LEFT_Y) * 0.5);
+			m_lArm->Set(-m_operator->GetRawAxis(LEFT_Y) * 0.5);
 			m_rArm->Set(m_operator->GetRawAxis(LEFT_Y) * 0.5);
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1, "Operator Controll LEFT_Y: %f", m_operator->GetRawAxis(LEFT_Y));
 		} else {
 			m_lArm->Set(0.0);
 			m_rArm->Set(0.0);
@@ -278,19 +310,18 @@ public:
 			m_armAngle->Reset();
 		}
 		
-		// Display to Driver
-		SmartDashboard::PutNumber("Arm Angle: ", (double)m_armAngle->Get());
-		SmartDashboard::PutNumber("Arm Speed: ", m_armAngle->GetRate());
+		armCount ++;
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1, "Arm COunt: %d", armCount);
 	}
 	
 	void TestBGrabber()
 		{
 			//ROLLERS	
 			if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
-				m_roller->Set(0.5);
+				m_roller->Set(1.0);
 			}
 			else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
-				m_roller->Set(0.5);
+				m_roller->Set(-1.0);
 			else {
 				m_roller->Set(0.0);
 			}	
@@ -315,8 +346,10 @@ public:
 	void TestRamMotion()
 	{
 		if (m_driver->GetRawButton(BUTTON_LB))
+			// IN
 			m_ramMotor->Set(.8);
 		else if (m_driver->GetRawButton(BUTTON_RB))
+			// OUT
 			m_ramMotor->Set(-.2);
 		else
 			m_ramMotor->Set(0);
@@ -324,10 +357,12 @@ public:
 	
 	void TestRamLock()
 	{
-		if (fabs(m_driver->GetRawAxis(TRIGGERS)) < .2)
+		if (m_driver->GetRawAxis(TRIGGERS) < -.2) {
+			m_ramServo->SetAngle(120);
+		} else {
 			m_ramServo->SetAngle(0);
-		else if (fabs(m_driver->GetRawAxis(TRIGGERS)) > .2)
-			m_ramServo->SetAngle(90);
+		}
+			
 	}
 	
 	/************** UNIVERSAL FUNCTIONS ***************/
