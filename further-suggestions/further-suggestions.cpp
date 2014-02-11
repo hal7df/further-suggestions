@@ -344,6 +344,9 @@ public:
 			m_robotDrive->TankDrive(.8 + ((m_rEncode -> GetRate()) - (m_lEncode -> GetRate())), .8 + ((m_lEncode -> GetRate()) - (m_rEncode -> GetRate())));
 		}
 	}
+	void Auton360s(){
+		m_robotDrive->TankDrive( -1.0, 1.0);
+	}
 };
 
 START_ROBOT_CLASS(BuiltinDefaultCode);
