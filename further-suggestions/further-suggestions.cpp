@@ -203,6 +203,7 @@ public:
 	void TeleopPeriodic() {
 	  TeleopDrive();
 	  
+	  
 	} // TeleopPeriodic()
 	
 	void TestPeriodic () {
@@ -223,6 +224,36 @@ public:
 		else
 			m_robotDrive->ArcadeDrive(0.0,0.0);
 	}
+	
+	 void TeleopBGrabber()
+		  		{
+		  			//ROLLERS	
+		  			if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
+		  				m_roller->Set(1);
+		  			}
+		  			else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
+		  				m_roller->Set(1);
+		  			else {
+		  				m_roller->Set(0.0);
+		  			}	
+		  			
+		  			//BALL CATCH (#Sweg)
+		  			if (m_operator->GetRawButton(BUTTON_LB)) {
+		  				m_catch->Set(true); 
+		  			}
+		  			else {
+		  				m_catch->Set(false);
+		  			}
+		  			
+		  			//bArm OPEN / CLOSE
+		  			if (m_operator->GetRawButton(BUTTON_X)) {
+		  				m_bArm->Set(true);
+		  			}
+		  			else if (m_operator->GetRawButton(BUTTON_Y)) {
+		  				m_bArm->Set(false);
+		  			}
+		  		}
+		  
 	
 	void TestDrive(){
 		TeleopDrive();
@@ -260,10 +291,10 @@ public:
 		{
 			//ROLLERS	
 			if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
-				m_roller->Set(0.5);
+				m_roller->Set(1);
 			}
 			else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
-				m_roller->Set(0.5);
+				m_roller->Set(1);
 			else {
 				m_roller->Set(0.0);
 			}	
