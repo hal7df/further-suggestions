@@ -1,4 +1,4 @@
-//Buttons
+// Buttons
 
 #define BUTTON_A 1
 #define BUTTON_B 2
@@ -11,7 +11,7 @@
 #define BUTTON_L3 9
 #define BUTTON_R3 10
 
-//Axes
+// Axes
 
 #define LEFT_X 1
 #define LEFT_Y 2
@@ -20,11 +20,15 @@
 #define RIGHT_Y 5
 
 #define PracticeBot
-//#define CompetitionBot
+// #define CompetitionBot
 
 
 #ifdef PracticeBot
-  //Place practice bot values here
+	// Place practice bot values here
+	#define FLOOR_PICKING_POS 1
+	#define MED_SHOOT_POS 1
+	#define LONG_SHOOT_POS 1
+	#define CATCH_POS 1
 #endif
 
 #ifdef CompetitionBot
