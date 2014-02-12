@@ -30,8 +30,25 @@
 	#define LONG_SHOOT_POS 1
 	#define CATCH_POS 1
 	#define BGRABBER_SAFE 3
+	
+	// PID Config for PID
+	#define ARM_P 0.1
+	#define ARM_I 0.0
+	#define ARM_D 0.0
+
 #endif
 
 #ifdef CompetitionBot
-  //Place competition bot values here
+	//Place competition bot values here
+	#define FLOOR_PICKING_POS 1
+	#define MED_SHOOT_POS 1
+	#define LONG_SHOOT_POS 1
+	#define CATCH_POS 1
+	#define BGRABBER_SAFE 3
+	
+	// PID Config for PID
+	#define ARM_P 0.1
+	#define ARM_I 0.0
+	#define ARM_D 0.0
+
 #endif

@@ -104,7 +104,7 @@ bool ArmWrapper::GetLimSwitch() {
 }
 
 bool ArmWrapper::bGrabberSafty () {
-	return GEtRwaAngle() < BGRABBER_SAFE;
+	return GetRawAngle() < BGRABBER_SAFE;
 }
 
 // ----- Conf -----
