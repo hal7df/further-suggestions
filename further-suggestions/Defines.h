@@ -25,8 +25,10 @@
 
 #ifdef PracticeBot
   //Place practice bot values here
+	#define RAM_LOCK_POSITION 900
 #endif
 
 #ifdef CompetitionBot
   //Place competition bot values here
+#define RAM_LOCK_POSITION 900
 #endif
