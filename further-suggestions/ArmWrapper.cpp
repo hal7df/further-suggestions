@@ -26,6 +26,9 @@ ArmWrapper::ArmWrapper(int lArm, int rArm, int armAngle1, int armAngle2, int arm
 	m_armAngle = new Encoder(armAngle1, armAngle2, true);
 	m_armLimSwitch = new DigitalInput(armLimSwitch);
 	
+	// ----- Start PID -----
+	PID = new PIDController (ARM_P, ARM_I, ARM_D, m_armAngle, this);
+	
 	// ----- Set Conf -----
 	c_distPerPulse = 1.0;
 	c_maxPeriod = 1.0;
@@ -54,10 +57,6 @@ void ArmWrapper::Set (float speed) {
 }
 
 // ----- PID -----
-void ArmWrapper::StartPID (float p, float i, float d) {
-	PID = new PIDController (p, i, d, m_armAngle, this);
-}
-
 void ArmWrapper::SetAngle (float angle) {
 	PID->SetSetpoint(angle);
 }
@@ -93,15 +92,11 @@ int ArmWrapper::GetRawAngle () {
 }
 
 double ArmWrapper::GetAngle () {
-	return (double)m_armAngle->Get() * c_distPerPulse;
+	return (double)m_armAngle->GetDistance();
 }
 
 double ArmWrapper::GetSpeed() {
-	if (m_armAngle->GetDirection()) {
-		return c_distPerPulse / m_armAngle->GetPeriod();
-	} else {
-		return - c_distPerPulse / m_armAngle->GetPeriod();
-	}
+	return m_armAngle->GetRate();
 }
 
 bool ArmWrapper::GetLimSwitch() {
@@ -109,11 +104,7 @@ bool ArmWrapper::GetLimSwitch() {
 }
 
 bool ArmWrapper::bGrabberSafty () {
-	if (GetRawAngle() > BGRABBER_SAFE) {
-		return true;
-	} else {
-		return false;
-	}
+	return GEtRwaAngle() < BGRABBER_SAFE;
 }
 
 // ----- Conf -----
