@@ -29,6 +29,7 @@
 	#define MED_SHOOT_POS 1
 	#define LONG_SHOOT_POS 1
 	#define CATCH_POS 1
+	#define BGRABBER_SAFE 3
 #endif
 
 #ifdef CompetitionBot

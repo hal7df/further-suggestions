@@ -51,6 +51,8 @@
 		double GetAngle ();
 		double GetSpeed ();		// Returns in [Dist Unit]/[microsec]
 		bool GetLimSwitch();
+		
+		bool bGrabberSafty ();
 	
 		// Conf
 		void SetDistPerPulse (double);

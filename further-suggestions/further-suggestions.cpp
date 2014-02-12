@@ -1,6 +1,7 @@
 #include "WPILib.h"
 #include "JoystickWrapper.h"
 #include "DriveWrapper.h"
+#include "ArmWrapper.h"
 #include "Defines.h"
 #include <cmath>
 
@@ -220,7 +221,7 @@ public:
 		TeleopDrive();
 		TeleopArm();
 		TeleopBGrabber();
-		TeleopRanrod();
+		//TeleopRanrod();
 		
 		teleopCounter++;
 	}

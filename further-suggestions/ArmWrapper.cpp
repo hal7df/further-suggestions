@@ -1,5 +1,7 @@
 #include "WPILib.h"
+#include "Defines.h"
 #include "ArmWrapper.h"
+
 
 // ----- Constructor -----
 
@@ -104,6 +106,14 @@ double ArmWrapper::GetSpeed() {
 
 bool ArmWrapper::GetLimSwitch() {
 	return m_armLimSwitch->Get();
+}
+
+bool ArmWrapper::bGrabberSafty () {
+	if (GetRawAngle() > BGRABBER_SAFE) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
 // ----- Conf -----
