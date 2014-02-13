@@ -239,10 +239,11 @@ public:
 		TeleopDrive();
 		RamrodInit();
 		RamFire();
+		TeleopBGrabber();
 		RamrodOverride();
 		PrintData();
 		TestArm();
-		TestBGrabber();
+		//TestBGrabber();
 	
 	  
 	} // TeleopPeriodic()
@@ -282,7 +283,7 @@ public:
 		  				m_roller->Set(1);
 		  			}
 		  			else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
-		  				m_roller->Set(1);
+		  				m_roller->Set(-1);
 		  			else {
 		  				m_roller->Set(0.0);
 		  			}	
@@ -296,10 +297,10 @@ public:
 		  			}
 		  			
 		  			//bArm OPEN / CLOSE
-		  			if (m_operator->GetRawButton(BUTTON_X)) {
+		  			if (m_operator->GetRawButton(BUTTON_RB)) {
 		  				m_bArm->Set(true);
 		  			}
-		  			else if (m_operator->GetRawButton(BUTTON_Y)) {
+		  			else {
 		  				m_bArm->Set(false);
 		  			}
 		  		}
@@ -437,6 +438,10 @@ public:
 		if (m_driver->GetRawAxis(TRIGGERS) < -0.4 && m_ramCase == -1)
 		{
 			m_ramCase = 0;
+		}
+		else if (m_driver->GetRawAxis(TRIGGERS) > 0.4 && m_ramCase == -1)
+		{
+			m_ramCase = 2;
 		}
 		switch(m_ramCase)
 		{
