@@ -309,7 +309,6 @@ public:
 			
 		} else {
 			m_arm->PIDDisable();
-			m_arm->PIDEnable();
 			
 			// Control With Joystick
 			m_arm->Set(m_operator->GetRawAxis(LEFT_Y));
