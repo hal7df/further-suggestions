@@ -36,6 +36,7 @@
 	#define ARM_I 0.0
 	#define ARM_D 0.0
 
+	#define RAM_LOCK_POSITION 900
 #endif
 
 #ifdef CompetitionBot
@@ -51,4 +52,5 @@
 	#define ARM_I 0.0
 	#define ARM_D 0.0
 
+#define RAM_LOCK_POSITION 900
 #endif

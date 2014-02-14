@@ -91,10 +91,12 @@ private:
 	//Declare bGrabber solenoids
 	Solenoid* m_catch;
 	Solenoid* m_bArm;
-
+	
+	//Declare arm encoder
+	Encoder* m_armAngle;	// Digital Input 5, 6
 	
 	//Declare ramrod encoder
-	Encoder *m_ramEncoder;
+	Encoder *m_ramEncode;
 	
 	//Declare joysticks
 	JoystickWrapper* m_driver;
@@ -103,8 +105,14 @@ private:
 	//Declare driver station
 	DriverStationLCD* m_dsLCD;
 	
+	//Timers
+	Timer *m_ramTime;
+	
 	// Counter
-	int teleopCounter, autonCounter, disabledCounter, testCounter;
+	int countLoop;
+	int armCount;
+	int m_ramCase;
+	bool m_ramInit;
 public:
 	
 /**
@@ -157,12 +165,26 @@ public:
 		
 		//Initialize robot drive
 		m_robotDrive = new RobotDrive (m_lDrive, m_rDrive);
+		m_robotDrive->SetSafetyEnabled(false);
 		
 		//Initialize ramrod encoder
 		m_ramEncoder = new Encoder (7,8,false);
 		m_ramEncoder->SetDistancePerPulse(1);
 		m_ramEncoder->SetMaxPeriod(1.0);
 		m_ramEncoder->Start();
+
+		//Initialize arm encoder
+		m_armAngle = new Encoder (5, 6, true);
+		m_armAngle->SetDistancePerPulse(1);
+		m_armAngle->SetMaxPeriod(1.0);
+		m_armAngle->Start();
+		
+		//Initialize ramrod encoder
+		
+		m_ramEncode = new Encoder (7,8,true);
+		m_ramEncode->SetDistancePerPulse(1);
+		m_ramEncode->SetMaxPeriod(1.0);
+		m_ramEncode->Start();
 		
 		//Initialize Compressor
 		m_compressor = new Compressor(9, 1);
@@ -181,11 +203,12 @@ public:
 		//Grab driver station object
 		m_dsLCD = DriverStationLCD::GetInstance();		
 		
-		// Counter
-		teleopCounter = 0;
-		autonCounter = 0;
-		disabledCounter = 0;
-		testCounter = 0;
+		//Timers
+		m_ramTime = new Timer;
+		
+		m_ramCase = -1;
+		countLoop = 0;
+		armCount = 0;
 	}
 	
 	
@@ -205,7 +228,11 @@ public:
 	}
 
 	void TeleopInit() {
-	  
+		m_ramCase = -1;
+		m_ramInit = false;
+		m_ramTime->Stop();
+		m_ramTime->Start();
+		m_ramTime->Reset();
 	}
 	
 	void TestInit () {
@@ -234,6 +261,8 @@ public:
 		teleopCounter++;
 	}
 	
+
+	
 	void TestPeriodic () {
 		ManageCompressor();
 		TestArm();
@@ -241,8 +270,7 @@ public:
 		TestBGrabber();
 		TestRamMotion();
 		TestRamLock();
-		
-		testCounter++;
+		PrintData();
 	}
 
 /********************************** Miscellaneous Routines *************************************/
@@ -263,36 +291,56 @@ public:
 		}
 	}
 	
-	void TeleopBGrabber()
-	{
-		//ROLLERS	
-		if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
-			m_roller->Set(1);
-		}
-		else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
-			m_roller->Set(1);
-		else {
-			m_roller->Set(0.0);
-		}	
+	 void TeleopBGrabber()
+		  		{
+		  			//ROLLERS	
+		  			if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
+		  				m_roller->Set(1);
+		  			}
+		  			else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
+		  				m_roller->Set(1);
+		  			else {
+		  				m_roller->Set(0.0);
+		  			}	
+		  			
+		  			//BALL CATCH (#Sweg)
+		  			if (m_operator->GetRawButton(BUTTON_LB)) {
+		  				m_catch->Set(true); 
+		  			}
+		  			else {
+		  				m_catch->Set(false);
+		  			}
+		  			
+		  			//bArm OPEN / CLOSE
+		  			if (m_operator->GetRawButton(BUTTON_X)) {
+		  				m_bArm->Set(true);
+		  			}
+		  			else if (m_operator->GetRawButton(BUTTON_Y)) {
+		  				m_bArm->Set(false);
+		  			}
+		  		}
+		  
+	
+	/*************************** TEST FUNCTIONS *****************************/
+	
+	void TestDrive(){
 		
-		//BALL CATCH (#Sweg)
-		if (m_operator->GetRawButton(BUTTON_LB)) {
-			m_catch->Set(true); 
+		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2)
+			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
+		else
+			m_robotDrive->ArcadeDrive(0.0,0.0);
+		if (m_driver -> GetRawButton(BUTTON_A)){
+			m_shifters -> Set(true);
 		}
 		else {
-			m_catch->Set(false);
+			m_shifters -> Set(false);
 		}
 		
-		//bArm OPEN / CLOSE
-		if (m_operator->GetRawButton(BUTTON_X)) {
-			m_bArm->Set(true);
-		}
-		else if (m_operator->GetRawButton(BUTTON_Y)) {
-			m_bArm->Set(false);
-		}
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Right encoder count: %d",m_rEncode->Get());
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"Left encoder count: %d",m_lEncode->Get());
 	}
 	
-	void TeleopArm ()
+	void TestArm ()
 	{
 		// ----- PID -----
 		if (m_operator->GetRawButton(BUTTON_A)) {
@@ -362,45 +410,43 @@ public:
 		SmartDashboard::PutNumber("Arm PID Position: ", m_arm->PID->Get());
 	}
 	
-	
 	void TestBGrabber()
-	{
-		// Doesn't make sense
-		//ROLLERS	
-		if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
-			m_roller->Set(1.0);
+		{
+			//ROLLERS	
+			if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
+				m_roller->Set(1.0);
+			}
+			else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
+				m_roller->Set(-1.0);
+			else {
+				m_roller->Set(0.0);
+			}	
+			
+			//BALL CATCH (#Sweg)
+			if (m_operator->GetRawButton(BUTTON_A)) {
+				m_catch->Set(true); 
+			}
+			else if (m_operator->GetRawButton(BUTTON_B)) {
+				m_catch->Set(false);
+			}
+			
+			//bArm OPEN / CLOSE
+			if (m_operator->GetRawButton(BUTTON_X)) {
+				m_bArm->Set(true);
+			}
+			else if (m_operator->GetRawButton(BUTTON_Y)) {
+				m_bArm->Set(false);
+			}
 		}
-		else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
-			m_roller->Set(-1.0);
-		else {
-			m_roller->Set(0.0);
-		}	
-		
-		//BALL CATCH (#Sweg)
-		if (m_operator->GetRawButton(BUTTON_A)) {
-			m_catch->Set(true); 
-		}
-		else if (m_operator->GetRawButton(BUTTON_B)) {
-			m_catch->Set(false);
-		}
-		
-		//bArm OPEN / CLOSE
-		if (m_operator->GetRawButton(BUTTON_X)) {
-			m_bArm->Set(true);
-		}
-		else if (m_operator->GetRawButton(BUTTON_Y)) {
-			m_bArm->Set(false);
-		}
-	}
 	
 	void TestRamMotion()
 	{
 		if (m_driver->GetRawButton(BUTTON_LB))
 			// IN
-			m_ramMotor->Set(.8);
+			m_ramMotor->Set(1);
 		else if (m_driver->GetRawButton(BUTTON_RB))
 			// OUT
-			m_ramMotor->Set(-.2);
+			m_ramMotor->Set(-1);
 		else
 			m_ramMotor->Set(0);
 	}
@@ -429,9 +475,98 @@ public:
 			m_robotDrive->TankDrive(.8 + ((m_rEncode -> GetRate()) - (m_lEncode -> GetRate())), .8 + ((m_lEncode -> GetRate()) - (m_rEncode -> GetRate())));
 		}
 	}
-	void Auton360s(){
-		m_robotDrive->TankDrive( -1.0, 1.0);
+	void RamrodInit(){
+		if (!m_ramInit)
+		{
+			m_ramServo->SetAngle(0);
+			m_ramMotor->Set(-0.2);
+			if (m_ramTime->HasPeriodPassed(0.2))
+			{
+				if (abs(m_ramEncode->GetRate()) < 100)
+				{
+					m_ramEncode->Reset();
+					m_ramMotor->Set(0.0);
+					m_ramTime->Stop();
+					m_ramTime->Reset();
+					m_ramInit = true;
+					m_ramCase = -1;
+				}
+					
+			}
+		}
 	}
+	
+	void RamFire()
+	{
+		//Do the thing with bGrabber
+		if (m_driver->GetRawAxis(TRIGGERS) < -0.4 && m_ramCase == -1)
+		{
+			m_ramCase = 0;
+		}
+		switch(m_ramCase)
+		{
+		case 0:
+			m_ramTime->Stop();
+			m_ramTime->Start();
+			m_ramTime->Reset();
+			m_ramCase++;
+			break;
+		case 1:
+			m_ramServo->SetAngle(120);
+			if(m_ramTime->HasPeriodPassed(0.5))
+				m_ramCase++;
+			break;
+		case 2:
+			m_ramServo->SetAngle(0);
+			m_ramCase++;
+			break;
+		case 3:
+			if (abs(m_ramEncode->GetDistance()) < RAM_LOCK_POSITION)
+				m_ramMotor->Set(1);
+			else
+				m_ramCase++;
+			break;
+		case 4:
+			if (abs(m_ramEncode->GetDistance()) < 20)
+			{
+				m_ramMotor->Set(-0.2);
+				m_ramCase++;
+			}
+			else
+				m_ramMotor->Set(-1.0);
+			break;
+		case 5:
+			if(m_ramEncode->GetDistance() < 50)
+			{	
+				m_ramMotor->Set(0.0);
+				m_ramCase = -1;
+			}
+			break;
+		}
+		
+	}
+	
+	void RamrodOverride()
+	{
+		if (m_operator->GetRawButton(BUTTON_BACK))
+		{
+			SmartDashboard::PutNumber("Joystick Value: ",m_operator->GetRawAxis(RIGHT_Y));
+			
+			if (fabs(m_operator->GetRawAxis(RIGHT_Y)) > 0.2)
+					m_ramMotor->Set(m_operator->GetRawAxis(RIGHT_Y));
+			else
+					m_ramMotor->Set(0.0);					
+		}
+	}
+	
+	void PrintData()
+	{
+		SmartDashboard::PutNumber("Ramrod Encoder: ", m_ramEncode->GetDistance());
+		SmartDashboard::PutNumber("Ramrod Rate: ",m_ramEncode->GetRate());
+		SmartDashboard::PutNumber("Ramrod Raw: ",m_ramEncode->GetRaw());
+		SmartDashboard::PutNumber("Ramrod Case: ",m_ramCase);
+	}
+	
 };
 
 START_ROBOT_CLASS(BuiltinDefaultCode);

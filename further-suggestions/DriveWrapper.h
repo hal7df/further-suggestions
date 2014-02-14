@@ -9,6 +9,7 @@ public:
 	DriveWrapper(SpeedController*, SpeedController*);
 	
 	void Set(float,uint8_t);
+	void Set(float,float,uint8_t);
 	float Get();
 	void Disable();
 	void PIDWrite(float);
