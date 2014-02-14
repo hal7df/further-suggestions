@@ -66,6 +66,7 @@ private:
 
 	//Declare arm
 	ArmWrapper* m_arm;
+	Encoder* m_armEncoder;
 	
 	//Declare ramrod motor
 	Talon *m_ramMotor;
@@ -136,8 +137,13 @@ public:
 		m_ramMotor = new Talon (5);
 		
 		//Initialize Arm
-		m_arm = new ArmWrapper (7, 6, 5, 6, 10);
-		m_arm->StartPID(0.0, 0.0, 0.0);
+		m_arm = new ArmWrapper (7, 6, 9, 10, 10);
+		//m_arm->StartPID(0.0, 0.0, 0.0);
+		m_armEncoder = new Encoder (5,6,true);
+		m_armEncoder->SetDistancePerPulse(1.0);
+		m_armEncoder->SetMaxPeriod(1.0);
+		m_armEncoder->Start();
+		
 		
 		//initialize bGrabber motor
 		m_roller = new Talon (8);
@@ -219,9 +225,11 @@ public:
 	void TeleopPeriodic() {
 		ManageCompressor();
 		TeleopDrive();
-		TeleopArm();
+		// TeleopArm();
 		TeleopBGrabber();
 		//TeleopRanrod();
+		
+		TestArm();
 		
 		teleopCounter++;
 	}
@@ -316,7 +324,7 @@ public:
 		
 		// Reset Arm
 		if (m_arm->GetLimSwitch()) {
-			m_arm->Reset();
+			//m_arm->Reset();
 		}
 	}
 		  
@@ -347,9 +355,13 @@ public:
 
 		// Reset Arm Encoder
 		if (m_operator->GetRawButton(BUTTON_L3)) {
-			m_arm->Reset();
+			//m_armEncoder->Reset();
 		}
+		
+		SmartDashboard::PutNumber("Arm Actual Position: ", m_armEncoder->GetDistance());
+		SmartDashboard::PutNumber("Arm PID Position: ", m_arm->PID->Get());
 	}
+	
 	
 	void TestBGrabber()
 	{

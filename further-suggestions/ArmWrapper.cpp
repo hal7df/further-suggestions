@@ -34,6 +34,7 @@ ArmWrapper::ArmWrapper(int lArm, int rArm, int armAngle1, int armAngle2, int arm
 	c_maxPeriod = 1.0;
 	m_armAngle->SetDistancePerPulse(c_distPerPulse);
 	m_armAngle->SetMaxPeriod(c_maxPeriod);
+	m_armAngle->Start();
 }
 
 // With Channel and reverse direction
@@ -52,7 +53,7 @@ ArmWrapper::ArmWrapper(int lArm, int rArm, int armAngle1, int armAngle2, bool re
 
 // ----- Control Motors -----
 void ArmWrapper::Set (float speed) {
-	m_lArm->Set (speed);
+	m_lArm->Set (-speed);
 	m_rArm->Set (speed);
 }
 
