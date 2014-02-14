@@ -108,6 +108,14 @@ bool ArmWrapper::bGrabberSafty () {
 	return GetRawAngle() < BGRABBER_SAFE;
 }
 
+double ArmWrapper::PIDGet () {
+	return m_armAngle->PIDGet();
+}
+
+double ArmWrapper::PIDOutput () {
+	return PID->Get();
+}
+
 // ----- Conf -----
 void ArmWrapper::SetDistPerPulse(double distPerPulse) {
 	c_distPerPulse = distPerPulse;

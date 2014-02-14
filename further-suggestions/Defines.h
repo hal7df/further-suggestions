@@ -26,13 +26,13 @@
 #ifdef PracticeBot
 	// Place practice bot values here
 	#define FLOOR_PICKING_POS 1
-	#define MED_SHOOT_POS 1
-	#define LONG_SHOOT_POS 1
+	#define MED_SHOOT_POS 140
+	#define LONG_SHOOT_POS -141
 	#define CATCH_POS 1
 	#define BGRABBER_SAFE 3
 	
 	// PID Config for PID
-	#define ARM_P 0.1
+	#define ARM_P 0.01
 	#define ARM_I 0.0
 	#define ARM_D 0.0
 

@@ -56,6 +56,8 @@
 		double GetAngle ();
 		double GetSpeed ();		// Returns in [Dist Unit]/[microsec]
 		bool GetLimSwitch();
+		double PIDGet ();
+		double PIDOutput ();
 		
 		bool bGrabberSafty ();
 	

@@ -66,7 +66,7 @@ private:
 
 	//Declare arm
 	ArmWrapper* m_arm;
-	Encoder* m_armEncoder;
+	// Encoder* m_armEncoder;
 	
 	//Declare ramrod motor
 	Talon *m_ramMotor;
@@ -107,6 +107,10 @@ private:
 	
 	//Timers
 	Timer *m_ramTime;
+	Timer *m_bGrabberTime;
+	
+	// bArmStatus
+	bool m_bArmStatus;
 	
 	// Counter
 	int countLoop;
@@ -145,13 +149,14 @@ public:
 		m_ramMotor = new Talon (5);
 		
 		//Initialize Arm
-		m_arm = new ArmWrapper (7, 6, 9, 10, 10);
+		m_arm = new ArmWrapper (7, 6, 5, 6, 10);
 		//m_arm->StartPID(0.0, 0.0, 0.0);
+		/*
 		m_armEncoder = new Encoder (5,6,true);
 		m_armEncoder->SetDistancePerPulse(1.0);
 		m_armEncoder->SetMaxPeriod(1.0);
 		m_armEncoder->Start();
-		
+		*/
 		
 		//initialize bGrabber motor
 		m_roller = new Talon (8);
@@ -168,23 +173,16 @@ public:
 		m_robotDrive->SetSafetyEnabled(false);
 		
 		//Initialize ramrod encoder
-		m_ramEncoder = new Encoder (7,8,false);
-		m_ramEncoder->SetDistancePerPulse(1);
-		m_ramEncoder->SetMaxPeriod(1.0);
-		m_ramEncoder->Start();
+		m_ramEncode = new Encoder (7,8,true);
+		m_ramEncode->SetDistancePerPulse(1);
+		m_ramEncode->SetMaxPeriod(1.0);
+		m_ramEncode->Start();
 
 		//Initialize arm encoder
 		m_armAngle = new Encoder (5, 6, true);
 		m_armAngle->SetDistancePerPulse(1);
 		m_armAngle->SetMaxPeriod(1.0);
 		m_armAngle->Start();
-		
-		//Initialize ramrod encoder
-		
-		m_ramEncode = new Encoder (7,8,true);
-		m_ramEncode->SetDistancePerPulse(1);
-		m_ramEncode->SetMaxPeriod(1.0);
-		m_ramEncode->Start();
 		
 		//Initialize Compressor
 		m_compressor = new Compressor(9, 1);
@@ -205,6 +203,10 @@ public:
 		
 		//Timers
 		m_ramTime = new Timer;
+		m_bGrabberTime = new Timer;
+		
+		// bArmStatus
+		m_bArmStatus = false;
 		
 		m_ramCase = -1;
 		countLoop = 0;
@@ -233,6 +235,8 @@ public:
 		m_ramTime->Stop();
 		m_ramTime->Start();
 		m_ramTime->Reset();
+		
+		m_arm->Reset();
 	}
 	
 	void TestInit () {
@@ -252,13 +256,15 @@ public:
 	void TeleopPeriodic() {
 		ManageCompressor();
 		TeleopDrive();
-		// TeleopArm();
+		RamrodInit();
+		RamFire();
+		RamrodOverride();
+		TeleopArm();
 		TeleopBGrabber();
 		//TeleopRanrod();
+		PrintData();
+		// TestArm();
 		
-		TestArm();
-		
-		teleopCounter++;
 	}
 	
 
@@ -292,55 +298,45 @@ public:
 	}
 	
 	 void TeleopBGrabber()
-		  		{
-		  			//ROLLERS	
-		  			if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
-		  				m_roller->Set(1);
-		  			}
-		  			else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
-		  				m_roller->Set(1);
-		  			else {
-		  				m_roller->Set(0.0);
-		  			}	
-		  			
-		  			//BALL CATCH (#Sweg)
-		  			if (m_operator->GetRawButton(BUTTON_LB)) {
-		  				m_catch->Set(true); 
-		  			}
-		  			else {
-		  				m_catch->Set(false);
-		  			}
-		  			
-		  			//bArm OPEN / CLOSE
-		  			if (m_operator->GetRawButton(BUTTON_X)) {
-		  				m_bArm->Set(true);
-		  			}
-		  			else if (m_operator->GetRawButton(BUTTON_Y)) {
-		  				m_bArm->Set(false);
-		  			}
-		  		}
-		  
-	
-	/*************************** TEST FUNCTIONS *****************************/
-	
-	void TestDrive(){
+	{
+		//ROLLERS	
+		if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
+			m_roller->Set(1);
+		}
+		else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
+			m_roller->Set(-1);
+		else {
+			m_roller->Set(0.0);
+		}	
 		
-		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2)
-			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
-		else
-			m_robotDrive->ArcadeDrive(0.0,0.0);
-		if (m_driver -> GetRawButton(BUTTON_A)){
-			m_shifters -> Set(true);
+		//BALL CATCH (#Sweg)
+		if (m_operator->GetRawButton(BUTTON_LB)) {
+			
+			m_catch->Set(true); 
 		}
 		else {
-			m_shifters -> Set(false);
+			m_catch->Set(false);
 		}
 		
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Right encoder count: %d",m_rEncode->Get());
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"Left encoder count: %d",m_lEncode->Get());
+		//bArm OPEN / CLOSE
+		if (m_operator->GetRawButton(BUTTON_RB) && m_bGrabberTime->Get() > 0.2) {
+			// Timer
+			m_bGrabberTime->Stop();
+			m_bGrabberTime->Reset();
+			
+			m_bArmStatus = !m_bArmStatus;
+			m_bArm->Set(m_bArmStatus);
+		}
+		else if (m_operator->GetRawButton(BUTTON_RB)) {
+			m_bGrabberTime->Reset();
+			m_bGrabberTime->Start();
+		}
+		
 	}
+		  
+
 	
-	void TestArm ()
+	void TeleopArm ()
 	{
 		// ----- PID -----
 		if (m_operator->GetRawButton(BUTTON_A)) {
@@ -403,11 +399,10 @@ public:
 
 		// Reset Arm Encoder
 		if (m_operator->GetRawButton(BUTTON_L3)) {
-			//m_armEncoder->Reset();
+			m_arm->Reset();
 		}
 		
-		SmartDashboard::PutNumber("Arm Actual Position: ", m_armEncoder->GetDistance());
-		SmartDashboard::PutNumber("Arm PID Position: ", m_arm->PID->Get());
+		
 	}
 	
 	void TestBGrabber()
@@ -503,6 +498,10 @@ public:
 		{
 			m_ramCase = 0;
 		}
+		else if (m_driver->GetRawAxis(TRIGGERS) > 0.4 && m_ramCase == -1)
+		{
+			m_ramCase = 3;
+		}
 		switch(m_ramCase)
 		{
 		case 0:
@@ -565,6 +564,9 @@ public:
 		SmartDashboard::PutNumber("Ramrod Rate: ",m_ramEncode->GetRate());
 		SmartDashboard::PutNumber("Ramrod Raw: ",m_ramEncode->GetRaw());
 		SmartDashboard::PutNumber("Ramrod Case: ",m_ramCase);
+		
+		SmartDashboard::PutNumber("Arm Actual Position: ", m_arm->GetAngle());
+		SmartDashboard::PutNumber("Arm PID Output: ", m_arm->PIDOutput());
 	}
 	
 };
