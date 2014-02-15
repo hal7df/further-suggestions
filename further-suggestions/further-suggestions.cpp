@@ -63,6 +63,7 @@ private:
 	//Drivetrain Encodes
 	Encoder *m_rEncode;
 	Encoder *m_lEncode;
+	bool Drive_Status;
 
 	//Declare arm
 	ArmWrapper* m_arm;
@@ -117,6 +118,17 @@ private:
 	int armCount;
 	int m_ramCase;
 	bool m_ramInit;
+	
+	//Auton
+	enum AutonChoice {
+		AutonDBRebound
+	}AutonChoice;
+	
+	// Auton Steps
+	enum AutonDBSteps {
+		DF1, RotateArmBack, DriveBack, ShootAngle1, ShootAngle2, DF2
+	} AutonDBSteps;
+			
 public:
 	
 /**
@@ -143,7 +155,7 @@ public:
 			m_lEncode->SetDistancePerPulse(1);
 			m_lEncode->SetMaxPeriod(1.0);
 			m_lEncode->Start();
-	
+		Drive_Status = false;
 		
 		//Initialize ramrod motor
 		m_ramMotor = new Talon (5);
@@ -211,9 +223,58 @@ public:
 		m_ramCase = -1;
 		countLoop = 0;
 		armCount = 0;
+		
+		// Auton Steps
+		AutonDBSteps = DF1;
 	}
 	
-	
+	void AutonDBRebound(){
+		RamFire();
+		switch(AutonDBSteps) {
+		case DF1:
+			AutonStraightDrive(200);
+			if (Drive_Status){
+				AutonDBSteps = ShootAngle1;
+			}
+			break;
+		case ShootAngle1:
+			m_arm->SetAngle(LONG_SHOOT_POS);
+			if (m_arm->GetAngle() > LONG_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < LONG_SHOOT_POS + AUTON_ANGLE_GAP) {
+				m_RamCase = 0;
+			}
+			if (RamCase == 2){
+				AutonDBSteps = RotateArmBack;
+			}
+			break;
+		case RotateArmBack:	
+			m_arm->SetAngle(FLOOR_PICKING_POS);
+			if (m_arm->GetAngle() > FLOOR_PICKING_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < FLOOR_PICKING_POS + AUTON_ANGLE_GAP){
+				AutonDBSteps = DriveBack;
+			}
+			break;
+		case DriveBack:
+			Drive_Status = false;
+			AutonStraightDrive(-30);
+			m_roller->Set(1.0);
+			if(Drive_Status == true){
+				AutonDBSteps = ShootAngle2;
+			}
+			break;
+		case DF2:
+			Drive_Status = false;
+			AutonStraightDrive(200);
+			if (Drive_Status){
+				AutonDBSteps = ShootAngle2;
+			}
+			break;
+		case ShootAngle2:
+			m_arm->SetAngle(LONG_SHOOT_POS);
+						if (m_arm->GetAngle() > LONG_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < LONG_SHOOT_POS + AUTON_ANGLE_GAP) {
+							m_RamCase = 0;
+						}
+			break;
+		}
+	}
 	/********************************** Init Routines *************************************/
 
 
@@ -249,7 +310,11 @@ public:
 	}
 
 	void AutonomousPeriodic() {
-	  
+	  switch(AutonChoice){
+	  case AutonDBRebound:
+		  AutonDBRebound();
+		  break;
+	  }
 	}
 
 	
@@ -464,9 +529,12 @@ public:
 			m_compressor->Start();
 		}
 	}
-	void AutonStraighDrive(){
-		if (m_lEncode -> GetDistance() > 200 && m_rEncode -> GetDistance() > 200){
+	void AutonStraightDrive(double Drive_Distance){
+		if (m_lEncode -> GetDistance() < Drive_Distance && m_rEncode -> GetDistance() < Drive_Distance){
 			m_robotDrive->TankDrive(.8 + ((m_rEncode -> GetRate()) - (m_lEncode -> GetRate())), .8 + ((m_lEncode -> GetRate()) - (m_rEncode -> GetRate())));
+		}
+		else {
+			Drive_Status = true;
 		}
 	}
 	void RamrodInit(){
