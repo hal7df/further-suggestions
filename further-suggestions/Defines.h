@@ -30,6 +30,8 @@
 	#define LONG_SHOOT_POS -141
 	#define CATCH_POS 1
 	#define BGRABBER_SAFE 3
+
+	#define AUTON_ANGLE_GAP 5
 	
 	// PID Config for PID
 	#define ARM_P 0.01
