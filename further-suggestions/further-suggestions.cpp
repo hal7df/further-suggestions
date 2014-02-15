@@ -63,6 +63,9 @@ private:
 	//Drivetrain Encodes
 	Encoder *m_rEncode;
 	Encoder *m_lEncode;
+	
+	//advanced drive
+	bool Low_Gear;
 
 	//Declare arm
 	ArmWrapper* m_arm;
@@ -143,6 +146,9 @@ public:
 			m_lEncode->SetDistancePerPulse(1);
 			m_lEncode->SetMaxPeriod(1.0);
 			m_lEncode->Start();
+			
+		//advanced drive
+		Low_Gear = false;
 	
 		
 		//Initialize ramrod motor
@@ -557,7 +563,30 @@ public:
 					m_ramMotor->Set(0.0);					
 		}
 	}
-	
+	void AdvancedDrive(){
+
+	if (Low_Gear){
+	    m_shifters -> Set(false);
+	    if (fabs(m_driver -> GetRawAxis(LEFT_Y)) < LOW_GEAR_HIGH){
+	        Low_Gear = false;
+	    }
+	    else {
+	    m_robotDrive->ArcadeDrive(-m_driver -> GetRawAxis(LEFT_Y), m_driver -> GetRawAxis(RIGHT_X));
+	    }
+	}
+	else if (!Low_Gear){
+	    m_shifters -> Set(true);
+	    if (fabs(m_driver -> GetRawAxis(LEFT_Y)) < (HIGH_GEAR_LOW - .10)){
+	        Low_Gear = true;
+	    }
+	    else if (-m_driver -> GetRawAxis(LEFT_Y) > 0.0){
+	        m_robotDrive->ArcadeDrive(HIGH_GEAR_LOW + (((1.0 - HIGH_GEAR_LOW) / (1.0 - LOW_GEAR_HIGH))*(-m_driver->GetRawAxis(LEFT_Y) - LOW_GEAR_HIGH)), m_driver -> GetRawAxis(RIGHT_X));
+	    }
+	    else if (-m_driver -> GetRawAxis(LEFT_Y) < 0.0){
+	        m_robotDrive->ArcadeDrive(-HIGH_GEAR_LOW - (((1.0 - HIGH_GEAR_LOW) / (1.0 - LOW_GEAR_HIGH))*(-m_driver->GetRawAxis(LEFT_Y) + LOW_GEAR_HIGH)), m_driver -> GetRawAxis(RIGHT_X));
+	    }
+	}
+	}
 	void PrintData()
 	{
 		SmartDashboard::PutNumber("Ramrod Encoder: ", m_ramEncode->GetDistance());

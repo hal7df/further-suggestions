@@ -11,6 +11,10 @@
 #define BUTTON_L3 9
 #define BUTTON_R3 10
 
+// advanced drive
+#define LOW_GEAR_HIGH .75
+#define HIGH_GEAR_LOW .40
+
 // Axes
 
 #define LEFT_X 1
