@@ -121,8 +121,8 @@ private:
 	
 	//Auton
 	enum AutonChoice {
-		AutonDBRebound
-	}AutonChoice;
+		AutonDBrebound, AutonDFshoot, AutonCheckHotleft, AutonCheckHotright, AutonDoNothing, AutonDf
+	} autonChoice;
 	
 	// Auton Steps
 	enum AutonDBSteps {
@@ -240,9 +240,9 @@ public:
 		case ShootAngle1:
 			m_arm->SetAngle(LONG_SHOOT_POS);
 			if (m_arm->GetAngle() > LONG_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < LONG_SHOOT_POS + AUTON_ANGLE_GAP) {
-				m_RamCase = 0;
+				m_ramCase = 0;
 			}
-			if (RamCase == 2){
+			if (m_ramCase == 2){
 				AutonDBSteps = RotateArmBack;
 			}
 			break;
@@ -261,6 +261,7 @@ public:
 			}
 			break;
 		case DF2:
+			m_roller->Set(0.0);
 			Drive_Status = false;
 			AutonStraightDrive(200);
 			if (Drive_Status){
@@ -270,10 +271,43 @@ public:
 		case ShootAngle2:
 			m_arm->SetAngle(LONG_SHOOT_POS);
 						if (m_arm->GetAngle() > LONG_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < LONG_SHOOT_POS + AUTON_ANGLE_GAP) {
-							m_RamCase = 0;
+							m_ramCase = 0;
 						}
 			break;
 		}
+	}
+	void AutonDFShoot(){
+		RamFire();
+		AutonStraightDrive(200);
+		if (Drive_Status){
+			m_arm->SetAngle(LONG_SHOOT_POS);
+			if (m_arm->GetAngle() > LONG_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < LONG_SHOOT_POS + AUTON_ANGLE_GAP) {
+				m_ramCase = 0;
+			}
+		}
+	}
+	void AutonCheckHotLeft(){
+		AutonStraightDrive(200);
+		RamFire();
+		if (Drive_Status){
+			if (m_cameraHandler->getHotGoal() == state_t::kLeft){
+				m_ramCase = 0;		
+			}
+			Drive_Status = false;
+		}
+	}
+	void AutonCheckHotRight(){
+		AutonStraightDrive(200);
+		RamFire();
+		if (Drive_Status){
+			if (m_cameraHandler->getHotGoal() == state_t::kRight){
+				m_ramCase = 0;		
+			}
+			Drive_Status = false;
+		}
+	}
+	void AutonDF(){
+		AutonStraightDrive(200);
 	}
 	/********************************** Init Routines *************************************/
 
@@ -310,10 +344,24 @@ public:
 	}
 
 	void AutonomousPeriodic() {
-	  switch(AutonChoice){
-	  case AutonDBRebound:
-		  AutonDBRebound();
-		  break;
+	  switch(autonChoice){
+	  	  case AutonDBrebound:
+	  		  AutonDBRebound();
+	  		  break;
+	  	  case AutonDFshoot:
+	  		  AutonDFShoot();
+	  		  break;
+	  	  case AutonCheckHotleft:
+	  		  AutonCheckHotLeft();
+	  		  break;
+	  	  case AutonCheckHotright:
+	  		  AutonCheckHotRight();
+	  		  break;
+	  	  case AutonDoNothing:
+	  		  break;
+	  	  case AutonDf:
+	  		  AutonDF();
+	  		  break;
 	  }
 	}
 
