@@ -4,6 +4,7 @@
 #include "ArmWrapper.h"
 #include "Defines.h"
 #include <cmath>
+#include "CameraHandler.h"
 
 /**
  * This "BuiltinDefaultCode" provides the "default code" functionality as used in the "Benchtop Test."
@@ -78,6 +79,9 @@ private:
 	//Declare ramrod servo
 	Servo *m_ramServo;
 	
+	//Declare camera light
+	Relay* m_camLight;
+	
 	//Declare drive objects
 	DriveWrapper* m_rDrive;
 	DriveWrapper* m_lDrive;
@@ -105,6 +109,9 @@ private:
 	
 	//Declare driver station
 	DriverStationLCD* m_dsLCD;
+	
+	//Declare camera handler object
+	CameraHandler* m_cameraHandler;
 	
 	//Timers
 	Timer *m_ramTime;
@@ -160,6 +167,9 @@ public:
 		//Initialize ramrod motor
 		m_ramMotor = new Talon (5);
 		
+		//Initialize relays
+		m_camLight = new Relay (2);
+		
 		//Initialize Arm
 		m_arm = new ArmWrapper (7, 6, 5, 6, 10);
 		//m_arm->StartPID(0.0, 0.0, 0.0);
@@ -209,6 +219,10 @@ public:
 		//Initialize joysticks
 		m_driver = new JoystickWrapper (1);
 		m_operator = new JoystickWrapper (2);
+		
+		//Initialize camera handler object
+		AxisCamera *camera = &AxisCamera::GetInstance("10.0.67.11");
+		m_cameraHandler = new CameraHandler (camera, m_dsLCD, m_camLight);
 		
 		//Grab driver station object
 		m_dsLCD = DriverStationLCD::GetInstance();		
@@ -290,7 +304,7 @@ public:
 		AutonStraightDrive(200);
 		RamFire();
 		if (Drive_Status){
-			if (m_cameraHandler->getHotGoal() == state_t::kLeft){
+			if (m_cameraHandler->getHotGoal() == kLeft){
 				m_ramCase = 0;		
 			}
 			Drive_Status = false;
@@ -300,7 +314,7 @@ public:
 		AutonStraightDrive(200);
 		RamFire();
 		if (Drive_Status){
-			if (m_cameraHandler->getHotGoal() == state_t::kRight){
+			if (m_cameraHandler->getHotGoal() == kRight){
 				m_ramCase = 0;		
 			}
 			Drive_Status = false;
