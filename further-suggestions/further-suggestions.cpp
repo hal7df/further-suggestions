@@ -584,6 +584,7 @@ public:
 		}
 		else {
 			Drive_Status = true;
+			m_robotDrive->TankDrive(0.0,0.0);
 		}
 	}
 	void RamrodInit(){
