@@ -121,7 +121,7 @@ private:
 	
 	//Auton
 	enum AutonChoice {
-		AutonDBRebound
+		AutonDBrebound
 	}AutonChoice;
 	
 	// Auton Steps
@@ -174,7 +174,7 @@ public:
 		m_roller = new Talon (8);
 		
 		//Initialize ramrod servo
-		m_ramServo = new Servo (9);
+		m_ramServo = new Servo (10);
 		
 		//Initialize drive wrappers
 		m_rDrive = new DriveWrapper (m_rDrive1, m_rDrive2);
@@ -240,9 +240,9 @@ public:
 		case ShootAngle1:
 			m_arm->SetAngle(LONG_SHOOT_POS);
 			if (m_arm->GetAngle() > LONG_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < LONG_SHOOT_POS + AUTON_ANGLE_GAP) {
-				m_RamCase = 0;
+				m_ramCase = 0;
 			}
-			if (RamCase == 2){
+			if (m_ramCase == 2){
 				AutonDBSteps = RotateArmBack;
 			}
 			break;
@@ -270,7 +270,7 @@ public:
 		case ShootAngle2:
 			m_arm->SetAngle(LONG_SHOOT_POS);
 						if (m_arm->GetAngle() > LONG_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < LONG_SHOOT_POS + AUTON_ANGLE_GAP) {
-							m_RamCase = 0;
+							m_ramCase = 0;
 						}
 			break;
 		}
@@ -311,7 +311,7 @@ public:
 
 	void AutonomousPeriodic() {
 	  switch(AutonChoice){
-	  case AutonDBRebound:
+	  case AutonDBrebound:
 		  AutonDBRebound();
 		  break;
 	  }
@@ -359,6 +359,11 @@ public:
 		}
 		else {
 			m_shifters -> Set(false);
+		}
+		if(m_driver->GetRawButton(BUTTON_BACK))
+		{
+			m_rEncode->Reset();
+			m_lEncode->Reset();
 		}
 	}
 	
@@ -530,11 +535,14 @@ public:
 		}
 	}
 	void AutonStraightDrive(double Drive_Distance){
-		if (m_lEncode -> GetDistance() < Drive_Distance && m_rEncode -> GetDistance() < Drive_Distance){
+		if (m_lEncode -> GetDistance() < Drive_Distance && m_rEncode -> GetDistance() < Drive_Distance)
+		{
 			m_robotDrive->TankDrive(.8 + ((m_rEncode -> GetRate()) - (m_lEncode -> GetRate())), .8 + ((m_lEncode -> GetRate()) - (m_rEncode -> GetRate())));
 		}
-		else {
+		else 
+		{
 			Drive_Status = true;
+			m_robotDrive->TankDrive(0.0,0.0);
 		}
 	}
 	void RamrodInit(){
@@ -634,6 +642,9 @@ public:
 		
 		SmartDashboard::PutNumber("Arm Actual Position: ", m_arm->GetAngle());
 		SmartDashboard::PutNumber("Arm PID Output: ", m_arm->PIDOutput());
+		
+		SmartDashboard::PutNumber("lEncoder: ",m_rEncode->GetDistance());
+		SmartDashboard::PutNumber("rEncoder: ",m_lEncode->GetDistance());
 	}
 	
 };
