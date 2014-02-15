@@ -453,7 +453,6 @@ public:
 		} else {
 			m_ramServo->SetAngle(0);
 		}
-			
 	}
 	
 	/************** UNIVERSAL FUNCTIONS ***************/
