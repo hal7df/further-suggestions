@@ -71,7 +71,7 @@ void ArmWrapper::PIDDisable () {
 }
 
 void ArmWrapper::PIDWrite(float output) {
-	Set(output);
+	Set(-output);
 }
 
 // ----- Control Encoder -----
