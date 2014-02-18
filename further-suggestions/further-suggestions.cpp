@@ -514,7 +514,7 @@ public:
 		switch (autonChoice)
 		{
 		case AutonDBrebound:
-			autonNm = "     DB Rebound      ";
+			autonNm = "      DB 2 Ball      ";
 			break;
 		case AutonDFshoot:
 			autonNm = "      DF Shoot       ";
@@ -559,7 +559,7 @@ public:
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"A: DF Shoot");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"B: Check Left");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"X: Check Right");
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Y: DB Rebound");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Y: DB 2 Ball");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"RB: Drive Forward");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"Back (HOLD): Disable");
 		}
