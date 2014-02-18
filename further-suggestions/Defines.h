@@ -75,7 +75,7 @@
 
 	// RAMROD
 	#define RAM_LOCK_POSITION 900
-	#define RAM_MID_POSITION 800
+	#define RAM_MID_POSITION 600
 
 	//Special PWMs
 	#define ROLLER_PWM 7

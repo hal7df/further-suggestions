@@ -562,6 +562,7 @@ public:
 			
 			// Control With Joystick
 			m_arm->Set(m_operator->GetRawAxis(LEFT_Y));
+			SmartDashboard::PutNumber("Arm Motor Input:",m_operator->GetRawAxis(LEFT_Y));
 		}
 		
 		// Reset Arm
@@ -805,7 +806,7 @@ public:
 		case 4:
 			if (m_ramEncode->GetDistance() > 20)
 			{
-				m_ramMotor->Set(-1.0);
+				m_ramMotor->Set(-0.8);
 			}
 			else
 			{
