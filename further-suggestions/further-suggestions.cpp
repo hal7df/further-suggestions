@@ -121,6 +121,7 @@ private:
 	Timer *m_ramTime;
 	Timer *m_bGrabberTime;
 	Timer *m_autonTime;
+	Timer *m_buttonTimer;
 	
 	// Counter
 	int countLoop;
@@ -131,10 +132,14 @@ private:
 	int m_ramCase;
 	bool m_ramInit;
 	
-	//Auton
+	//Auton Selector Variables
 	enum AutonChoice {
 		AutonDBrebound, AutonDFshoot, AutonCheckHotleft, AutonCheckHotright, AutonDoNothing, AutonDf
 	} autonChoice;
+	
+	int m_selectorCountdown;
+	
+	
 	
 	// Auton Steps
 	int AutonDBSteps;
@@ -243,10 +248,14 @@ public:
 		m_ramTime = new Timer;
 		m_bGrabberTime = new Timer;
 		m_autonTime = new Timer;
+		m_buttonTimer = new Timer;
+		
 		m_ramCase = -1;
 		m_medRamCase = -1;
 		countLoop = 0;
 		armCount = 0;
+		
+		m_selectorCountdown = 100;
 		
 		// Auton Steps
 		AutonDBSteps = 1;
@@ -368,9 +377,10 @@ public:
 		RamFire();
 		if (Drive_Status){
 			if (m_cameraHandler->getHotGoal() == kLeft){
-				m_ramCase = 0;		
+				m_ramCase = 0;
+				Drive_Status = false;	
 			}
-			Drive_Status = false;
+			
 		}
 	}
 	void AutonCheckHotRight(){
@@ -395,7 +405,8 @@ public:
 	}
 	
 	void DisabledInit() {
-		
+		autonChoice = AutonDFshoot;
+		m_buttonTimer->Reset();
 	}
 
 	void AutonomousInit() {
@@ -432,15 +443,124 @@ public:
 
 	/********************************** Periodic Routines *************************************/
 	void DisabledPeriodic()  {
-		autonChoice = AutonDBrebound;
+		char autonNm [21];
+		
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.2-18-14 v0.9");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"  ||  ||  __  -----  ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"  ||--|| /  \   |    ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"  ||  || \__/   |    ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"        Auton:       ");
+		
+		if (m_buttonTimer->Get() == 0.0)
+		{
+			if (m_operator->GetRawButton(BUTTON_A))
+			{
+				autonChoice = AutonDFshoot;
+				m_buttonTimer->Start();
+			}
+			else if (m_operator->GetRawButton(BUTTON_B))
+			{
+				autonChoice = AutonCheckHotright;
+				m_buttonTimer->Start();
+			}
+			else if (m_operator->GetRawButton(BUTTON_X))
+			{
+				autonChoice = AutonCheckHotleft;
+				m_buttonTimer->Start();
+			}
+			else if (m_operator->GetRawButton(BUTTON_Y))
+			{
+				autonChoice = AutonDBrebound;
+				m_buttonTimer->Start();
+			}
+			else if (m_operator->GetRawButton(BUTTON_RB))
+			{
+				autonChoice = AutonDf;
+				m_buttonTimer->Start();
+			}
+		}
+		
+		if (m_buttonTimer->HasPeriodPassed(0.1))
+		{
+			m_buttonTimer->Stop();
+			m_buttonTimer->Reset();
+		}
+		
+		switch (autonChoice)
+		{
+		case AutonDBrebound:
+			autonNm = "     DB Rebound      ";
+			break;
+		case AutonDFshoot:
+			autonNm = "      DF Shoot       ";
+			break;
+		case AutonCheckHotleft:
+			autonNm = "   Check Left Hot    ";
+			break;
+		case AutonCheckHotright:
+			autonNm = "   Check Right Hot   ";
+			break;
+		case AutonDoNothing:
+			autonNm = "      DISABLED       ";
+			break;
+		case AutonDf:
+			autonNm = "    Drive Forward    ";
+			break;
+		}
+		
+		if (m_operator->GetRawButton(BUTTON_BACK) && autonChoice != AutonDoNothing)
+		{
+			if (m_selectorCountdown > 0)
+			{
+				autonNm = "DISABLING..."+m_selectorCountdown;
+				m_selectorCountdown--;
+			}
+			else
+			{
+				autonNm = "DISABLING...RELEASE";
+			}
+		}
+		else if (m_selectorCountdown == 0)
+		{
+			autonNm = "      DISABLED       ";
+			autonChoice = AutonDoNothing;
+			m_selectorCountdown = 100;
+		}
+		
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"%s",autonNm);
+		
+		if (m_operator->GetRawButton(BUTTON_START))
+		{
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"A: DF Shoot");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"B: Check Left");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"X: Check Right");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Y: DB Rebound");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"RB: Drive Forward");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"Back (HOLD): Disable");
+		}
+		
+		m_dsLCD->UpdateLCD();
 	}
 
 	void AutonomousPeriodic() {
-		ManageCompressor();
-		PrintData();
-	    AutonDBRebound();
-	    RamFire();
-	    m_bArm -> Set(false);
+		switch (autonChoice)
+		{
+		case AutonDf:
+			AutonDF();
+			break;
+		case AutonDFshoot:
+			AutonDFShoot();
+			break;
+		case AutonDBrebound:
+			AutonDBRebound();
+			break;
+		case AutonCheckHotleft:
+			AutonCheckHotLeft();
+			break;
+		case AutonCheckHotright:
+			AutonCheckHotRight();
+			break;
+		}
 	}
 
 	
