@@ -2,6 +2,9 @@
 
 #ifndef ARMWRAPPER_H
 #define ARMWRAPPER_H
+
+//#define PRAC_BOT
+#define COMP_BOT
 	
 	class ArmWrapper: public PIDOutput {
 		

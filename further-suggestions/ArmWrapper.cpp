@@ -22,7 +22,12 @@ ArmWrapper::ArmWrapper (SpeedController* lArm, SpeedController* rArm, Encoder* a
 // With Channel
 ArmWrapper::ArmWrapper(int lArm, int rArm, int armAngle1, int armAngle2, int armLimSwitch) {
 	m_lArm = new Talon(lArm);
+#ifdef PRAC_BOT
 	m_rArm = new Talon(rArm);
+#endif
+#ifdef COMP_BOT
+	m_rArm = new Talon(2,1);
+#endif
 	m_armAngle = new Encoder(armAngle1, armAngle2, true);
 	m_armLimSwitch = new DigitalInput(armLimSwitch);
 	
