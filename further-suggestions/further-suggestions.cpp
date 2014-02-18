@@ -138,6 +138,8 @@ private:
 	
 	// Auton Steps
 	int AutonDBSteps;
+	int AutonSteps;
+	
 	/*enum AutonDBSteps {
 		DF1=1, ShootAngle1=2, DriveBack=3, DriveBack2=4,ShootAngle2=5, DF2=6
 	} AutonDBSteps;
@@ -250,6 +252,7 @@ public:
 		
 		// Auton Steps
 		AutonDBSteps = 1;
+		AutonSteps = 0;
 	}
 	
 	void AutonDBRebound(){
@@ -354,38 +357,61 @@ public:
 	}
 	void AutonDFShoot(){
 		RamFire();
-		AutonStraightDrive(1,200);
-		if (Drive_Status){
-			m_arm->SetAngle(LONG_SHOOT_POS);
-			if (m_arm->GetAngle() > LONG_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < LONG_SHOOT_POS + AUTON_ANGLE_GAP) {
-				m_ramCase = 0;
-			}
+		switch(AutonSteps){
+		case 0:
+			AutonStraightDrive(-1,32 *REV_IN);		
+			if (Drive_Status){
+				m_arm->SetAngle(MED_SHOOT_POS);
+				m_arm->PIDEnable();
+				if (m_arm->GetAngle() > LONG_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < LONG_SHOOT_POS + AUTON_ANGLE_GAP) {
+					m_ramCase = 0;
+					AutonSteps = 1;
+				}
+			}	
+		break;
+		case 1:
+		break;
 		}
 	}
-/*
+
 	void AutonCheckHotLeft(){
-		AutonStraightDrive(200);
+		AutonStraightDrive(-1, 32 * REV_IN);
 		RamFire();
-		if (Drive_Status){
-			if (m_cameraHandler->getHotGoal() == kLeft){
-				m_ramCase = 0;		
+		switch(AutonSteps){
+		case 0:
+			m_arm->SetAngle(MED_SHOOT_POS);
+			m_arm->PIDEnable();
+			if (Drive_Status){
+				if (m_cameraHandler->getHotGoal() == kLeft){
+					m_ramCase = 0;		
+					AutonSteps = 1;
+				}			
 			}
-			Drive_Status = false;
+		break;
+		case 1:
+		break;
 		}
 	}
 	void AutonCheckHotRight(){
-		AutonStraightDrive(200);
+		AutonStraightDrive(-1, 32 * REV_IN);
 		RamFire();
-		if (Drive_Status){
-			if (m_cameraHandler->getHotGoal() == kRight){
-				m_ramCase = 0;		
+		switch(AutonSteps){
+		case 0:
+			m_arm->SetAngle(MED_SHOOT_POS);
+			m_arm->PIDEnable();
+			if (Drive_Status){
+				if (m_cameraHandler->getHotGoal() == kRight){
+					m_ramCase = 0;	
+					AutonSteps = 1;	
+				}
 			}
-			Drive_Status = false;
+		case 1:
+		break;
 		}
 	}
-*/
+
 	void AutonDF(){
-		AutonStraightDrive(1,200);
+		AutonStraightDrive(-1,32* REV_IN);
 	}
 	/********************************** Init Routines *************************************/
 
