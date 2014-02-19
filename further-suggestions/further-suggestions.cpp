@@ -173,7 +173,7 @@ public:
 		m_ramMotor = new Talon (5);
 		
 		//Initialize Arm
-		m_armMotor = new Talon (8);
+		m_armMotor = new Talon (6);
 		m_armEncoder = new Encoder (5, 6, false);
 		m_armEncoder->SetDistancePerPulse(1.0);
 		m_armEncoder->SetMaxPeriod(1.0);
@@ -247,23 +247,23 @@ public:
 		// Auton Steps
 		AutonDBSteps = 1;
 	}
-	/*
+	
 	void AutonDBRebound(){
-		//RamFire();
+		RamFire();
 		switch(AutonDBSteps) {
 		case 1:
 			
-			m_arm->SetAngle(MED_SHOOT_POS);
-			m_arm->PIDEnable();
-			AutonStraightDrive(-1,-32 * REV_IN);
+			m_armPID->SetSetpoint(LONG_SHOOT_POS);
+			m_armPID->Enable();
+			AutonStraightDrive(-0.7,-32 * REV_IN);
 			if (Drive_Status){
 				AutonDBSteps = 2;
 			}
 			break;
 			
 		case 2:
-			SmartDashboard::PutNumber("Arm Difference", fabs(m_arm->GetAngle() - MED_SHOOT_POS));
-			if (fabs(m_arm->GetAngle() - MED_SHOOT_POS) < AUTON_ANGLE_GAP) {
+			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - LONG_SHOOT_POS));
+			if (fabs(m_armEncoder->GetDistance() - LONG_SHOOT_POS) < AUTON_ANGLE_GAP) {
 				if (m_ramCase == -1)
 				{
 					m_ramCase = 0;
@@ -283,14 +283,14 @@ public:
 			break;
 
 		case 3:	
-			m_arm->SetAngle(FLOOR_PICKING_POS);
-			m_arm->PIDEnable();
-			AutonStraightDrive(1,30 * REV_IN);
+			m_armPID->SetSetpoint(FLOOR_PICKING_POS);
+			m_armPID->Enable();
+			AutonStraightDrive(0.7,30 * REV_IN);
 			m_roller->Set(-1.0);
-			SmartDashboard::PutNumber("Arm Difference", fabs(m_arm->GetAngle() - FLOOR_PICKING_POS));
-			SmartDashboard::PutBoolean("Arm Difference Bool", fabs(m_arm->GetAngle() - FLOOR_PICKING_POS) < AUTON_ANGLE_GAP);
+			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
+			SmartDashboard::PutBoolean("Arm Difference Bool", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS) < AUTON_ANGLE_GAP);
 						
-			if ((fabs(m_arm->GetAngle() - FLOOR_PICKING_POS) < AUTON_ANGLE_GAP) || (m_autonTime->HasPeriodPassed(2.0))){
+			if ((fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS) < AUTON_ANGLE_GAP) || (m_autonTime->HasPeriodPassed(2.0))){
 				m_rEncode -> Reset();
 				m_lEncode -> Reset();
 				m_autonTime->Stop();
@@ -299,9 +299,9 @@ public:
 			}
 			break;
 		case 4:	
-			AutonStraightDrive(1,24 * REV_IN);
-			SmartDashboard::PutNumber("Arm Difference", fabs(m_arm->GetAngle() - FLOOR_PICKING_POS));
-			SmartDashboard::PutBoolean("Arm Difference Bool", fabs(m_arm->GetAngle() - FLOOR_PICKING_POS) < AUTON_ANGLE_GAP);
+			AutonStraightDrive(0.7,24 * REV_IN);
+			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
+			SmartDashboard::PutBoolean("Arm Difference Bool", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS) < AUTON_ANGLE_GAP);
 						
 			if(Drive_Status){
 				m_rEncode -> Reset();
@@ -315,12 +315,12 @@ public:
 			break;	
 		
 		case 5:
-			m_arm->SetAngle(MED_SHOOT_POS);
-			m_arm->PIDEnable();
+			m_armPID->SetSetpoint(LONG_SHOOT_POS);
+			m_armPID->Enable();
 			SmartDashboard::PutBoolean("Auton Time: ", m_autonTime->Get());
 			if(m_autonTime->Get() > 1)
 			{
-				AutonStraightDrive(-1, -55 * REV_IN);
+				AutonStraightDrive(-0.7, -55 * REV_IN);
 				m_autonTime->Stop();
 			}
 			if (Drive_Status){
@@ -332,8 +332,8 @@ public:
 			break;
 			
 		case 6:
-			SmartDashboard::PutNumber("Arm Difference", fabs(m_arm->GetAngle() - MED_SHOOT_POS));
-			if (fabs(m_arm->GetAngle() - MED_SHOOT_POS) < AUTON_ANGLE_GAP) {
+			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - LONG_SHOOT_POS));
+			if (fabs(m_armEncoder->GetDistance() - LONG_SHOOT_POS) < AUTON_ANGLE_GAP) {
 				if (m_ramCase == -1)
 				{
 					m_roller->Set(0.0);
@@ -348,6 +348,7 @@ public:
 			break;
 		}
 	}
+	/*
 	void AutonDFShoot(){
 		RamFire();
 		AutonStraightDrive(1,200);
@@ -430,15 +431,15 @@ public:
 	void DisabledPeriodic()  {
 		autonChoice = AutonDBrebound;
 	}
-/*
+
 	void AutonomousPeriodic() {
 		ManageCompressor();
 		PrintData();
 	    AutonDBRebound();
 	    RamFire();
-	    m_bArm -> Set(false);
+	    //m_bArm -> Set(false);
 	}
-*/
+
 	
 	void TeleopPeriodic() {
 		ManageCompressor();
