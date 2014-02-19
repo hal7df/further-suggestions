@@ -66,7 +66,12 @@ private:
 	bool Drive_Status;
 
 	//Declare arm
-	ArmWrapper* m_arm;
+	Talon* m_armMotor;
+	Encoder* m_armEncoder;
+	PIDController* m_armPID;
+	bool m_armPIDFlag;
+	// igitalInput* m_armLimSwitch;
+	// ArmWrapper* m_arm;
 	// Encoder* m_armEncoder;
 	
 	//Declare ramrod motor
@@ -98,7 +103,7 @@ private:
 	Solenoid* m_bArm;
 	
 	//Declare arm encoder
-	Encoder* m_armAngle;	// Digital Input 5, 6
+	//Encoder* m_armAngle;	// Digital Input 5, 6
 	
 	//Declare ramrod encoder
 	Encoder *m_ramEncode;
@@ -137,6 +142,7 @@ private:
 		*/	
 public:
 	
+	
 /**
  * Constructor for this "BuiltinDefaultCode" Class.
  * 
@@ -167,7 +173,14 @@ public:
 		m_ramMotor = new Talon (5);
 		
 		//Initialize Arm
-		m_arm = new ArmWrapper (6, 7, 5, 6, 10);
+		m_armMotor = new Talon (8);
+		m_armEncoder = new Encoder (5, 6, false);
+		m_armEncoder->SetDistancePerPulse(1.0);
+		m_armEncoder->SetMaxPeriod(1.0);
+		m_armEncoder->Start();
+		m_armPID = new PIDController(ARM_P, ARM_I, ARM_D, m_armEncoder, m_armMotor);
+		
+		// m_arm = new ArmWrapper (6, 8, 5, 6, 10);
 		//m_arm->StartPID(0.0, 0.0, 0.0);
 		/*
 		m_armEncoder = new Encoder (5,6,true);
@@ -203,10 +216,7 @@ public:
 		m_ramEncode->Start();
 
 		//Initialize arm encoder
-		m_armAngle = new Encoder (5, 6, true);
-		m_armAngle->SetDistancePerPulse(1);
-		m_armAngle->SetMaxPeriod(1.0);
-		m_armAngle->Start();
+		
 		
 		//Initialize Compressor
 		m_compressor = new Compressor(9, 1);
@@ -237,7 +247,7 @@ public:
 		// Auton Steps
 		AutonDBSteps = 1;
 	}
-	
+	/*
 	void AutonDBRebound(){
 		//RamFire();
 		switch(AutonDBSteps) {
@@ -369,7 +379,7 @@ public:
 			Drive_Status = false;
 		}
 	}
-*/
+
 	void AutonDF(){
 		AutonStraightDrive(1,200);
 	}
@@ -387,7 +397,7 @@ public:
 	void AutonomousInit() {
 		// Auton Steps
 		AutonDBSteps = 1;
-		m_arm->Reset();
+		m_armEncoder->Reset();
 		m_ramEncode->Reset();
 		m_rEncode->Reset();
 		m_lEncode->Reset();
@@ -408,8 +418,8 @@ public:
 		m_ramTime->Reset();
 		m_rEncode->Reset();
 		m_lEncode->Reset();
-		m_arm->Reset();
-		m_arm->PIDDisable();
+		m_armEncoder->Reset();
+		// m_arm->PIDDisable();
 	}
 	
 	void TestInit () {
@@ -420,7 +430,7 @@ public:
 	void DisabledPeriodic()  {
 		autonChoice = AutonDBrebound;
 	}
-
+/*
 	void AutonomousPeriodic() {
 		ManageCompressor();
 		PrintData();
@@ -428,7 +438,7 @@ public:
 	    RamFire();
 	    m_bArm -> Set(false);
 	}
-
+*/
 	
 	void TeleopPeriodic() {
 		ManageCompressor();
@@ -449,7 +459,7 @@ public:
 	
 	void TestPeriodic () {
 		ManageCompressor();
-		TestArm();
+		// TestArm();
 		TestDrive();
 		TestBGrabber();
 		TestRamMotion();
@@ -494,18 +504,32 @@ public:
 			m_roller->Set(-1);
 		else {
 			m_roller->Set(0.0);
-		}	
+		}
 		
+		//BALL CATCH
+		if (m_operator->GetRawButton(BUTTON_BACK) && m_bGrabberTime->Get() > 0.1) {
+			// Timer
+			m_bGrabberTime->Stop();
+			m_bGrabberTime->Reset();
+			
+			m_catch->Set(!m_catch->Get());
+		}
+		else if (m_operator->GetRawButton(BUTTON_BACK)) {
+			m_bGrabberTime->Reset();
+			m_bGrabberTime->Start();
+		}
+/*
 		//BALL CATCH (#Sweg)
-		if (m_operator->GetRawButton(BUTTON_LB)) {
+		if (m_operator->GetRawButton(BUTTON_BACK)) {
 			
 			m_catch->Set(true); 
 		}
 		else {
 			m_catch->Set(false);
 		}
-		
+	*/	
 		//BALL CATCH SERVOS
+		/*
 		if (m_operator->GetRawButton(BUTTON_START))
 		{
 			m_catchServo1->SetAngle(180);
@@ -516,16 +540,16 @@ public:
 			m_catchServo1->SetAngle(0);
 			m_catchServo2->SetAngle(0);
 		}
-		
+		*/
 		//bArm OPEN / CLOSE
-		if (m_operator->GetRawButton(BUTTON_RB) && m_bGrabberTime->Get() > 0.1) {
+		if (m_operator->GetRawButton(BUTTON_START) && m_bGrabberTime->Get() > 0.1) {
 			// Timer
 			m_bGrabberTime->Stop();
 			m_bGrabberTime->Reset();
 			
 			m_bArm->Set(!m_bArm->Get());
 		}
-		else if (m_operator->GetRawButton(BUTTON_RB)) {
+		else if (m_operator->GetRawButton(BUTTON_START)) {
 			m_bGrabberTime->Reset();
 			m_bGrabberTime->Start();
 		}
@@ -539,36 +563,44 @@ public:
 		// ----- PID -----
 		if (m_operator->GetRawButton(BUTTON_A)) {
 			// Floor Picking
-			m_arm->SetAngle (FLOOR_PICKING_POS);
-			m_arm->PIDEnable();
+			m_armPIDFlag = true;
+			m_armPID->SetSetpoint (FLOOR_PICKING_POS);
+			m_armPID->Enable();
 			
 		} else if (m_operator->GetRawButton(BUTTON_B)) {
 			// Medium (12ft) Shoot Position
-			m_arm->SetAngle (MED_SHOOT_POS);
-			m_arm->PIDEnable();
+			m_armPIDFlag = true;
+			m_armPID->SetSetpoint (MED_SHOOT_POS);
+			m_armPID->Enable();
 			
 		} else if (m_operator->GetRawButton(BUTTON_X)) {
 			// Long (18ft) Shoot Position
-			m_arm->SetAngle(LONG_SHOOT_POS);
-			m_arm->PIDEnable();
+			m_armPIDFlag = true;
+			m_armPID->SetSetpoint(LONG_SHOOT_POS);
+			m_armPID->Enable();
 			
 		} else if (m_operator->GetRawButton(BUTTON_Y)) {
 			// Catch Position
-			m_arm->SetAngle(CATCH_POS);
-			m_arm->PIDEnable();
+			m_armPIDFlag = true;
+			m_armPID->SetSetpoint(CATCH_POS);
+			m_armPID->Enable();
 			
-		} else {
-			m_arm->PIDDisable();
+		} 
+		else {
+			if (m_armPIDFlag) {
+				m_armPID->Disable();
+				m_armPIDFlag = false;
+			}
 			
 			// Control With Joystick
-			m_arm->Set(m_operator->GetRawAxis(LEFT_Y));
+			m_armMotor->Set(m_operator->GetRawAxis(LEFT_Y));
 			SmartDashboard::PutNumber("Arm Motor Input:",m_operator->GetRawAxis(LEFT_Y));
 		}
-		
+		SmartDashboard::PutNumber("Arm PID Output:",m_armPID->Get());
 		// Reset Arm
-		if (m_arm->GetLimSwitch()) {
+		// if (m_arm->GetLimSwitch()) {
 			//m_arm->Reset();
-		}
+		// }
 	}
 		  
 	
@@ -590,7 +622,7 @@ public:
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Right encoder count: %d",m_rEncode->Get());
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"Left encoder count: %d",m_lEncode->Get());
 	}
-	
+	/*
 	void TestArm ()
 	{
 		// Control Arm
@@ -603,7 +635,7 @@ public:
 		
 		
 	}
-	
+	*/
 	void TestBGrabber()
 		{
 			//ROLLERS	
@@ -806,7 +838,7 @@ public:
 		case 4:
 			if (m_ramEncode->GetDistance() > 20)
 			{
-				m_ramMotor->Set(-0.8);
+				m_ramMotor->Set(-0.3);
 			}
 			else
 			{
@@ -819,7 +851,7 @@ public:
 	
 	void RamrodOverride()
 	{
-		if (m_operator->GetRawButton(BUTTON_BACK))
+		if (m_operator->GetRawButton(BUTTON_LB) && m_operator->GetRawButton(BUTTON_RB))
 		{
 			SmartDashboard::PutNumber("Joystick Value: ",m_operator->GetRawAxis(RIGHT_Y));
 			
@@ -838,8 +870,8 @@ public:
 		SmartDashboard::PutNumber("Ramrod Case: ",m_ramCase);
 		SmartDashboard::PutNumber("Medium Ramrod Fire Case: ",m_medRamCase);
 		
-		SmartDashboard::PutNumber("Arm Actual Position: ", m_arm->GetAngle());
-		SmartDashboard::PutNumber("Arm PID Output: ", m_arm->PIDOutput());
+		SmartDashboard::PutNumber("Arm Actual Position: ", m_armEncoder->GetDistance());
+		SmartDashboard::PutNumber("Arm PID Output: ", m_armEncoder->PIDGet());
 		
 		SmartDashboard::PutNumber("lEncoder: ",m_rEncode->GetDistance());
 		SmartDashboard::PutNumber("rEncoder: ",m_lEncode->GetDistance());
