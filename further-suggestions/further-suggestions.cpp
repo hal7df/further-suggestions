@@ -263,9 +263,207 @@ public:
 		AutonDBSteps = 1;
 		AutonSteps = 0;
 	}
+
+	/********************************** Init Routines *************************************/
+
+
+	void RobotInit() {
+	  
+	}
 	
-	void AutonDBRebound(){
-		//RamFire();
+	void DisabledInit() {
+		autonChoice = AutonDFshoot;
+		m_buttonTimer->Reset();
+	}
+
+	void AutonomousInit() {
+		// Auton Steps
+		AutonDBSteps = 1;
+		m_arm->Reset();
+		m_ramEncode->Reset();
+		m_rEncode->Reset();
+		m_lEncode->Reset();
+		m_ramCase = -1;
+		m_medRamCase = -1;
+		m_shifters -> Set(true);
+		Drive_Status = false;
+		m_bArm -> Set(false);
+	}
+
+	void TeleopInit() {
+		m_shifters -> Set(false);
+		m_ramCase = -1;
+		m_medRamCase = -1;
+		m_ramInit = false;
+		m_ramTime->Stop();
+		m_ramTime->Start();
+		m_ramTime->Reset();
+		m_rEncode->Reset();
+		m_lEncode->Reset();
+		m_arm->Reset();
+		m_arm->PIDDisable();
+	}
+	
+	void TestInit () {
+		
+	}
+
+	/********************************** Periodic Routines *************************************/
+	void DisabledPeriodic()  {
+		char autonNm [21];
+		
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.2-18-14 v1.0");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"  ||  ||  __  -----  ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"  ||--|| /  \   |    ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"  ||  || \__/   |    ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"        Auton:       ");
+		
+		if (m_buttonTimer->Get() == 0.0)
+		{
+			if (m_operator->GetRawButton(BUTTON_A))
+			{
+				autonChoice = AutonDFshoot;
+				m_buttonTimer->Start();
+			}
+			else if (m_operator->GetRawButton(BUTTON_B))
+			{
+				autonChoice = AutonCheckHotright;
+				m_buttonTimer->Start();
+			}
+			else if (m_operator->GetRawButton(BUTTON_X))
+			{
+				autonChoice = AutonCheckHotleft;
+				m_buttonTimer->Start();
+			}
+			else if (m_operator->GetRawButton(BUTTON_Y))
+			{
+				autonChoice = AutonDBrebound;
+				m_buttonTimer->Start();
+			}
+			else if (m_operator->GetRawButton(BUTTON_RB))
+			{
+				autonChoice = AutonDf;
+				m_buttonTimer->Start();
+			}
+		}
+		
+		if (m_buttonTimer->HasPeriodPassed(0.1))
+		{
+			m_buttonTimer->Stop();
+			m_buttonTimer->Reset();
+		}
+		
+		switch (autonChoice)
+		{
+		case AutonDBrebound:
+			autonNm = "      DB 2 Ball      ";
+			break;
+		case AutonDFshoot:
+			autonNm = "      DF Shoot       ";
+			break;
+		case AutonCheckHotleft:
+			autonNm = "   Check Left Hot    ";
+			break;
+		case AutonCheckHotright:
+			autonNm = "   Check Right Hot   ";
+			break;
+		case AutonDoNothing:
+			autonNm = "      DISABLED       ";
+			break;
+		case AutonDf:
+			autonNm = "    Drive Forward    ";
+			break;
+		}
+		
+		if (m_operator->GetRawButton(BUTTON_BACK) && autonChoice != AutonDoNothing)
+		{
+			if (m_selectorCountdown > 0)
+			{
+				autonNm = "DISABLING..."+m_selectorCountdown;
+				m_selectorCountdown--;
+			}
+			else
+			{
+				autonNm = "DISABLING...RELEASE";
+			}
+		}
+		else if (m_selectorCountdown == 0)
+		{
+			autonNm = "      DISABLED       ";
+			autonChoice = AutonDoNothing;
+			m_selectorCountdown = 100;
+		}
+		
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"%s",autonNm);
+		
+		if (m_operator->GetRawButton(BUTTON_START))
+		{
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"A: DF Shoot          ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"B: Check Left Hot    ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"X: Check Right Hot   ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Y: Drive Back 2 Ball ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"RB: Drive Forward    ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"Back (HOLD): Disable ");
+		}
+		
+		m_dsLCD->UpdateLCD();
+	}
+
+	void AutonomousPeriodic() {
+		switch (autonChoice)
+		{
+		case AutonDf:
+			AutonDF();
+			break;
+		case AutonDFshoot:
+			AutonDFShoot();
+			break;
+		case AutonDBrebound:
+			AutonDBRebound();
+			break;
+		case AutonCheckHotleft:
+			AutonCheckHotLeft();
+			break;
+		case AutonCheckHotright:
+			AutonCheckHotRight();
+			break;
+		}
+	}
+
+	
+	void TeleopPeriodic() {
+		ManageCompressor();
+		TeleopDrive();
+		RamrodInit();
+		RamFire();
+		MedRamFire();
+		RamrodOverride();
+		TeleopArm();
+		TeleopBGrabber();
+		//TeleopRanrod();
+		PrintData();
+		// TestArm();
+		
+	}
+	
+
+	
+	void TestPeriodic () {
+		ManageCompressor();
+		TestArm();
+		TestDrive();
+		TestBGrabber();
+		TestRamMotion();
+		TestRamLock();
+		PrintData();
+	}
+
+/********************************** External Routines *************************************/
+
+	/*********************** AUTONOMOUS FUNCTIONS ****************************/
+	
+		void AutonDBRebound(){
+		RamFire();
 		switch(AutonDBSteps) {
 		case 1:
 			
@@ -422,202 +620,7 @@ public:
 	void AutonDF(){
 		AutonStraightDrive(-1,32* REV_IN);
 	}
-	/********************************** Init Routines *************************************/
 
-
-	void RobotInit() {
-	  
-	}
-	
-	void DisabledInit() {
-		autonChoice = AutonDFshoot;
-		m_buttonTimer->Reset();
-	}
-
-	void AutonomousInit() {
-		// Auton Steps
-		AutonDBSteps = 1;
-		m_arm->Reset();
-		m_ramEncode->Reset();
-		m_rEncode->Reset();
-		m_lEncode->Reset();
-		m_ramCase = -1;
-		m_medRamCase = -1;
-		m_shifters -> Set(true);
-		Drive_Status = false;
-		m_bArm -> Set(false);
-	}
-
-	void TeleopInit() {
-		m_shifters -> Set(false);
-		m_ramCase = -1;
-		m_medRamCase = -1;
-		m_ramInit = false;
-		m_ramTime->Stop();
-		m_ramTime->Start();
-		m_ramTime->Reset();
-		m_rEncode->Reset();
-		m_lEncode->Reset();
-		m_arm->Reset();
-		m_arm->PIDDisable();
-	}
-	
-	void TestInit () {
-		
-	}
-
-	/********************************** Periodic Routines *************************************/
-	void DisabledPeriodic()  {
-		char autonNm [21];
-		
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.2-18-14 v0.9");
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"  ||  ||  __  -----  ");
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"  ||--|| /  \   |    ");
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"  ||  || \__/   |    ");
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"        Auton:       ");
-		
-		if (m_buttonTimer->Get() == 0.0)
-		{
-			if (m_operator->GetRawButton(BUTTON_A))
-			{
-				autonChoice = AutonDFshoot;
-				m_buttonTimer->Start();
-			}
-			else if (m_operator->GetRawButton(BUTTON_B))
-			{
-				autonChoice = AutonCheckHotright;
-				m_buttonTimer->Start();
-			}
-			else if (m_operator->GetRawButton(BUTTON_X))
-			{
-				autonChoice = AutonCheckHotleft;
-				m_buttonTimer->Start();
-			}
-			else if (m_operator->GetRawButton(BUTTON_Y))
-			{
-				autonChoice = AutonDBrebound;
-				m_buttonTimer->Start();
-			}
-			else if (m_operator->GetRawButton(BUTTON_RB))
-			{
-				autonChoice = AutonDf;
-				m_buttonTimer->Start();
-			}
-		}
-		
-		if (m_buttonTimer->HasPeriodPassed(0.1))
-		{
-			m_buttonTimer->Stop();
-			m_buttonTimer->Reset();
-		}
-		
-		switch (autonChoice)
-		{
-		case AutonDBrebound:
-			autonNm = "      DB 2 Ball      ";
-			break;
-		case AutonDFshoot:
-			autonNm = "      DF Shoot       ";
-			break;
-		case AutonCheckHotleft:
-			autonNm = "   Check Left Hot    ";
-			break;
-		case AutonCheckHotright:
-			autonNm = "   Check Right Hot   ";
-			break;
-		case AutonDoNothing:
-			autonNm = "      DISABLED       ";
-			break;
-		case AutonDf:
-			autonNm = "    Drive Forward    ";
-			break;
-		}
-		
-		if (m_operator->GetRawButton(BUTTON_BACK) && autonChoice != AutonDoNothing)
-		{
-			if (m_selectorCountdown > 0)
-			{
-				autonNm = "DISABLING..."+m_selectorCountdown;
-				m_selectorCountdown--;
-			}
-			else
-			{
-				autonNm = "DISABLING...RELEASE";
-			}
-		}
-		else if (m_selectorCountdown == 0)
-		{
-			autonNm = "      DISABLED       ";
-			autonChoice = AutonDoNothing;
-			m_selectorCountdown = 100;
-		}
-		
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"%s",autonNm);
-		
-		if (m_operator->GetRawButton(BUTTON_START))
-		{
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"A: DF Shoot");
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"B: Check Left");
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"X: Check Right");
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Y: DB 2 Ball");
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"RB: Drive Forward");
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"Back (HOLD): Disable");
-		}
-		
-		m_dsLCD->UpdateLCD();
-	}
-
-	void AutonomousPeriodic() {
-		switch (autonChoice)
-		{
-		case AutonDf:
-			AutonDF();
-			break;
-		case AutonDFshoot:
-			AutonDFShoot();
-			break;
-		case AutonDBrebound:
-			AutonDBRebound();
-			break;
-		case AutonCheckHotleft:
-			AutonCheckHotLeft();
-			break;
-		case AutonCheckHotright:
-			AutonCheckHotRight();
-			break;
-		}
-	}
-
-	
-	void TeleopPeriodic() {
-		ManageCompressor();
-		TeleopDrive();
-		RamrodInit();
-		RamFire();
-		MedRamFire();
-		RamrodOverride();
-		TeleopArm();
-		TeleopBGrabber();
-		//TeleopRanrod();
-		PrintData();
-		// TestArm();
-		
-	}
-	
-
-	
-	void TestPeriodic () {
-		ManageCompressor();
-		TestArm();
-		TestDrive();
-		TestBGrabber();
-		TestRamMotion();
-		TestRamLock();
-		PrintData();
-	}
-
-/********************************** Miscellaneous Routines *************************************/
-	
 	/*********************** TELEOP FUNCTIONS **************************/
 	
 	void TeleopDrive()
