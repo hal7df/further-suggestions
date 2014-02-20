@@ -172,7 +172,6 @@ private:
 	
 	//Timers
 	Timer *m_ramTime;
-	Timer *m_bGrabberTime;
 	Timer *m_autonTime;
 	
 	// Counter
@@ -307,7 +306,6 @@ public:
 		
 		//Timers
 		m_ramTime = new Timer;
-		m_bGrabberTime = new Timer;
 		m_autonTime = new Timer;
 		
 		m_ramCase = -1;
@@ -386,7 +384,6 @@ public:
 		RamrodOverride();
 		TeleopArm();
 		TeleopBGrabber();
-		//TeleopRanrod();
 		PrintData();
 		// TestArm();
 		
@@ -579,16 +576,8 @@ public:
 		}
 		
 		//BALL CATCH
-		if (m_operator->GetRawButton(BUTTON_BACK) && m_bGrabberTime->Get() > 0.1) {
-			// Timer
-			m_bGrabberTime->Stop();
-			m_bGrabberTime->Reset();
-			
+		if (m_operator->GetButtonPress(BUTTON_BACK)) {			
 			m_catch->Set(!m_catch->Get());
-		}
-		else if (m_operator->GetRawButton(BUTTON_BACK)) {
-			m_bGrabberTime->Reset();
-			m_bGrabberTime->Start();
 		}
 /*
 		//BALL CATCH (#Sweg)
@@ -614,16 +603,8 @@ public:
 		}
 		*/
 		//bArm OPEN / CLOSE
-		if (m_operator->GetRawButton(BUTTON_START) && m_bGrabberTime->Get() > 0.1) {
-			// Timer
-			m_bGrabberTime->Stop();
-			m_bGrabberTime->Reset();
-			
+		if (m_operator->GetButtonPress(BUTTON_START)) {
 			m_bArm->Set(!m_bArm->Get());
-		}
-		else if (m_operator->GetRawButton(BUTTON_START)) {
-			m_bGrabberTime->Reset();
-			m_bGrabberTime->Start();
 		}
 		
 	}

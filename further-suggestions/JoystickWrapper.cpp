@@ -3,11 +3,15 @@
 JoystickWrapper::JoystickWrapper (Joystick* gamepad) {
 	m_gamepad = gamepad;
 	m_timer = new Timer;
+	
+	m_timer->Reset();
 }
 
 JoystickWrapper::JoystickWrapper(int gamepad) {
 	m_gamepad = new Joystick (gamepad);
 	m_timer = new Timer;
+	
+	m_timer->Reset();
 }
 
 float JoystickWrapper::adjust (float input) {
