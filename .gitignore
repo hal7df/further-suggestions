@@ -6,6 +6,10 @@
 # Built .d files
 *.d
 
+# Linux build stuff
+
+build/
+
 # Code::Blocks stuff
 *.cbp
 *.layout

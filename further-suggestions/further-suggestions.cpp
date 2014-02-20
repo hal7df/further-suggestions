@@ -767,6 +767,8 @@ public:
 	}
 	void AutonStraightDrive(double output, double distance)
 		{
+		  
+		SmartDashboard::PutNumber("Straight Distance: ",distance);
 			float comp_spd = 0.05;
 		    if (fabs(m_rEncode -> GetDistance()) < fabs(distance)){
 		    	if (m_rEncode->GetDistance() + 10 > m_lEncode->GetDistance())
@@ -949,7 +951,6 @@ public:
 		SmartDashboard::PutNumber("lEncoder: ",m_rEncode->GetDistance());
 		SmartDashboard::PutNumber("rEncoder: ",m_lEncode->GetDistance());
 		SmartDashboard::PutBoolean("Drive Status: ", Drive_Status);
-		SmartDashboard::PutNumber("Straight Distance: ",distance);
 		
 		// Auton
 		SmartDashboard::PutNumber("Auton Step: ", AutonDBSteps);
