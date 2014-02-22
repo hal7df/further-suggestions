@@ -8,10 +8,10 @@
 // With Object
 ArmWrapper::ArmWrapper (SpeedController* lArm, SpeedController* rArm, Encoder* armAngle, DigitalInput* armLimSwitch) {
 	m_lArm = lArm;
-	m_rArm = rArm;
+	// m_rArm = rArm;
 	m_armAngle = armAngle;
 	m_armLimSwitch = armLimSwitch;
-	
+
 	// ----- Start PID -----
 	PID = new PIDController (ARM_P, ARM_I, ARM_D, m_armAngle, this);
 	PIDFlag = false;
@@ -26,15 +26,10 @@ ArmWrapper::ArmWrapper (SpeedController* lArm, SpeedController* rArm, Encoder* a
 // With Channel
 ArmWrapper::ArmWrapper(int lArm, int rArm, int armAngle1, int armAngle2, int armLimSwitch) {
 	m_lArm = new Talon(lArm);
-#ifdef PRAC_BOT
-	m_rArm = new Talon(rArm);
-#endif
-#ifdef COMP_BOT
-	m_rArm = new Talon(2,1);
-#endif
+	// m_rArm = new Talon(rArm);
 	m_armAngle = new Encoder(armAngle1, armAngle2, true);
 	m_armLimSwitch = new DigitalInput(armLimSwitch);
-	
+
 	// ----- Start PID -----
 	PID = new PIDController (ARM_P, ARM_I, ARM_D, m_armAngle, this);
 	PIDFlag = false;
@@ -50,10 +45,10 @@ ArmWrapper::ArmWrapper(int lArm, int rArm, int armAngle1, int armAngle2, int arm
 // With Channel and reverse direction
 ArmWrapper::ArmWrapper(int lArm, int rArm, int armAngle1, int armAngle2, bool reverse, int armLimSwitch) {
 	m_lArm = new Talon(lArm);
-	m_rArm = new Talon(rArm);
+	// m_rArm = new Talon(rArm);
 	m_armAngle = new Encoder(armAngle1, armAngle2, reverse);
 	m_armLimSwitch = new DigitalInput(armLimSwitch);
-	
+
 	// ----- Start PID -----
 	PID = new PIDController (ARM_P, ARM_I, ARM_D, m_armAngle, this);
 	PIDFlag = false;
@@ -68,7 +63,7 @@ ArmWrapper::ArmWrapper(int lArm, int rArm, int armAngle1, int armAngle2, bool re
 // ----- Control Motors -----
 void ArmWrapper::Set (float speed) {
 	m_lArm->Set (-speed);
-	m_rArm->Set (speed);
+	// m_rArm->Set (speed);
 }
 
 // ----- PID -----
@@ -89,7 +84,7 @@ void ArmWrapper::PIDDisable () {
 }
 
 void ArmWrapper::PIDWrite(float output) {
-	Set(-output);
+	Set(output);
 }
 
 // ----- Control Encoder -----

@@ -1,4 +1,4 @@
-	#include "cameraHandler.h"
+#include "cameraHandler.h"
 #define TWO_IMAGES
 	CameraHandler::CameraHandler(AxisCamera *camera, DriverStationLCD *m_dsLCD, Relay *relay)	
 	{
@@ -11,6 +11,7 @@
 		this->camera = camera;
 		this->m_dsLCD = m_dsLCD;
 		this->light = relay;
+		this->m_ds = DriverStation::GetInstance();
 	}
 	
 	bool particleSort (ParticleAnalysisReport i, ParticleAnalysisReport j) {return (i.particleArea > j.particleArea);}

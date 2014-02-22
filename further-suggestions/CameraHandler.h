@@ -33,7 +33,9 @@
 		double getBallX();
 		
 	private:
+		
 		AxisCamera *camera;
+		DriverStation *m_ds;
 		DriverStationLCD *m_dsLCD;
 		ColorImage *img;
 		ColorImage *img2;
