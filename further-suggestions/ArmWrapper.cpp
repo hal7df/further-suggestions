@@ -12,6 +12,10 @@ ArmWrapper::ArmWrapper (SpeedController* lArm, SpeedController* rArm, Encoder* a
 	m_armAngle = armAngle;
 	m_armLimSwitch = armLimSwitch;
 	
+	// ----- Start PID -----
+	PID = new PIDController (ARM_P, ARM_I, ARM_D, m_armAngle, this);
+	PIDFlag = false;
+	
 	// ----- Set Conf -----
 	c_distPerPulse = 1.0;
 	c_maxPeriod = 1.0;
@@ -33,6 +37,7 @@ ArmWrapper::ArmWrapper(int lArm, int rArm, int armAngle1, int armAngle2, int arm
 	
 	// ----- Start PID -----
 	PID = new PIDController (ARM_P, ARM_I, ARM_D, m_armAngle, this);
+	PIDFlag = false;
 	
 	// ----- Set Conf -----
 	c_distPerPulse = 1.0;
@@ -48,6 +53,10 @@ ArmWrapper::ArmWrapper(int lArm, int rArm, int armAngle1, int armAngle2, bool re
 	m_rArm = new Talon(rArm);
 	m_armAngle = new Encoder(armAngle1, armAngle2, reverse);
 	m_armLimSwitch = new DigitalInput(armLimSwitch);
+	
+	// ----- Start PID -----
+	PID = new PIDController (ARM_P, ARM_I, ARM_D, m_armAngle, this);
+	PIDFlag = false;
 	
 	// ----- Set Conf -----
 	c_distPerPulse = 1.0;
@@ -69,10 +78,14 @@ void ArmWrapper::SetAngle (float angle) {
 
 void ArmWrapper::PIDEnable () {
 	PID->Enable();
+	PIDFlag = true;
 }
 
 void ArmWrapper::PIDDisable () {
-	PID->Disable();
+	if (PIDFlag) {
+		PID->Disable();
+		PIDFlag = false;
+	}
 }
 
 void ArmWrapper::PIDWrite(float output) {

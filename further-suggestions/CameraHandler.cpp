@@ -18,6 +18,15 @@
 	
 	double CameraHandler::getCenter()
 	{
+		unsigned x,y;
+		
+		int largestWidth;
+		int largestHeight[2];
+		int largestWidthVal, largestHeightVal;
+		
+		BinaryImage* binImg;
+		vector<ParticleAnalysisReport>* particles;
+		
 		//m_dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "Test");
 		//m_dsLCD->UpdateLCD();
 		//Get new camera image
@@ -31,7 +40,7 @@
 		
 		//Perform HSLThreshold to pull out only blue LED reflection of targets into BinaryImage
 		//BinaryImage* binImg = img->ThresholdHSL(202, 255, 55, 255, 55, 129);      //RED LED WORKS TERRRIBLY!!!!
-		BinaryImage* binImg = img->ThresholdHSL(52, 255, 71, 188, 76, 219);      //RED LED WORKS TERRRIBLY!!!!
+		binImg = img->ThresholdHSL(52, 255, 71, 188, 76, 219);      //RED LED WORKS TERRRIBLY!!!!
 		//BinaryImage* binImg = img->ThresholdHSL(57, 255, 79, 255, 51, 255);  //BLUE LED
 		//BinaryImage* binImg = img->ThresholdHSL(159, 255, 0, 255, 71, 255);  //RED LED
 		//Perform Morphology on image to remove noise/unwanted particles.  Also fills in incomplete particles.
@@ -39,61 +48,50 @@
 		
 		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_DILATE);
 		//Perform particle analysis on BinaryImage, creates vector with all particles found
-		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
+		particles = binImg->GetOrderedParticleAnalysisReports();
 		
 		//Print numbers of particles found to driver station
 		//m_dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "# Parts:%d    ",particles->size());
 		//m_dsLCD->UpdateLCD();
 		if(particles->size() > 1 || particles->size() < 30)
-		{
+		{// Sort by size
+			sort(particles->begin(), particles->end(), particleSort);
 			
-			sort(particles->begin(),particles->end(),particleSort);
+			// Initialize
+			y=0;
 			
-			unsigned x;
-			int largestWidth = 0;
-			int largestWidthVal = 0;
+			largestWidth = 0;
+			largestHeight[0] = -1;
+			largestHeight[1] = -1;
+			largestHeightVal = 0;
+			largestWidthVal = 0;
+			largestHeightVal = 10;
 			
-			for (x = 0; ((x < 3) && (x < particles->size())); x++)
-			{
-				if ((*particles)[x].imageWidth > largestWidthVal)
-				{
+			for (x=0; (x < 3 &&  x < particles->size()); x++) {
+				// Find tallest
+				if ((*particles)[x].boundingRect.height > largestHeightVal) {
+					largestHeight[y] = x;
+					largestHeightVal = (*particles)[x].boundingRect.height;
+					y++;
+				}
+				
+				// Find Fattest
+				if ((*particles)[x].boundingRect.width > largestWidthVal) {
 					largestWidth = x;
-					largestWidthVal = (*particles)[x].imageWidth;
+					largestWidthVal = (*particles)[x].boundingRect.width;
 				}
 			}
 			
-			int distance;
-			int smallestDistance = 0;
-			int smallestDistanceVal = 999;
-			
-			for (x = 0; ((x < 3) && (x < particles->size())); x++)
-			{
-				distance = abs((*particles)[x].center_mass_x - (*particles)[largestWidth].center_mass_x);
-				if (distance < smallestDistanceVal)
-				{
-					smallestDistance = x;
-					smallestDistanceVal = distance;
-				}
+			// Detect Which Is Hot And Return Normalized Value of X (-1.0 - 1.0)
+			if (fabs((*particles)[largestHeight[0]].center_mass_x - (*particles)[largestWidth].center_mass_x) < fabs((*particles)[largestHeight[1]].center_mass_x - (*particles)[largestWidth].center_mass_x)) {
+				return (*particles)[largestHeight[0]].center_mass_x_normalized;
+			} else {
+				return (*particles)[largestHeight[1]].center_mass_x_normalized;
 			}
-			
-			//dash->PutString("test","hi");
-			//dash->PutDouble("Area 1:",(*particles)[1].particleArea);
-			//dash->PutDouble("Area 2:",(*particles)[2].particleArea);
-			//dash->PutDouble("Area 3:",(*particles)[3].particleArea);
-			//dash->PutDouble("Area 4:",(*particles)[4].particleArea);
-							
-			//Prints X center of largest particle found
-			//m_dsLCD->Printf(DriverStationLCD::kUser_Line1, 1, "%d     %d",fourLargest[0],fourLargest[1]);
-			//m_dsLCD->Printf(DriverStationLCD::kUser_Line2, 1, "%f",(float)((*particles)[highestY].center_mass_y));
-			//m_dsLCD->Printf(DriverStationLCD::kUser_Line3, 1, "High Y: %d",highestY);
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line5, 1, "Cen X Norm:%f",(float)((*particles)[smallestDistance].center_mass_x_normalized));
-			//m_dsLCD->Printf(DriverStationLCD::kUser_Line6, 1, "%d %d %d",(*particles)[0].center_mass_y,(*particles)[1].center_mass_y,(*particles)[2].center_mass_y);
-			//m_dsLCD->UpdateLCD();
-			
-			//Returns the center of mass of the largest particle found (double)
-			return (*particles)[smallestDistance].center_mass_x_normalized;	
 		}
-		else{return(0);}
+		else{
+			return 0;
+		}
 	}
 	
 	state_t CameraHandler::getHotGoal () 
@@ -173,4 +171,65 @@
 	{
 		return getHotGoal() == kRight;
 	}
-
+	
+	double CameraHandler::getBallX ()
+	{
+		unsigned x;
+		
+		int ballNum;
+		double largestArea;
+		int sizeRatio;
+		
+		BinaryImage* binImg;
+		vector<ParticleAnalysisReport>* particles;
+		
+		// ----- Get Image -----
+		camera->GetImage(img);
+		
+		// ----- Filter out background -----
+		binImg = img->ThresholdHSL(148, 195, 88, 245, 0, 179);
+		
+		// Make picture clear
+		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_PCLOSE);
+		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_DILATE);
+		
+		particles = binImg->GetOrderedParticleAnalysisReports(); 
+		
+		if (particles->size() > 0 && particles->size() < 30)
+		{
+			sort(particles->begin(),particles->end(),particleSort);
+			
+			//Find ball
+			
+			largestArea = 25.0;
+			ballNum = -1;
+			
+			for (x = 0; ((x < particles->size()) && x < 5); x++)
+			{
+				sizeRatio = (*particles)[x].boundingRect.height/(*particles)[x].boundingRect.width;
+				
+				if (((*particles)[x].particleArea > largestArea) && (sizeRatio > 0.75 && sizeRatio < 1.25))
+				{
+					largestArea = (*particles)[x].particleArea;
+					ballNum = x;
+				}
+			}
+			
+			if (ballNum == -1)
+			{
+				return -2.0;
+			}
+			else
+			{
+				return (*particles)[x].center_mass_x_normalized;
+			}
+		}
+		else {
+			return -3.0;
+		}
+		
+	}
+	
+	
+	
+	

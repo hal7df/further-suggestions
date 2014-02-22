@@ -15,7 +15,8 @@
 		DigitalInput* m_armLimSwitch;
 		
 		// PID
-		// PIDController* PID;
+		PIDController* PID;
+		bool PIDFlag;
 		
 		// Config
 		double c_distPerPulse;
@@ -25,11 +26,6 @@
 		void mainConstructor (SpeedController* lArm, SpeedController* rArm, Encoder* armAngle, DigitalInput* armLimSwitch);
 		
 	public:
-		// PID Constroller
-		// PID
-		PIDController* PID;
-		
-		
 		// Constructor
 		// (Left Arm, Right Arm, Encoder, Dist / Pulse, Max Period)
 		ArmWrapper (SpeedController* lArm, SpeedController* rArm, Encoder* armAngle, DigitalInput* armLimSwitch);
