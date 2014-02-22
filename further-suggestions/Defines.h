@@ -54,10 +54,10 @@
 
 #ifdef CompetitionBot
 	//Place competition bot values here
-	#define FLOOR_PICKING_POS 1
+	#define FLOOR_PICKING_POS 383
 	#define MED_SHOOT_POS 1
-	#define LONG_SHOOT_POS 1
-	#define CATCH_POS 1
+	#define LONG_SHOOT_POS -150
+	#define CATCH_POS -100
 	#define BGRABBER_SAFE 3
 	#define AUTON_SHOOT_POS 1
 
@@ -75,7 +75,7 @@
 
 	// RAMROD
 	#define RAM_LOCK_POSITION 900
-	#define RAM_MID_POSITION 600
+	#define RAM_MID_POSITION 450
 
 	//Special PWMs
 	#define ROLLER_PWM 7
