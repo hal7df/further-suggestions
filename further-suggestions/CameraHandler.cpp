@@ -188,7 +188,10 @@
 		camera->GetImage(img);
 		
 		// ----- Filter out background -----
-		binImg = img->ThresholdHSL(148, 195, 88, 245, 0, 179);
+		if (m_ds->GetAlliance() == DriverStation::kBlue)
+			binImg = img->ThresholdHSL(148, 195, 88, 245, 0, 179);
+		else
+			binImg = img->ThresholdHSL(236, 255, 104, 255, 14, 79);
 		
 		// Make picture clear
 		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_PCLOSE);
