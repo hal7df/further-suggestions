@@ -241,6 +241,8 @@
 		double largestArea;
 		int sizeRatio;
 
+		double objAngle;
+
 		BinaryImage* binImg;
 		vector<ParticleAnalysisReport>* particles;
 
@@ -279,11 +281,10 @@
 				}
 			}
         }
-            double camAngle;
 
-            camAngle = 0.5*((*particles)[ballNum].boundingRect.width)*(47/(*particles)[ballNum].imageWidth);
+            objAngle = 0.5*((*particles)[ballNum].boundingRect.width)*(CAMERA_ANGLE/(*particles)[ballNum].imageWidth);
 
-            return 1/tan(camAngle*(M_PI/180));
+            return 1/tan(objAngle);
     }
 
 
