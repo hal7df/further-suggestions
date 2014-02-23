@@ -31,6 +31,7 @@
 		
 		// Get Ball
 		double getBallX();
+		double GetDistanceToBall();
 		
 	private:
 		
