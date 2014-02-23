@@ -281,7 +281,7 @@
         }
             double camAngle;
 
-            camAngle = ((*particles)[ballNum].boundingRect.width)*(47/(*particles)[ballNum].imageWidth);
+            camAngle = 0.5*((*particles)[ballNum].boundingRect.width)*(47/(*particles)[ballNum].imageWidth);
 
             return 1/tan(camAngle*(M_PI/180));
     }
