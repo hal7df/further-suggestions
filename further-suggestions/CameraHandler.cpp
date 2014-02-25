@@ -283,6 +283,9 @@
         }
 
             objAngle = 0.5*((*particles)[ballNum].boundingRect.width)*(CAMERA_ANGLE/(*particles)[ballNum].imageWidth);
+            
+            SmartDashboard::PutNumber("Tangent Distance: ", 1/tan(objAngle));
+            SmartDashboard::PutNumber("Other Distance: ", 776.652/(*particles)[ballNum].boundingRect.width);
 
             return 1/tan(objAngle);
     }
