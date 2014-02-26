@@ -50,6 +50,8 @@
 		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_DILATE);
 		//Perform particle analysis on BinaryImage, creates vector with all particles found
 		particles = binImg->GetOrderedParticleAnalysisReports();
+		
+		printf("Particles found: %d",(int)particles->size());
 
 		//Print numbers of particles found to driver station
 		//m_dsLCD->Printf(DriverStationLCD::kUser_Line4, 1, "# Parts:%d    ",particles->size());
@@ -173,13 +175,14 @@
 		return getHotGoal() == kRight;
 	}
 
+	
 	double CameraHandler::getBallX ()
 	{
 		unsigned x;
 
 		int ballNum;
 		double largestArea;
-		int sizeRatio;
+		double sizeRatio;
 
 		BinaryImage* binImg;
 		vector<ParticleAnalysisReport>* particles;
@@ -189,16 +192,18 @@
 
 		// ----- Filter out background -----
 		if (m_ds->GetAlliance() == DriverStation::kBlue)
-			binImg = img->ThresholdHSL(148, 195, 88, 245, 0, 179);
-		else
-			binImg = img->ThresholdHSL(236, 255, 104, 255, 14, 79);
+					binImg = img->ThresholdHSV(160, 184, 120, 255, 14, 233);
+				else
+					binImg = img->ThresholdRGB(88, 255, 0, 74, 0, 31);
 
 		// Make picture clear
 		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_PCLOSE);
-		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_DILATE);
+		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_ERODE);
 
 		particles = binImg->GetOrderedParticleAnalysisReports();
 
+		SmartDashboard::PutNumber("DEBUG Particle size: ", particles->size());
+		
 		if (particles->size() > 0 && particles->size() < 30)
 		{
 			sort(particles->begin(),particles->end(),particleSort);
@@ -207,25 +212,25 @@
 
 			largestArea = 25.0;
 			ballNum = -1;
-
+			
 			for (x = 0; ((x < particles->size()) && x < 5); x++)
 			{
-				sizeRatio = (*particles)[x].boundingRect.height/(*particles)[x].boundingRect.width;
-
+				sizeRatio = (double)(*particles)[x].boundingRect.height/(*particles)[x].boundingRect.width;
+				
 				if (((*particles)[x].particleArea > largestArea) && (sizeRatio > 0.75 && sizeRatio < 1.25))
 				{
 					largestArea = (*particles)[x].particleArea;
 					ballNum = x;
 				}
 			}
-
+			
 			if (ballNum == -1)
 			{
 				return -2.0;
 			}
 			else
 			{
-				return (*particles)[x].center_mass_x_normalized;
+				return (*particles)[ballNum].center_mass_x_normalized;
 			}
 		}
 		else {
@@ -233,15 +238,15 @@
 		}
 
 	}
-          double CameraHandler::GetDistanceToBall ()
+  
+	double CameraHandler::GetDistanceToBall ()
     {
-        	unsigned x;
+		unsigned x;
 
 		int ballNum;
-		double largestArea;
-		int sizeRatio;
-
 		double objAngle;
+		double largestArea;
+		double sizeRatio;
 
 		BinaryImage* binImg;
 		vector<ParticleAnalysisReport>* particles;
@@ -251,15 +256,17 @@
 
 		// ----- Filter out background -----
 		if (m_ds->GetAlliance() == DriverStation::kBlue)
-			binImg = img->ThresholdHSL(148, 195, 88, 245, 0, 179);
-		else
-			binImg = img->ThresholdHSL(236, 255, 104, 255, 14, 79);
+					binImg = img->ThresholdHSV(160, 184, 120, 255, 14, 233);
+				else
+					binImg = img->ThresholdRGB(88, 255, 0, 74, 0, 31);
 
 		// Make picture clear
 		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_PCLOSE);
-		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_DILATE);
+		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_ERODE);
 
 		particles = binImg->GetOrderedParticleAnalysisReports();
+		
+		SmartDashboard::PutNumber("DEBUG Particle size: ", particles->size());
 
 		if (particles->size() > 0 && particles->size() < 30)
 		{
@@ -272,23 +279,24 @@
 
 			for (x = 0; ((x < particles->size()) && x < 5); x++)
 			{
-				sizeRatio = (*particles)[x].boundingRect.height/(*particles)[x].boundingRect.width;
-
+				sizeRatio = (double)(*particles)[x].boundingRect.height/(*particles)[x].boundingRect.width;
+				
 				if (((*particles)[x].particleArea > largestArea) && (sizeRatio > 0.75 && sizeRatio < 1.25))
 				{
 					largestArea = (*particles)[x].particleArea;
 					ballNum = x;
 				}
 			}
-        }
+		}
 
+		if (ballNum >= 0)
+		{
             objAngle = 0.5*((*particles)[ballNum].boundingRect.width)*(CAMERA_ANGLE/(*particles)[ballNum].imageWidth);
-            
-            SmartDashboard::PutNumber("Tangent Distance: ", 1/tan(objAngle));
-            SmartDashboard::PutNumber("Other Distance: ", 776.652/(*particles)[ballNum].boundingRect.width);
 
             return 1/tan(objAngle);
+		}
+		else
+			return -1.0;
     }
-
 
 
