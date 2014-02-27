@@ -19,16 +19,17 @@
 #define RIGHT_X 4
 #define RIGHT_Y 5
 
-//#define PracticeBot
- #define CompetitionBot
+#define PracticeBot
+//#define CompetitionBot
 
 
 #ifdef PracticeBot
 	// Place practice bot values here
-	#define FLOOR_PICKING_POS -380.0
-	#define MED_SHOOT_POS 165
+	#define FLOOR_PICKING_POS 372.0
+	#define MED_SHOOT_POS 111.0
+	#define MED_SHOT_BACK -177.0
 	#define LONG_SHOOT_POS -141
-	#define CATCH_POS 1
+	#define CATCH_POS -1.0
 	#define BGRABBER_SAFE 3
 	#define AUTON_SHOOT_POS 1
 
@@ -45,7 +46,7 @@
 	#define REV_IN 100.0
 
 	// RAMROD
-	#define RAM_LOCK_POSITION 900
+	#define RAM_LOCK_POSITION 930
 	#define RAM_MID_POSITION 800
 
 	//Special PWMs

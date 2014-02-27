@@ -576,9 +576,11 @@ public:
 		}
 		
 		//BALL CATCH
-		if (m_operator->GetButtonPress(BUTTON_BACK)) {			
-			m_catch->Set(!m_catch->Get());
+		if (m_operator->GetRawButton(BUTTON_RB)) {			
+			m_catch->Set(true);
 		}
+		else
+			m_catch->Set(false);
 /*
 		//BALL CATCH (#Sweg)
 		if (m_operator->GetRawButton(BUTTON_BACK)) {
@@ -623,22 +625,27 @@ public:
 		} else if (m_operator->GetRawButton(BUTTON_B)) {
 			// Medium (12ft) Shoot Position
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint (MED_SHOOT_POS);
+			m_armPID->SetSetpoint (MED_SHOT_BACK);
 			m_armPID->Enable();
 			
 		} else if (m_operator->GetRawButton(BUTTON_X)) {
 			// Long (18ft) Shoot Position
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint(LONG_SHOOT_POS);
+			m_armPID->SetSetpoint(MED_SHOOT_POS);
 			m_armPID->Enable();
 			
 		} else if (m_operator->GetRawButton(BUTTON_Y)) {
 			// Catch Position
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint(CATCH_POS);
+			m_armPID->SetSetpoint(0.0);
 			m_armPID->Enable();
 			
-		} 
+		} else if (m_operator->GetRawButton(BUTTON_LB))
+		{
+			m_armPIDFlag = true;
+			m_armPID->SetSetpoint(CATCH_POS);
+			m_armPID->Enable();
+		}
 		else {
 			if (m_armPIDFlag) {
 				m_armPID->Disable();
@@ -903,7 +910,7 @@ public:
 	
 	void RamrodOverride()
 	{
-		if (m_operator->GetRawButton(BUTTON_LB) && m_operator->GetRawButton(BUTTON_RB))
+		if (m_operator->GetRawButton(BUTTON_BACK))
 		{
 			SmartDashboard::PutNumber("Joystick Value: ",m_operator->GetRawAxis(RIGHT_Y));
 			
