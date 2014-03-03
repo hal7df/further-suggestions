@@ -25,7 +25,7 @@
 
 #ifdef PracticeBot
 	// Place practice bot values here
-	#define FLOOR_PICKING_POS 372.0
+	#define FLOOR_PICKING_POS 375.0
 	#define MED_SHOOT_POS 111.0
 	#define MED_SHOT_BACK -177.0
 	#define LONG_SHOOT_POS -141
