@@ -9,11 +9,7 @@
 
 void _GLOBAL__I__Z20FRC_userClassFactoryv();
 
-void _GLOBAL__I__ZN10ArmWrapperC2EP15SpeedControllerS1_P7EncoderP12DigitalInput();
-
 void _GLOBAL__I__ZN12DriveWrapperC2EP15SpeedControllerS1_();
-
-void _GLOBAL__I__ZN15JoystickWrapperC2EP8Joystick();
 
 void _GLOBAL__I__ZN12PrintCommandC2EPKc();
 
@@ -71,9 +67,7 @@ extern void (*_ctors[])();
 void (*_ctors[])() =
     {
     _GLOBAL__I__Z20FRC_userClassFactoryv,
-    _GLOBAL__I__ZN10ArmWrapperC2EP15SpeedControllerS1_P7EncoderP12DigitalInput,
     _GLOBAL__I__ZN12DriveWrapperC2EP15SpeedControllerS1_,
-    _GLOBAL__I__ZN15JoystickWrapperC2EP8Joystick,
     _GLOBAL__I__ZN12PrintCommandC2EPKc,
     _GLOBAL__I__ZN9Scheduler9_instanceE,
     _GLOBAL__I__ZN11WaitCommandC2Ed,
@@ -105,11 +99,7 @@ void (*_ctors[])() =
 
 void _GLOBAL__D__Z20FRC_userClassFactoryv();
 
-void _GLOBAL__D__ZN10ArmWrapperC2EP15SpeedControllerS1_P7EncoderP12DigitalInput();
-
 void _GLOBAL__D__ZN12DriveWrapperC2EP15SpeedControllerS1_();
-
-void _GLOBAL__D__ZN15JoystickWrapperC2EP8Joystick();
 
 void _GLOBAL__D__ZN9Scheduler9_instanceE();
 
@@ -157,9 +147,7 @@ extern void (*_dtors[])();
 void (*_dtors[])() =
     {
     _GLOBAL__D__Z20FRC_userClassFactoryv,
-    _GLOBAL__D__ZN10ArmWrapperC2EP15SpeedControllerS1_P7EncoderP12DigitalInput,
     _GLOBAL__D__ZN12DriveWrapperC2EP15SpeedControllerS1_,
-    _GLOBAL__D__ZN15JoystickWrapperC2EP8Joystick,
     _GLOBAL__D__ZN9Scheduler9_instanceE,
     _GLOBAL__D_wpi_error_s_ModuleIndexOutOfRange,
     _GLOBAL__D__ZN17MotorSafetyHelper12m_headHelperE,
