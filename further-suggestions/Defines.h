@@ -25,9 +25,9 @@
 
 #ifdef PracticeBot
 	// Place practice bot values here
-	#define FLOOR_PICKING_POS 375.0
-	#define MED_SHOOT_POS 111.0
-	#define MED_SHOT_BACK -177.0
+	#define FLOOR_PICKING_POS 363.0
+	#define MED_SHOOT_POS 100.0
+	#define MED_SHOT_BACK -190.0
 	#define LONG_SHOOT_POS -141
 	#define CATCH_POS -1.0
 	#define BGRABBER_SAFE 3
@@ -47,7 +47,7 @@
 
 	// RAMROD
 	#define RAM_LOCK_POSITION 930
-	#define RAM_MID_POSITION 800
+	#define RAM_MID_POSITION 450
 
 	//Special PWMs
 	#define ROLLER_PWM 8
