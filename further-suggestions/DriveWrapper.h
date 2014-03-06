@@ -41,7 +41,7 @@ public:
 	void PIDWrite(float input);
 	double PIDGet();
 private:
-	// ----- Conmponents -----
+	// ----- Components -----
 	RobotDrive* m_robotDrive;
 	Encoder* m_lEncoder;
 	Encoder* m_rEncoder;
@@ -53,10 +53,10 @@ private:
 	double iniLEncoder, iniREncoder;
 	
 	// ----- Flags -----
-	// To Avoid calling disable in loop
-	bool PIDFlag;
 	// TO Avoid initializing ini_angle in loop
 	bool f_angleInitialized;
+	// Check the direction of rotation
+	enum {kLeft, kRight} f_turningDirection;
 };
 
 #endif //DRIVEWRAPPER_H

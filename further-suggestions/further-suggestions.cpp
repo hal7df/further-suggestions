@@ -94,7 +94,8 @@ enum AutonChoice {
 		AutonCheckHotleft,
 		AutonCheckHotright,
 		AutonDoNothing,
-		AutonDf
+		AutonDf,
+		AutonBalltrack
 };
 
 class BuiltinDefaultCode : public IterativeRobot
@@ -205,6 +206,7 @@ private:
 	//Auton Selector Variables
 	AutonChoice autonChoice;
 	int m_selectorCountdown;
+	int m_selectorPage;
 	
 	// Auton Steps
 	int AutonDBSteps;
@@ -340,6 +342,7 @@ public:
 		
 		//Auton Selector Variables
 		m_selectorCountdown = 100;
+		m_selectorPage = 0;
 		
 		// Auton Steps
 		AutonDBSteps = 1;
@@ -403,22 +406,32 @@ public:
 		if (m_operator->GetButtonPress(BUTTON_A))
 		{
 			autonChoice = AutonDFshoot;
+			m_selectorPage = 0;
 		}
 		else if (m_operator->GetButtonPress(BUTTON_B))
 		{
 			autonChoice = AutonCheckHotright;
+			m_selectorPage = 0;
 		}
 		else if (m_operator->GetButtonPress(BUTTON_X))
 		{
 			autonChoice = AutonCheckHotleft;
+			m_selectorPage = 0;
 		}
 		else if (m_operator->GetButtonPress(BUTTON_Y))
 		{
 			autonChoice = AutonDBrebound;
+			m_selectorPage = 0;
 		}
 		else if (m_operator->GetButtonPress(BUTTON_RB))
 		{
 			autonChoice = AutonDf;
+			m_selectorPage = 0;
+		}
+		else if (m_operator->GetButtonPress(BUTTON_LB))
+		{
+			autonChoice = AutonBalltrack;
+			m_selectorPage = 0;
 		}
 		
 		switch (autonChoice)
@@ -441,6 +454,9 @@ public:
 		case AutonDf:
 			autonNm = "    Drive Forward    ";
 			break;
+		case AutonBalltrack:
+			autonNm = "     Ball Tracker    ";
+			break;
 		}
 		
 		if (m_operator->GetRawButton(BUTTON_BACK) && autonChoice != AutonDoNothing)
@@ -454,6 +470,7 @@ public:
 			{
 				autonNm = "DISABLING...RELEASE";
 			}
+			m_selectorPage = 0;
 		}
 		else if (m_selectorCountdown == 0)
 		{
@@ -464,14 +481,33 @@ public:
 		
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"%s",autonNm.c_str());
 		
-		if (m_operator->GetRawButton(BUTTON_START))
+		if (m_operator->GetButtonPress(BUTTON_START) && m_selectorPage == 2)
 		{
+			m_selectorPage = 0;
+		}
+		else if (m_operator->GetButtonPress(BUTTON_START))
+		{
+			m_selectorPage++;
+		}
+		
+		switch (m_selectorPage)
+		{
+		case 1:
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"A: DF Shoot          ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"B: Check Left Hot    ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"X: Check Right Hot   ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Y: Drive Back 2 Ball ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"RB: Drive Forward    ");
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"Back (HOLD): Disable ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"LB: Shoot & Ball Trk ");
+			break;
+		case 2:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"Back (HOLD): Disable ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"                     ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"                     ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"                     ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"                     ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
+			break;
 		}
 		
 		m_dsLCD->UpdateLCD();
@@ -498,6 +534,9 @@ public:
 			break;
 		case AutonCheckHotright:
 			AutonCheckHotRight();
+			break;
+		case AutonBalltrack:
+			//Ball tracker auton
 			break;
 	*/
 		}

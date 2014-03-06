@@ -1,6 +1,7 @@
 	#include "WPILib.h"
 	#include <cmath>
 	#include "nivision.h"
+	#include "Defines.h"
 
 	enum state_t {
 		kNone,
@@ -31,6 +32,7 @@
 		
 		// Get Ball
 		double getBallX();
+		double GetDistanceToBall();
 		
 	private:
 		
