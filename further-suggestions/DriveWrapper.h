@@ -33,14 +33,11 @@ public:
 	DriveRotate (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rEncoder);
 	
 	void SetAngle (double angle);
-	void PIDEneble ();
+	void PIDEnable ();
 	void PIDDisable ();
+	bool IsRotating (double gap);
 	bool IsRotating ();
-	
-	void StartDance (double ini_angle, double max_angle, double min_angle);
-	void DanceEnable ();
-	void DanceDisable ();
-	
+
 	void PIDWrite(float input);
 	double PIDGet();
 private:
@@ -51,18 +48,15 @@ private:
 	
 	// ----- PID -----
 	PIDController* PID;
-	bool PIDFlag;
 	
-	// ----- Dance -----
-	double maxAngle, minAngle;
+	// ----- Values -----
+	double iniLEncoder, iniREncoder;
 	
 	// ----- Flags -----
 	// To Avoid calling disable in loop
 	bool PIDFlag;
 	// TO Avoid initializing ini_angle in loop
-	boo f_angleInitialized;
-	// Check the direction of rotation
-	enum {kLeft, kRight} f_turningDirection;
+	bool f_angleInitialized;
 };
 
 #endif //DRIVEWRAPPER_H

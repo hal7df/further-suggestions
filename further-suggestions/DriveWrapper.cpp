@@ -61,9 +61,10 @@ DriveRotate::DriveRotate (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rE
 void DriveRotate::SetAngle (double angle)
 {
 	// Save Initilized Encoder Values
-	if (f_angleInitialized) {
+	if (!f_angleInitialized) {
 		iniLEncoder = m_lEncoder->GetDistance();
 		iniREncoder = m_rEncoder->GetDistance();
+		f_angleInitialized = true;
 	}
 
 	// Start PID
@@ -72,7 +73,7 @@ void DriveRotate::SetAngle (double angle)
 /*
  * Enable Set Angle PID
  */
-void DriveRotate::PIDEneble()
+void DriveRotate::PIDEnable()
 {
 	PID->Enable();
 	PIDFlag = true;
@@ -87,9 +88,25 @@ void DriveRotate::PIDDisable()
 	if (PIDFlag) {
 		PID->Disable();
 		PIDFlag = false;
+		f_angleInitialized = false;
 	}
 }
 
+/*
+ * Determine if the robot got to set angle
+ * return bool.
+ */
+bool DriveRotate::IsRotating (double gap)
+{
+	double Dleft = iniLEncoder - m_lEncoder->GetDistance();
+	double Dright = iniREncoder - m_rEncoder->GetDistance();
+	
+	return fabs(Dleft - Dright) * DEGREE_FACTOR > gap;
+}
+bool DriveRotate::IsRotating ()
+{
+	return IsRotating (ROTATE_ANGLE_GAP);
+}
 
 // ----- For PID Use -----
 double DriveRotate::PIDGet ()

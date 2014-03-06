@@ -97,11 +97,6 @@ enum AutonChoice {
 		AutonDf
 };
 
-enum CurAlliance {
-	kRed,
-	kBlue
-};
-
 class BuiltinDefaultCode : public IterativeRobot
 {
 private:
@@ -133,6 +128,7 @@ private:
 	
 	//Declare camera light
 	Relay* m_camLight;
+	
 	// PNEUMATICS ****************************************
 	
 	//Declare Compressor
@@ -151,6 +147,7 @@ private:
 	DriveWrapper* m_rDrive;
 	DriveWrapper* m_lDrive;
 	RobotDrive* m_robotDrive;
+	DriveRotate* m_driveRotate;
 	
 	// SENSORS *******************************************
 	
@@ -208,16 +205,12 @@ private:
 	//Auton Selector Variables
 	AutonChoice autonChoice;
 	int m_selectorCountdown;
-	CurAlliance m_alliance;
 	
 	// Auton Steps
 	int AutonDBSteps;
 	int AutonSteps;
-	
-	/*enum AutonDBSteps {
-		DF1=1, ShootAngle1=2, DriveBack=3, DriveBack2=4,ShootAngle2=5, DF2=6
-	} AutonDBSteps;
-		*/	
+	int autondance;
+
 public:
 	
 	
@@ -261,16 +254,6 @@ public:
 		m_catchServo2 = new Servo (9);
 		#endif
 		
-		// DRIVE ABSTRACTION OBJECTS *************************
-		
-		//Initialize drive wrappers
-		m_rDrive = new DriveWrapper (m_rDrive1, m_rDrive2);
-		m_lDrive = new DriveWrapper (m_lDrive1, m_lDrive2);
-		
-		//Initialize robot drive
-		m_robotDrive = new RobotDrive (m_lDrive, m_rDrive);
-		m_robotDrive->SetSafetyEnabled(false);
-		
 		// SENSORS *******************************************
 		
 		//Drive encoders
@@ -313,6 +296,19 @@ public:
 		
 		m_armPID = new PIDController(ARM_P, ARM_I, ARM_D, m_armEncoder, m_armMotor);
 		
+		// DRIVE ABSTRACTION OBJECTS *************************
+				
+		//Initialize drive wrappers
+		m_rDrive = new DriveWrapper (m_rDrive1, m_rDrive2);
+		m_lDrive = new DriveWrapper (m_lDrive1, m_lDrive2);
+		
+		//Initialize robot drive
+		m_robotDrive = new RobotDrive (m_lDrive, m_rDrive);
+		m_robotDrive->SetSafetyEnabled(false);
+		
+		//Initialize Drive Rotate
+		m_driveRotate = new DriveRotate (m_robotDrive, m_lEncode, m_rEncode);
+		
 		// OTHER ABSTRACTION OBJECTS *************************
 		
 		m_arm = new ArmWrapper (6, 8, 5, 6, 10);
@@ -348,6 +344,7 @@ public:
 		// Auton Steps
 		AutonDBSteps = 1;
 		AutonSteps = 0;
+		autondance = 0;
 	}
 
 	/********************************** Init Routines *************************************/
@@ -496,12 +493,13 @@ public:
 		case AutonDBrebound:
 			AutonDBRebound();
 			break;
-		case AutonCheckHotleft:
+	/*	case AutonCheckHotleft:
 			AutonCheckHotLeft();
 			break;
 		case AutonCheckHotright:
 			AutonCheckHotRight();
 			break;
+	*/
 		}
 	}
 
@@ -639,7 +637,7 @@ public:
 			if (Drive_Status){
 				m_arm->SetAngle(MED_SHOOT_POS);
 				m_arm->PIDEnable();
-				if (m_arm->GetAngle() > LONG_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < LONG_SHOOT_POS + AUTON_ANGLE_GAP) {
+				if (m_arm->GetAngle() > MED_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < MED_SHOOT_POS + AUTON_ANGLE_GAP) {
 					m_ramCase = 0;
 					AutonSteps = 1;
 				}
@@ -649,7 +647,7 @@ public:
 		break;
 		}
 	}
-
+/*
 	void AutonCheckHotLeft(){
 		AutonStraightDrive(-1, 32 * REV_IN);
 		RamFire();
@@ -685,10 +683,137 @@ public:
 		break;
 		}
 	}
-
+*/
 	void AutonDF(){
 		AutonStraightDrive(-1,32* REV_IN);
 	}
+/*	
+	void AutonTracker () {
+		double ballX;
+		
+		switch (AutonSteps) {
+		case 0:		// Drive Foward + Arm Set Point
+			// Drive Foward
+			AutonStraightDrive(1,32 * REV_IN);
+			
+			// Arm Set Point
+			m_arm->SetAngle(MED_SHOOT_POS);
+			m_arm->PIDEnable();
+			
+			// Check if arm and drive are ready
+			if (Drive_Status) {
+				m_arm->PIDDisable();
+				AutonSteps++;
+			}
+			break;
+		case 1:		// Move to Center of the Hot Goal + Shoot
+			m_robotDrive->ArcadeDrive(0.0, m_cameraHandler->getCenter());
+			
+			if (fabs(m_cameraHandler->getCenter()) < ROTATE_ANGLE_GAP) {
+				m_ramCase = 0;
+				AutonSteps++;
+			}
+			break;
+		case 2:		// Dance and find Ball
+			// Dance
+			Dance();
+			
+			// Move The Arm to the Pick up position
+			m_arm->SetAngle(FLOOR_PICKING_POS);
+			m_arm->PIDEnable();
+			
+			// Check Ball
+			ballX = m_cameraHandler->getBallX();
+			if (-1.0 < ballX && ballX < 1.0) {
+				// Find The Ball
+				AutonSteps++;
+			}
+			break;
+		case 3:		// Track Ball
+			m_roller->Set(-1.0);
+			ballX = m_cameraHandler->getBallX();
+			if (-1.0 < ballX && ballX < 1.0) {
+			m_robotDrive->ArcadeDrive(0.8, ballX);
+			}
+			else if (-1.0 > ballX && ballX > 1.0){
+				m_autonTime->Start();
+				m_autonTime->Reset();
+				if (m_autonTime-> HasPeriodPassed(1.0)){
+					AutonSteps++;
+				}
+				else{
+					m_robotDrive->ArcadeDrive(1.0,0.0);
+				}
+				
+			}
+			
+			break;
+		case 4:
+			m_robotDrive->TankDrive(-.25,.25);
+			if (-1.0 < ballX && ballX < 1.0) {
+				AutonSteps = 3;
+			}
+			if (m_autonTime-> HasPeriodPassed(2.0)){
+				AutonSteps++;
+			}
+			break;
+		case 5:
+			m_autonTime->Stop();
+			m_arm->SetAngle(MED_SHOOT_POS);
+			m_arm->PIDEnable();
+			if (fabs(m_cameraHandler->getCenter()) < ROTATE_ANGLE_GAP) {
+				m_ramCase = 0;
+				AutonSteps++;
+			break;
+		case 6:
+			break;
+		}
+		}
+	}
+	
+	void Dance(){
+			switch(autondance){
+			case 0:     //
+				if (m_lEncode > m_rEncode){
+					m_driveRotate->SetAngle(61.87 - (.5 * CAMERA_VIEW));
+					m_driveRotate->PIDEnable();
+					if(!m_driveRotate->IsRotating()){
+						autondance = 1;
+						m_driveRotate->PIDDisable();
+					}
+				}
+				else if (m_rEncode > m_lEncode){
+					m_driveRotate->SetAngle(-61.87 + (.5 * CAMERA_VIEW));
+					m_driveRotate->PIDEnable();
+					if(!m_driveRotate->IsRotating()){
+						autondance = 2;
+						m_driveRotate->PIDDisable();
+					}
+				}
+				break;
+
+			case 1:
+				m_driveRotate->SetAngle(-180 + CAMERA_VIEW);
+				m_driveRotate->PIDEnable();
+				if(!m_driveRotate->IsRotating()){
+					autondance = 2;
+					m_driveRotate->PIDDisable();
+	            }
+				break;
+
+			case 2:
+				m_driveRotate->SetAngle(180 - CAMERA_VIEW);
+				m_driveRotate->PIDEnable();
+				if(!m_driveRotate->IsRotating()){
+					autondance = 1;
+					m_driveRotate->PIDDisable();
+	            }
+				break;
+			}
+		}
+*/
+
+	
 	
 	/*********************** TELEOP FUNCTIONS **************************/
 	
@@ -1089,7 +1214,6 @@ public:
 		SmartDashboard::PutNumber("Auton Step: ", AutonDBSteps);
 		SmartDashboard::PutBoolean("Auton Time: ", m_autonTime->Get());
 	}
-	
 };
 
 START_ROBOT_CLASS(BuiltinDefaultCode);

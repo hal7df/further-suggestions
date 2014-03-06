@@ -81,8 +81,8 @@
 	#define ROLLER_PWM 7
 
 	// Drive Rotate
-	#define CAMERA_VIEW_ANGLE 1
+	#define CAMERA_VIEW 1
 	#define DEGREE_FACTOR 1
-	#define INI_ANGLE 28.13
-	#define DIRVE_ROTATE_PID_GAP 5
+	#define ANGLE_TO_HOTGOAL 28.13
+	#define ROTATE_ANGLE_GAP 5
 #endif
