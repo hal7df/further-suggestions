@@ -55,6 +55,7 @@ private:
 	// ----- Flags -----
 	// TO Avoid initializing ini_angle in loop
 	bool f_angleInitialized;
+	bool PIDFlag;
 	// Check the direction of rotation
 	enum {kLeft, kRight} f_turningDirection;
 };

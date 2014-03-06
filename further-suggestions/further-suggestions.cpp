@@ -401,7 +401,7 @@ public:
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"  ||  ||  __  -----  ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"  ||--|| /  \\   |    ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"  ||  || \\__/   |    ");
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"        Auton:       ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"        Auton:       ");
 		
 		if (m_operator->GetButtonPress(BUTTON_A))
 		{
@@ -497,7 +497,7 @@ public:
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"B: Check Left Hot    ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"X: Check Right Hot   ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Y: Drive Back 2 Ball ");
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"RB: Drive Forward    ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"RB: Drive Forward    ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"LB: Shoot & Ball Trk ");
 			break;
 		case 2:
@@ -672,11 +672,11 @@ public:
 		RamFire();
 		switch(AutonSteps){
 		case 0:
-			AutonStraightDrive(-1,32 *REV_IN);		
+			AutonStraightDrive(-1,40 *REV_IN);		
 			if (Drive_Status){
-				m_arm->SetAngle(MED_SHOOT_POS);
+				m_arm->SetAngle(MED_SHOT_BACK);
 				m_arm->PIDEnable();
-				if (m_arm->GetAngle() > MED_SHOOT_POS - AUTON_ANGLE_GAP && m_arm->GetAngle() < MED_SHOOT_POS + AUTON_ANGLE_GAP) {
+				if (m_arm->GetAngle() > MED_SHOT_BACK - AUTON_ANGLE_GAP && m_arm->GetAngle() < MED_SHOT_BACK + AUTON_ANGLE_GAP) {
 					m_ramCase = 0;
 					AutonSteps = 1;
 				}
@@ -724,7 +724,7 @@ public:
 	}
 */
 	void AutonDF(){
-		AutonStraightDrive(-1,32* REV_IN);
+		AutonStraightDrive(-1,40* REV_IN);
 	}
 /*	
 	void AutonTracker () {
