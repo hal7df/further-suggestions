@@ -19,6 +19,8 @@
 #define RIGHT_X 4
 #define RIGHT_Y 5
 
+#define PracticeBot
+//#define CompetitionBot
 //Universal constants
 #define CAMERA_ANGLE 0.82030475
 

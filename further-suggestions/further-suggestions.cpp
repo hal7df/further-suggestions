@@ -7,7 +7,7 @@
 #include "CameraHandler.h"
 
 /**
- * HOTBOT 2014 v1.0 - Build Date: 2/18/14
+ * HOTBOT 2014 v1.0 - Build Date: 3/3/14
  * 
  * See the wiki on the GitHub repository for more information
  * 
@@ -162,8 +162,8 @@ private:
 	//Declare ramrod encoder
 	Encoder *m_ramEncode;
 	
-	//Arm limit switch (we may not end up using this...)
-	// DigitalInput* m_armLimSwitch;
+	//Arm light sensor
+	DigitalInput* m_armReset;
 	
 	// PID CONTROLLERS ***********************************
 	
@@ -196,6 +196,7 @@ private:
 	int countLoop;
 	int armCount;
 	int autonCount;
+	
 	int ramFire;
 	int m_medRamCase;
 	int m_ramCase;
@@ -207,6 +208,10 @@ private:
 	AutonChoice autonChoice;
 	int m_selectorCountdown;
 	int m_selectorPage;
+	double m_armResetPos;
+	bool m_armResetCheck;
+	bool m_armResetFlag [2];
+	
 	
 	// Auton Steps
 	int AutonDBSteps;
@@ -282,6 +287,9 @@ public:
 		m_ramEncode->SetMaxPeriod(1.0);
 		m_ramEncode->Start();
 		
+		//Arm reset light sensor
+		m_armReset = new DigitalInput (11);
+		
 		// PNEUMATICS ****************************************
 		
 		//Initialize Compressor
@@ -339,6 +347,10 @@ public:
 		countLoop = 0;
 		armCount = 0;
 		Drive_Status = false;
+		m_armResetPos = 0;
+		m_armResetCheck = false;
+		m_armResetFlag[0] = false;
+		m_armResetFlag[1] = false;
 		
 		//Auton Selector Variables
 		m_selectorCountdown = 100;
@@ -892,9 +904,11 @@ public:
 		}
 		
 		//BALL CATCH
-		if (m_operator->GetButtonPress(BUTTON_BACK)) {			
-			m_catch->Set(!m_catch->Get());
+		if (m_operator->GetRawButton(BUTTON_RB)) {			
+			m_catch->Set(true);
 		}
+		else
+			m_catch->Set(false);
 /*
 		//BALL CATCH (#Sweg)
 		if (m_operator->GetRawButton(BUTTON_BACK)) {
@@ -939,22 +953,43 @@ public:
 		} else if (m_operator->GetRawButton(BUTTON_B)) {
 			// Medium (12ft) Shoot Position
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint (MED_SHOOT_POS);
+			m_armPID->SetSetpoint (MED_SHOT_BACK);
 			m_armPID->Enable();
 			
 		} else if (m_operator->GetRawButton(BUTTON_X)) {
 			// Long (18ft) Shoot Position
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint(LONG_SHOOT_POS);
+			m_armPID->SetSetpoint(MED_SHOOT_POS);
 			m_armPID->Enable();
 			
+		} else if (m_operator->GetRawButton(BUTTON_Y) && m_operator->GetRawButton(BUTTON_BACK)) {
+				//Reset arm encoder
+				double dirToZero;
+				
+				dirToZero = m_armEncoder->GetDistance()-m_armResetPos;
+				if (fabs(dirToZero) < 5)
+					m_armMotor->Set(0.0);
+				else if (dirToZero < 0)
+					m_armMotor->Set(0.2);
+				else if (dirToZero > 0)
+					m_armMotor->Set(-0.2);
+				
+				SmartDashboard::PutNumber("Direction to Arm Zero: ",dirToZero);
+	
+				ArmReset();
+		
 		} else if (m_operator->GetRawButton(BUTTON_Y)) {
 			// Catch Position
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint(CATCH_POS);
+			m_armPID->SetSetpoint(0.0);
 			m_armPID->Enable();
 			
-		} 
+		} else if (m_operator->GetRawButton(BUTTON_LB))
+		{
+			m_armPIDFlag = true;
+			m_armPID->SetSetpoint(CATCH_POS);
+			m_armPID->Enable();
+		}
 		else {
 			if (m_armPIDFlag) {
 				m_armPID->Disable();
@@ -964,10 +999,40 @@ public:
 			// Control With Joystick
 			m_armMotor->Set(m_operator->GetRawAxis(LEFT_Y));
 		}
-		// Reset Arm
-		// if (m_arm->GetLimSwitch()) {
-			//m_arm->Reset();
-		// }
+		
+		if (!m_operator->GetRawButton(BUTTON_BACK))
+		{
+			if (!m_armReset->Get()&& m_armEncoder->GetRate() < 0 && !m_armResetFlag[0])
+			{
+				if (fabs(m_armEncoder->GetDistance()) > 10)
+				{
+					m_armResetPos = m_armEncoder->GetDistance();
+					m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"ARM RESET NEEDED     ");
+					m_armResetFlag [0] = true;
+				}
+			}
+			else if (!m_armReset->Get() && !m_armResetCheck && m_armEncoder->GetRate() > 0)
+			{
+				if (fabs(m_armEncoder->GetDistance()) > 5)
+				{
+						m_armResetFlag[0] = true;
+						m_armResetCheck = true;
+				}
+			}
+			else if (m_armResetCheck && m_armReset->Get() && m_armEncoder->GetRate() > 0)
+			{
+				m_armResetPos = m_armEncoder->GetDistance();
+				m_armResetCheck = false;
+				
+				m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"ARM RESET NEEDED     ");
+			}
+			else if (m_armResetCheck && m_armReset->Get())
+			{
+				m_armResetCheck = false;
+			}
+		}
+		
+		m_dsLCD->UpdateLCD();
 	}
 		  
 	
@@ -1086,6 +1151,32 @@ public:
 		    	m_robotDrive->TankDrive(0.0,0.0);
 		    }
 		}
+	
+	void ArmReset()
+	{
+		if (!m_armReset->Get() && m_armEncoder->GetRate() < 0 && !m_armResetFlag[1])
+		{
+			m_armEncoder->Reset();
+			m_armResetPos = 0;
+			m_armResetFlag[1] = true;
+			m_armMotor->Set(0.0);
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"                     ");
+		}
+		else if (!m_armReset->Get() && !m_armResetCheck && m_armEncoder->GetRate() > 0)
+		{
+			m_armResetFlag[1] = true;
+			m_armResetCheck = true;
+		}
+		else if (m_armReset->Get() && m_armResetCheck)
+		{
+			m_armEncoder->Reset();
+			m_armResetPos = 0;
+			m_armMotor->Set(0.0);
+			m_armResetCheck = false;
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"                     ");
+		}
+	}
+	
 	void RamrodInit(){
 		if (!m_ramInit)
 		{
@@ -1219,7 +1310,7 @@ public:
 	
 	void RamrodOverride()
 	{
-		if (m_operator->GetRawButton(BUTTON_LB) && m_operator->GetRawButton(BUTTON_RB))
+		if (m_operator->GetRawButton(BUTTON_BACK))
 		{
 			SmartDashboard::PutNumber("Joystick Value: ",m_operator->GetRawAxis(RIGHT_Y));
 			
@@ -1240,6 +1331,7 @@ public:
 		SmartDashboard::PutNumber("Medium Ramrod Fire Case: ",m_medRamCase);
 		
 		SmartDashboard::PutNumber("Arm Actual Position: ", m_armEncoder->GetDistance());
+		SmartDashboard::PutNumber("Arm Rate: ", m_armEncoder->GetRate());
 		SmartDashboard::PutNumber("Arm PID Input: ", m_armEncoder->PIDGet());
 		SmartDashboard::PutNumber("Arm PID Output:",m_armPID->Get());
 		SmartDashboard::PutNumber("Arm Motor Input:",m_operator->GetRawAxis(LEFT_Y));
@@ -1248,6 +1340,10 @@ public:
 		SmartDashboard::PutNumber("lEncoder: ",m_rEncode->GetDistance());
 		SmartDashboard::PutNumber("rEncoder: ",m_lEncode->GetDistance());
 		SmartDashboard::PutBoolean("Drive Status: ", Drive_Status);
+
+		SmartDashboard::PutNumber("Arm Reset Position: ",m_armResetPos);
+		SmartDashboard::PutBoolean("Arm Reset Sensor",m_armReset->Get());
+		SmartDashboard::PutBoolean("Arm Reset Check Flag",m_armResetCheck);
 		
 		// Auton
 		SmartDashboard::PutNumber("Auton Step: ", AutonDBSteps);
