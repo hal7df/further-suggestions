@@ -7,7 +7,7 @@
 #include "CameraHandler.h"
 
 /**
- * HOTBOT 2014 v1.0 - Build Date: 3/3/14
+ * HOTBOT 2014 v1.5 - Build Date: 3/6/14
  * 
  * See the wiki on the GitHub repository for more information
  * 
@@ -407,12 +407,11 @@ public:
 
 	/********************************** Periodic Routines *************************************/
 	void DisabledPeriodic()  {
-		string autonNm;
 		
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.2-18-14 v1.0");
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"  ||  ||  __  -----  ");
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"  ||--|| /  \\   |    ");
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"  ||  || \\__/   |    ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.3-06-14 v1.5");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"  ||   ||  __  ----- ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"  ||--|| /   \\    |  ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"  ||   || \\__/   |   ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"        Auton:       ");
 		
 		if (m_operator->GetButtonPress(BUTTON_A))
@@ -445,29 +444,36 @@ public:
 			autonChoice = AutonBalltrack;
 			m_selectorPage = 0;
 		}
+		else if (m_operator->GetButtonPress(BUTTON_START))
+		{
+			if (m_selectorPage == 2)
+				m_selectorPage = 0;
+			else
+				m_selectorPage++;
+		}
 		
 		switch (autonChoice)
 		{
 		case AutonDBrebound:
-			autonNm = "      DB 2 Ball      ";
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"      DB 2 Ball      ");
 			break;
 		case AutonDFshoot:
-			autonNm = "      DF Shoot       ";
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"      DF Shoot       ");
 			break;
 		case AutonCheckHotleft:
-			autonNm = "   Check Left Hot    ";
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"   Check Left Hot    ");
 			break;
 		case AutonCheckHotright:
-			autonNm = "   Check Right Hot   ";
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"   Check Right Hot   ");
 			break;
 		case AutonDoNothing:
-			autonNm = "      DISABLED       ";
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"      DISABLED       ");
 			break;
 		case AutonDf:
-			autonNm = "    Drive Forward    ";
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"    Drive Forward    ");
 			break;
 		case AutonBalltrack:
-			autonNm = "     Ball Tracker    ";
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"     Ball Tracker    ");
 			break;
 		}
 		
@@ -475,31 +481,21 @@ public:
 		{
 			if (m_selectorCountdown > 0)
 			{
-				autonNm = "DISABLING... "+m_selectorCountdown;
+				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
+				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...%d "+m_selectorCountdown);
 				m_selectorCountdown--;
 			}
 			else
 			{
-				autonNm = "DISABLING...RELEASE";
+				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...RELEASE");
 			}
 			m_selectorPage = 0;
 		}
 		else if (m_selectorCountdown == 0)
 		{
-			autonNm = "      DISABLED       ";
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"      DISABLED       ");
 			autonChoice = AutonDoNothing;
 			m_selectorCountdown = 100;
-		}
-		
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"%s",autonNm.c_str());
-		
-		if (m_operator->GetButtonPress(BUTTON_START) && m_selectorPage == 2)
-		{
-			m_selectorPage = 0;
-		}
-		else if (m_operator->GetButtonPress(BUTTON_START))
-		{
-			m_selectorPage++;
 		}
 		
 		switch (m_selectorPage)
@@ -686,9 +682,9 @@ public:
 		case 0:
 			AutonStraightDrive(-1,40 *REV_IN);		
 			if (Drive_Status){
-				m_arm->SetAngle(MED_SHOT_BACK);
-				m_arm->PIDEnable();
-				if (m_arm->GetAngle() > MED_SHOT_BACK - AUTON_ANGLE_GAP && m_arm->GetAngle() < MED_SHOT_BACK + AUTON_ANGLE_GAP) {
+				m_armPID->SetSetpoint(MED_SHOT_BACK);
+				m_armPID->Enable();
+				if (m_armEncoder->GetDistance() > MED_SHOT_BACK - AUTON_ANGLE_GAP && m_armEncoder->GetDistance() < MED_SHOT_BACK + AUTON_ANGLE_GAP) {
 					m_ramCase = 0;
 					AutonSteps = 1;
 				}
