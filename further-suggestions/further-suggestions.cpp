@@ -1208,9 +1208,16 @@ public:
 			m_ramServo->SetAngle(0);
 			m_ramCase++;
 			m_ramTime->Stop();
+			m_ramTime->Start();
+			m_ramTime->Reset();
 			break;
 		case 3:
-			if (abs(m_ramEncode->GetDistance()) < RAM_LOCK_POSITION)
+			if(m_ramTime->HasPeriodPassed(1.5))
+			{
+				m_ramCase = 5;
+				m_ramTime->Stop();
+			}
+			else if (abs(m_ramEncode->GetDistance()) < RAM_LOCK_POSITION)
 				m_ramMotor->Set(1);
 			else
 				m_ramCase++;
