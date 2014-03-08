@@ -397,7 +397,7 @@ public:
 		m_ramTime->Reset();
 		m_rEncode->Reset();
 		m_lEncode->Reset();
-		m_armEncoder->Reset();
+		//m_armEncoder->Reset();
 		m_arm->PIDDisable();
 	}
 	
@@ -584,9 +584,9 @@ public:
 		switch(AutonDBSteps) {
 		case 1:
 			
-			m_armPID->SetSetpoint(LONG_SHOOT_POS);
+			m_armPID->SetSetpoint(MED_SHOT_BACK);
 			m_armPID->Enable();
-			AutonStraightDrive(-0.7,-32 * REV_IN);
+			AutonStraightDrive(-1,64 *REV_IN);
 			if (Drive_Status){
 				AutonDBSteps = 2;
 			}
@@ -594,12 +594,8 @@ public:
 			
 		case 2:
 			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - LONG_SHOOT_POS));
-			if (fabs(m_armEncoder->GetDistance() - LONG_SHOOT_POS) < AUTON_ANGLE_GAP) {
-				if (m_ramCase == -1)
-				{
-					m_ramCase = 0;
-					//m_ramCase = 5;
-				}
+			if (fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK) < AUTON_ANGLE_GAP && m_ramCase == -1) {
+				m_ramCase = 0;
 			}
 			
 			if (m_ramCase == 5){
@@ -616,62 +612,46 @@ public:
 		case 3:	
 			m_armPID->SetSetpoint(FLOOR_PICKING_POS);
 			m_armPID->Enable();
-			AutonStraightDrive(0.7,30 * REV_IN);
+			AutonStraightDrive(1,76 *REV_IN);
 			m_roller->Set(-1.0);
 			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
 						
-			if ((fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS) < AUTON_ANGLE_GAP) || (m_autonTime->HasPeriodPassed(2.0))){
+			if ((fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS) < AUTON_ANGLE_GAP) && Drive_Status){
 				m_rEncode -> Reset();
 				m_lEncode -> Reset();
-				m_autonTime->Stop();
-				Drive_Status = false;
-				AutonDBSteps = 4;
-			}
-			break;
-		case 4:	
-			AutonStraightDrive(0.7,24 * REV_IN);
-			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
-						
-			if(Drive_Status){
-				m_rEncode -> Reset();
-				m_lEncode -> Reset();
-				AutonDBSteps = 5;
-				Drive_Status = false;
 				m_autonTime->Stop();
 				m_autonTime->Start();
 				m_autonTime->Reset();
+				AutonDBSteps = 4;
+				Drive_Status = false;
+			}
+			break;
+		case 4:	
+			m_roller->Set(0.0);
+			m_armPID->SetSetpoint(MED_SHOT_BACK);
+			m_armPID->Enable();
+			
+			if (m_autonTime->HasPeriodPassed(.25))
+				AutonStraightDrive(-1,76 * REV_IN);
+			
+			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
+						
+			if((fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK) < AUTON_ANGLE_GAP) && Drive_Status){
+				m_rEncode -> Reset();
+				m_lEncode -> Reset();		
+				AutonDBSteps = 5;
+				Drive_Status = false;
 			}
 			break;	
-		
 		case 5:
-			m_armPID->SetSetpoint(LONG_SHOOT_POS);
-			m_armPID->Enable();
-			if(m_autonTime->Get() > 1)
-			{
-				AutonStraightDrive(-0.7, -55 * REV_IN);
-				m_autonTime->Stop();
-			}
-			if (Drive_Status){
+			if (m_ramCase == -1)
+				m_ramCase = 0;
+			else
 				AutonDBSteps = 6;
-				m_robotDrive->TankDrive(0.,0.);
-				m_rEncode -> Reset();
-				m_lEncode -> Reset();
-			}
 			break;
-			
 		case 6:
-			if (fabs(m_armEncoder->GetDistance() - LONG_SHOOT_POS) < AUTON_ANGLE_GAP) {
-				if (m_ramCase == -1)
-				{
-					m_roller->Set(0.0);
-					m_ramCase = 0;
-					AutonDBSteps = 7;
-					//m_ramCase = 5;
-				}
-				
-			}
-			break;
-		case 7:
+			m_armPID->SetSetpoint(0.0);
+			m_armPID->Enable();
 			break;
 		}
 	}
@@ -680,7 +660,7 @@ public:
 		RamFire();
 		switch(AutonSteps){
 		case 0:
-			AutonStraightDrive(-1,40 *REV_IN);		
+			AutonStraightDrive(-1,64 *REV_IN);		
 			if (Drive_Status){
 				m_armPID->SetSetpoint(MED_SHOT_BACK);
 				m_armPID->Enable();
@@ -732,7 +712,7 @@ public:
 	}
 */
 	void AutonDF(){
-		AutonStraightDrive(-1,40* REV_IN);
+		AutonStraightDrive(-1,50* REV_IN);
 	}
 /*	
 	void AutonTracker () {
@@ -963,6 +943,7 @@ public:
 				double dirToZero;
 				
 				dirToZero = m_armEncoder->GetDistance()-m_armResetPos;
+				
 				if (fabs(dirToZero) < 5)
 					m_armMotor->Set(0.0);
 				else if (dirToZero < 0)
@@ -1108,10 +1089,14 @@ public:
 	void TestRamLock()
 	{
 		if (m_driver->GetRawAxis(TRIGGERS) < -.2) {
-			m_ramServo->SetAngle(120);
+			if(m_driver->GetRawButton(BUTTON_BACK))
+				m_ramServo->SetAngle(180);
+			else
+				m_ramServo->SetAngle(120);
 		} else {
 			m_ramServo->SetAngle(0);
 		}
+		
 	}
 	
 	/************** UNIVERSAL FUNCTIONS ***************/
@@ -1205,7 +1190,7 @@ public:
 		{
 			m_ramCase = 3;
 		}*/
-		
+
 		switch(m_ramCase)
 		{
 		case 0:
@@ -1215,8 +1200,8 @@ public:
 			m_ramCase++;
 			break;
 		case 1:
-			m_ramServo->SetAngle(120);
-			if(m_ramTime->HasPeriodPassed(0.5))
+			m_ramServo->SetAngle(180);
+			if(m_ramTime->HasPeriodPassed(0.7))
 				m_ramCase++;
 			break;
 		case 2:
@@ -1231,7 +1216,7 @@ public:
 				m_ramCase++;
 			break;
 		case 4:
-			if (abs(m_ramEncode->GetDistance()) < 20)
+			if (abs(m_ramEncode->GetDistance()) < 50)
 			{
 				m_ramMotor->Set(-0.2);
 				m_ramCase++;
@@ -1240,16 +1225,88 @@ public:
 				m_ramMotor->Set(-1.0);
 			break;
 		case 5:
-			if(m_ramEncode->GetDistance() < 50)
+			if(m_ramEncode->GetDistance() < 20)
 			{	
 				m_ramMotor->Set(0.0);
+				m_ramEncode->Reset();
 				m_ramCase = -1;
 			}
 			break;
 		}
-		
 	}
-	
+		/*
+		switch(m_ramCase)
+		{
+		case 0:
+			m_ramTime->Stop();
+			m_ramTime->Start();
+			m_ramTime->Reset();
+			m_ramCase++;
+			break;
+		case 1:
+			m_ramServo->SetAngle(180);
+			if(m_ramTime->HasPeriodPassed(0.7))
+				m_ramCase++;
+			break;
+		case 2:
+			m_ramServo->SetAngle(0);
+			m_ramCase++;
+			m_ramTime->Stop();
+			m_ramTime->Start();
+			m_ramTime->Reset();			
+			break;
+		case 3:
+			if(m_ramTime->HasPeriodPassed(0.3))
+			{
+				m_ramTime->Stop();
+				m_ramTime->Start();
+				m_ramTime->Reset();	
+				m_ramCase++;
+			}
+			else
+				m_ramMotor->Set(1);
+			break;
+		case 4:
+			if (m_ramTime->HasPeriodPassed(0.5))
+			{
+				m_ramTime->Stop();
+				m_ramTime->Start();
+				m_ramTime->Reset();
+				m_ramCase++;
+			}
+			else
+				m_ramMotor->Set(0.7);
+			break;
+		case 5:
+			if (m_ramTime->HasPeriodPassed(0.15))
+			{
+				m_ramTime->Stop();
+				m_ramTime->Start();
+				m_ramTime->Reset();
+				m_ramCase++;
+			}
+			else
+				m_ramMotor->Set(-1);
+			break;
+		case 6:
+			if (m_ramTime->HasPeriodPassed(0.3))
+			{
+				m_ramTime->Stop();
+				m_ramTime->Start();
+				m_ramTime->Reset();
+				m_ramCase++;
+			}
+			else
+				m_ramMotor->Set(-0.2);
+			break;
+		case 7:
+			m_ramMotor->Set(0.0);
+			m_ramTime->Stop();
+			m_ramCase = -1;
+			break;
+		}
+	}
+	*/
 	void MedRamFire() {
 		if (m_driver->GetRawAxis(TRIGGERS) > 0.4)
 			m_medRamCase = 0;
