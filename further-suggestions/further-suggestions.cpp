@@ -1162,10 +1162,10 @@ public:
 		if (!m_ramInit)
 		{
 			m_ramServo->SetAngle(0);
-			m_ramMotor->Set(-0.2);
-			if (m_ramTime->HasPeriodPassed(0.2))
+			m_ramMotor->Set(-0.15);
+			if (m_ramTime->HasPeriodPassed(0.3))
 			{
-				if (abs(m_ramEncode->GetRate()) < 100)
+				if (abs(m_ramEncode->GetRate()) < 5)
 				{
 					m_ramEncode->Reset();
 					m_ramMotor->Set(0.0);
@@ -1201,7 +1201,7 @@ public:
 			break;
 		case 1:
 			m_ramServo->SetAngle(180);
-			if(m_ramTime->HasPeriodPassed(0.7))
+			if(m_ramTime->HasPeriodPassed(1.0))
 				m_ramCase++;
 			break;
 		case 2:
@@ -1210,32 +1210,41 @@ public:
 			m_ramTime->Stop();
 			m_ramTime->Start();
 			m_ramTime->Reset();
+			m_ramMotor->Set(0.8);
 			break;
 		case 3:
-			if(m_ramTime->HasPeriodPassed(1.5))
+			if (m_ramTime->HasPeriodPassed(0.1))
 			{
-				m_ramCase = 5;
-				m_ramTime->Stop();
+				if (abs(m_ramEncode->GetRate()) < 20)
+				{
+					m_ramMotor->Set(0.0);
+					m_ramTime->Stop();
+					m_ramTime->Start();
+					m_ramTime->Reset();
+					m_ramCase++;
+				}
 			}
-			else if (abs(m_ramEncode->GetDistance()) < RAM_LOCK_POSITION)
-				m_ramMotor->Set(1);
-			else
-				m_ramCase++;
 			break;
 		case 4:
-			if (abs(m_ramEncode->GetDistance()) < 50)
+			if (m_ramTime->HasPeriodPassed(0.1))
 			{
-				m_ramMotor->Set(-0.2);
-				m_ramCase++;
+				if (abs(m_ramEncode->GetDistance()) < 200)
+				{
+					m_ramMotor->Set(-0.15);
+					m_ramCase++;
+				}
+				else
+					m_ramMotor->Set(-0.4);
 			}
-			else
-				m_ramMotor->Set(-1.0);
 			break;
 		case 5:
-			if(m_ramEncode->GetDistance() < 20)
-			{	
-				m_ramMotor->Set(0.0);
+			if (abs(m_ramEncode->GetRate()) < 5)
+			{
 				m_ramEncode->Reset();
+				m_ramMotor->Set(0.0);
+				m_ramTime->Stop();
+				m_ramTime->Start();
+				m_ramTime->Reset();
 				m_ramCase = -1;
 			}
 			break;
