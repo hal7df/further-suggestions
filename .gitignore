@@ -3,8 +3,9 @@
 *.out
 *.exe
 
-# Built .d files
+# Intermediary build files
 *.d
+*.c
 
 # Linux build stuff
 

@@ -442,29 +442,12 @@ public:
 	/********************************** Periodic Routines *************************************/
 	void DisabledPeriodic()  {
 		
-//////////////////////////////////////////////////////////////////
-		double accelerationX = m_armAccelerometer->GetAcceleration(ADXL345_I2C::kAxis_X);
-		double accelerationY = m_armAccelerometer->GetAcceleration(ADXL345_I2C::kAxis_Y);
-		double gyroRate = m_armGyro->GetRate();
-		double armAngleFiltered = m_armAngle->GetAngle();
-		double armAngle = atan2(accelerationX, accelerationY);//*180.0/3.14159;
-//////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"ACCEL-X: %f", (float) accelerationX);
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"ACCEL-Y: %f", (float) accelerationY);
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"Rate:    %f", (float) gyroRate);
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Angle:   %f", (float) armAngle);
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"Angle:   %f", (float) armAngleFiltered);
-		m_dsLCD->UpdateLCD();
-///////////////////////////////////////////////////////
-
-/*
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.3-06-14 v1.5");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"  ||   ||  __  ----- ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"  ||--|| /   \\    |  ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"  ||   || \\__/   |   ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"        Auton:       ");
-*/		
+		
 		if (m_operator->GetButtonPress(BUTTON_A))
 		{
 			autonChoice = AutonDFshoot;
@@ -603,21 +586,6 @@ public:
 
 	
 	void TeleopPeriodic() {
-//////////////////////////////////////////////////////////////////
-		double accelerationX = m_armAccelerometer->GetAcceleration(ADXL345_I2C::kAxis_X);
-		double accelerationY = m_armAccelerometer->GetAcceleration(ADXL345_I2C::kAxis_Y);
-		double gyroRate = m_armGyro->GetRate();
-		double armAngleFiltered = m_armAngle->GetAngle();
-		double armAngle = atan2(accelerationX, accelerationY);//*180.0/3.14159;
-//////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"ACCEL-X: %f", (float) accelerationX);
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"ACCEL-Y: %f", (float) accelerationY);
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"Rate:    %f", (float) gyroRate);
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Angle:   %f", (float) armAngle);
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"Angle:   %f", (float) armAngleFiltered);
-		m_dsLCD->UpdateLCD();
-///////////////////////////////////////////////////////
 			ManageCompressor();
 			TeleopDrive();
 			RamrodInit();
@@ -724,7 +692,7 @@ public:
 						
 			if((fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK) < AUTON_ANGLE_GAP) && m_drvSource->Finished()){
 				m_rEncode -> Reset();
-				m_lEncode -> Reset();
+				m_lEncode -> Reset();		
 				m_drvStraightPID->Disable();
 				m_autonTime->Stop();
 				m_autonTime->Reset();
@@ -1267,10 +1235,10 @@ public:
 		if (!m_ramInit)
 		{
 			m_ramServo->SetAngle(0);
-			m_ramMotor->Set(-0.2);
-			if (m_ramTime->HasPeriodPassed(0.2))
+			m_ramMotor->Set(-0.15);
+			if (m_ramTime->HasPeriodPassed(0.3))
 			{
-				if (abs(m_ramEncode->GetRate()) < 100)
+				if (abs(m_ramEncode->GetRate()) < 5)
 				{
 					m_ramEncode->Reset();
 					m_ramMotor->Set(0.0);
@@ -1329,7 +1297,7 @@ public:
 			break;
 		case 1:
 			m_ramServo->SetAngle(180);
-			if(m_ramTime->HasPeriodPassed(0.7))
+			if(m_ramTime->HasPeriodPassed(1.0))
 				m_ramCase++;
 			break;
 		case 2:
@@ -1338,32 +1306,41 @@ public:
 			m_ramTime->Stop();
 			m_ramTime->Start();
 			m_ramTime->Reset();
+			m_ramMotor->Set(0.8);
 			break;
 		case 3:
-			if(m_ramTime->HasPeriodPassed(1.5))
+			if (m_ramTime->HasPeriodPassed(0.1))
 			{
-				m_ramCase = 5;
-				m_ramTime->Stop();
+				if (abs(m_ramEncode->GetRate()) < 20)
+				{
+					m_ramMotor->Set(0.0);
+					m_ramTime->Stop();
+					m_ramTime->Start();
+					m_ramTime->Reset();
+					m_ramCase++;
+				}
 			}
-			else if (abs(m_ramEncode->GetDistance()) < RAM_LOCK_POSITION)
-				m_ramMotor->Set(1);
-			else
-				m_ramCase++;
 			break;
 		case 4:
-			if (abs(m_ramEncode->GetDistance()) < 50)
+			if (m_ramTime->HasPeriodPassed(0.1))
 			{
-				m_ramMotor->Set(-0.2);
-				m_ramCase++;
+				if (abs(m_ramEncode->GetDistance()) < 200)
+				{
+					m_ramMotor->Set(-0.15);
+					m_ramCase++;
+				}
+				else
+					m_ramMotor->Set(-0.4);
 			}
-			else
-				m_ramMotor->Set(-1.0);
 			break;
 		case 5:
-			if(m_ramEncode->GetDistance() < 20)
-			{	
-				m_ramMotor->Set(0.0);
+			if (abs(m_ramEncode->GetRate()) < 5)
+			{
 				m_ramEncode->Reset();
+				m_ramMotor->Set(0.0);
+				m_ramTime->Stop();
+				m_ramTime->Start();
+				m_ramTime->Reset();
 				m_ramCase = -1;
 			}
 			break;
