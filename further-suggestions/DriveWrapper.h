@@ -34,7 +34,6 @@ public:
 	
 	double PIDGet ();
 	void PIDWrite (float output);
-	bool Finished();
 	
 private:
 	RobotDrive* m_drive;

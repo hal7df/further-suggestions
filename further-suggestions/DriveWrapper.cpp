@@ -45,24 +45,21 @@ DriveStraightPID::DriveStraightPID (RobotDrive* roboDrv, Encoder* leftEncode, En
 
 double DriveStraightPID::PIDGet()
 {
-	return (((m_lEncode->GetDistance()+m_rEncode->GetDistance())/2)*REV_IN);
+	return (((m_lEncode->GetDistance()+m_rEncode->GetDistance())/2)/REV_IN);
 }
 
 void DriveStraightPID::PIDWrite(float output)
 {
 	m_pidOut = output;
 	
-	if (m_lEncode->GetDistance() > m_rEncode->GetDistance() + 10)
-		m_drive->TankDrive(output - 0.05, output + 0.05);
-	else if (m_rEncode->GetDistance() > m_lEncode->GetDistance() + 10)
-		m_drive->TankDrive(output + 0.05, output - 0.05);
+	if (m_lEncode->GetDistance() + 5 > m_rEncode->GetDistance())
+		m_drive->TankDrive(output - 0.1, output + 0.1);
+	else if (m_rEncode->GetDistance() + 5 > m_lEncode->GetDistance())
+		m_drive->TankDrive(output + 0.1, output - 0.1);
 	else
 		m_drive->TankDrive(output,output);
-}
-
-bool DriveStraightPID::Finished ()
-{
-	return (fabs((float)m_pidOut) < 1);
+	
+	SmartDashboard::PutNumber("Drive PID Output: ", output);
 }
 
 // ---------- Drive Rotate ----------

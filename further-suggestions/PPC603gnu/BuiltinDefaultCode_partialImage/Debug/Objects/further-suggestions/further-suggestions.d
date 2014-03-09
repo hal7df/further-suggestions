@@ -391,12 +391,7 @@
   C:/WindRiver/vxworks-6.3/target/h/math.h \
   C:/WindRiver/workspace/further-suggestions/further-suggestions/ArmWrapper.h \
   C:/WindRiver/workspace/further-suggestions/further-suggestions/CameraHandler.h \
-  C:/WindRiver/vxworks-6.3/target/h/WPILib/nivision.h \
-  C:/WindRiver/workspace/further-suggestions/further-suggestions/TiltSensor.h \
-  C:/WindRiver/vxworks-6.3/target/h/WPILib/PIDSource.h \
-  C:/WindRiver/vxworks-6.3/target/h/WPILib/ADXL345_I2C.h \
-  C:/WindRiver/vxworks-6.3/target/h/WPILib/Gyro.h \
-  C:/WindRiver/vxworks-6.3/target/h/WPILib/Timer.h
+  C:/WindRiver/vxworks-6.3/target/h/WPILib/nivision.h
 
 C:/WindRiver/vxworks-6.3/target/h/WPILib/WPILib.h:
 
@@ -1179,13 +1174,3 @@ C:/WindRiver/workspace/further-suggestions/further-suggestions/ArmWrapper.h:
 C:/WindRiver/workspace/further-suggestions/further-suggestions/CameraHandler.h:
 
 C:/WindRiver/vxworks-6.3/target/h/WPILib/nivision.h:
-
-C:/WindRiver/workspace/further-suggestions/further-suggestions/TiltSensor.h:
-
-C:/WindRiver/vxworks-6.3/target/h/WPILib/PIDSource.h:
-
-C:/WindRiver/vxworks-6.3/target/h/WPILib/ADXL345_I2C.h:
-
-C:/WindRiver/vxworks-6.3/target/h/WPILib/Gyro.h:
-
-C:/WindRiver/vxworks-6.3/target/h/WPILib/Timer.h:

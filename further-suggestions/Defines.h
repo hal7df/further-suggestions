@@ -33,6 +33,8 @@
 	#define FLOOR_PICKING_POS 363.0
 	#define MED_SHOOT_POS 100.0
 	#define MED_SHOT_BACK -190.0
+	#define GUARDED_SHOT_FRONT 75.0
+	#define GUARDED_SHOT_BACK -155.5
 	#define LONG_SHOOT_POS -141
 	#define CATCH_POS -1.0
 	#define BGRABBER_SAFE 3
@@ -48,12 +50,12 @@
 	#define ARM_P 0.01
 	#define ARM_I 0.0
 	#define ARM_D 0.0
-	#define REV_IN 100.0
 
 	// Drive PID
-	#define DRV_P 0.005
+	#define DRV_P 0.0625
 	#define DRV_I 0.000
-	#define DRV_D 0.025
+	#define DRV_D 0.210
+	#define REV_IN 100.0
 
 	// RAMROD
 	#define RAM_LOCK_POSITION 930
