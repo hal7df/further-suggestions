@@ -21,6 +21,11 @@
 
 #define PracticeBot
 //#define CompetitionBot
+//Universal constants
+#define CAMERA_ANGLE 0.82030475
+
+#define PracticeBot
+//#define CompetitionBot
 
 
 #ifdef PracticeBot
@@ -38,16 +43,27 @@
 	
 	#define AUTON_ANGLE_GAP 10
 
-	
+
 	// PID Config for PID
 	#define ARM_P 0.01
 	#define ARM_I 0.0
 	#define ARM_D 0.0
 	#define REV_IN 100.0
 
+	// Drive PID
+	#define DRV_P 0.005
+	#define DRV_I 0.000
+	#define DRV_D 0.025
+
 	// RAMROD
 	#define RAM_LOCK_POSITION 930
 	#define RAM_MID_POSITION 450
+
+	// Drive Rotate
+	#define CAMERA_VIEW 1
+	#define DEGREE_FACTOR 1
+	#define ANGLE_TO_HOTGOAL 28.13
+	#define ROTATE_ANGLE_GAP 5
 
 	//Special PWMs
 	#define ROLLER_PWM 8
@@ -74,10 +90,21 @@
 	#define ARM_D 0.0
 	#define REV_IN 100.0
 
+	// Drive PID
+	#define DRV_P 0.005
+	#define DRV_I 0.000
+	#define DRV_D 0.025
+
 	// RAMROD
 	#define RAM_LOCK_POSITION 900
 	#define RAM_MID_POSITION 450
 
 	//Special PWMs
 	#define ROLLER_PWM 7
+
+	// Drive Rotate
+	#define CAMERA_VIEW 1
+	#define DEGREE_FACTOR 1
+	#define ANGLE_TO_HOTGOAL 28.13
+	#define ROTATE_ANGLE_GAP 5
 #endif

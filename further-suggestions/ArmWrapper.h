@@ -13,8 +13,8 @@
 
 		// PID
 		PIDController* PID;
-		bool pidFlag;
-
+		bool PIDFlag;
+		
 		// Config
 		double c_distPerPulse;
 		double c_maxPeriod;
