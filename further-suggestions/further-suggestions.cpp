@@ -215,9 +215,11 @@ private:
 	int m_selectorCountdown;
 	int m_selectorPage;
 	
+	//Arm reset variables
 	double m_armResetPos;
-	bool m_armResetCheck;
-	bool m_armResetFlag [2];
+	bool m_armResetFlag;
+	bool m_canResetArm;
+	int m_armResetCase;
 	
 	
 	// Auton Steps
@@ -358,10 +360,12 @@ public:
 		countLoop = 0;
 		armCount = 0;
 		Drive_Status = false;
+		
+		//Arm reset variables
 		m_armResetPos = 0;
-		m_armResetCheck = false;
-		m_armResetFlag[0] = false;
-		m_armResetFlag[1] = false;
+		m_armResetFlag = false;
+		m_canResetArm = false;
+		m_armResetCase = 0;
 		
 		//Auton Selector Variables
 		m_selectorCountdown = 100;
@@ -394,6 +398,14 @@ public:
 		m_ramCase = -1;
 		m_medRamCase = -1;
 		//m_shifters -> Set(true);
+		
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"      AUTONOMOUS     ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"         Mode:       ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"                     ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"                     ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"                     ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"                     ");
+		m_dsLCD->UpdateLCD();
 	}
 
 	void TeleopInit() {
@@ -408,6 +420,14 @@ public:
 		m_lEncode->Reset();
 		//m_armEncoder->Reset();
 		m_armPID->Disable();
+		
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"       TELEOP        ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"                     ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"                     ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"                     ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"                     ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"                     ");
+		m_dsLCD->UpdateLCD();
 	}
 	
 	void TestInit () {
@@ -491,7 +511,7 @@ public:
 			if (m_selectorCountdown > 0)
 			{
 				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
-				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...%d "+m_selectorCountdown);
+				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...%d"+m_selectorCountdown);
 				m_selectorCountdown--;
 			}
 			else
@@ -1032,24 +1052,7 @@ public:
 			m_armPID->SetSetpoint(MED_SHOOT_POS);
 			m_armPID->Enable();
 			
-		} else if (m_operator->GetRawButton(BUTTON_Y) && m_operator->GetRawButton(BUTTON_BACK)) {
-				//Reset arm encoder
-				double dirToZero;
-				
-				dirToZero = m_armEncoder->GetDistance()-m_armResetPos;
-				
-				if (fabs(dirToZero) < 5 && fabs(m_armEncoder->GetDistance()) < 5)
-					m_armMotor->Set(0.0);
-				else if (dirToZero < 0)
-					m_armMotor->Set(0.2);
-				else if (dirToZero > 0)
-					m_armMotor->Set(-0.2);
-				
-				SmartDashboard::PutNumber("Direction to Arm Zero: ",dirToZero);
-	
-				ArmReset();
-		
-		} else if (m_operator->GetRawButton(BUTTON_Y)) {
+		} else if (m_operator->GetRawButton(BUTTON_Y) && !m_operator->GetRawButton(BUTTON_BACK)) {
 			// Catch Position
 			m_armPIDFlag = true;
 			m_armPID->SetSetpoint(0.0);
@@ -1068,39 +1071,9 @@ public:
 			}		
 			
 			// Control With Joystick
-			m_armMotor->Set(m_operator->GetRawAxis(LEFT_Y));
+			if (!m_operator->GetRawButton(BUTTON_BACK))
+			  m_armMotor->Set(m_operator->GetRawAxis(LEFT_Y));
 		}
-		
-		if (!m_operator->GetRawButton(BUTTON_BACK))
-		{
-			if (!m_armReset->Get()&& m_armEncoder->GetRate() < 0 && !m_armResetFlag[0])
-			{
-					m_armResetPos = m_armEncoder->GetDistance();
-					m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"ARM RESET NEEDED     ");
-					m_armResetFlag [0] = true;
-			}
-			if (!m_armReset->Get() && !m_armResetCheck && m_armEncoder->GetRate() > 0)
-			{
-						m_armResetFlag[0] = false;
-						m_armResetCheck = true;
-			}
-			if (m_armResetCheck && m_armReset->Get() && m_armEncoder->GetRate() > 0)
-			{
-				m_armResetPos = m_armEncoder->GetDistance();
-				m_armResetCheck = false;
-				
-				m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"ARM RESET NEEDED     ");
-			}
-			if (m_armReset->Get())
-			{
-				m_armResetFlag[0] = false;
-				m_armResetCheck = false;
-			}
-			if (m_armEncoder->GetRate() < 0)
-				m_armResetCheck = false;
-		}
-		
-		m_dsLCD->UpdateLCD();
 	}
 		  
 	
@@ -1202,27 +1175,88 @@ public:
 	
 	void ArmReset()
 	{
-		if (!m_armReset->Get() && m_armEncoder->GetRate() < 0 && !m_armResetFlag[1])
+	  double dirToZero;
+	  
+	  // MOVING IN NEGATIVE DIRECITON (TOWARDS BACK) *******************************
+	  
+	  if (m_armEncoder->GetRate() < 0)
+	  {
+	    if (!m_armReset->Get() && !m_armResetFlag)
+	    {
+	      m_armResetPos = m_armEncoder->GetDistance();
+	      m_canResetArm = true;
+	      m_armResetFlag = true;
+	    }
+	    
+	    m_armResetCase = 0;
+	  }
+	  
+	  // MOVING IN POSITIVE DIRECTION (TOWARDS FRONT) ******************************
+	  
+	  if (m_armEncoder->GetRate() > 0)
+	  {
+	    switch (m_armResetCase)
+	    {
+	      case 0:
+		if (!m_armReset->Get())
+		  m_armResetCase++;
+		break;
+	      case 1:
+		if (m_armReset->Get())
 		{
-			m_armEncoder->Reset();
-			m_armResetPos = 0;
-			m_armResetFlag[1] = true;
-			m_armMotor->Set(0.0);
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"                     ");
+		  m_armResetPos = m_armEncoder->GetDistance();
+		  m_canResetArm = true;
+		  m_armResetCase = 0;
 		}
-		else if (!m_armReset->Get() && !m_armResetCheck && m_armEncoder->GetRate() > 0)
-		{
-			m_armResetFlag[1] = false;
-			m_armResetCheck = true;
-		}
-		else if (m_armReset->Get() && m_armResetCheck)
-		{
-			m_armEncoder->Reset();
-			m_armResetPos = 0;
-			m_armMotor->Set(0.0);
-			m_armResetCheck = false;
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"                     ");
-		}
+		break;
+	    }
+	  }
+	  
+	  dirToZero = m_armEncoder->GetDistance() - m_armResetPos;
+	  
+	  // RESET VARIABLES WHEN OUTSIDE RANGE *****************************************
+	  
+	  if (m_armReset->Get())
+	  {
+	    m_armResetFlag = false;
+	    m_armResetCase = 0;
+	  }
+	  
+	  SmartDashboard::PutNumber("Direction to Arm Zero: ",dirToZero);
+	  
+	  // CHECK TO SEE IF STILL IN RANGE *********************************************
+	  
+	  if (fabs(dirToZero) > 5)
+	    m_canResetArm = false;
+	  
+	  // RESET ARM ******************************************************************
+	  
+	  if (m_operator->GetRawButton(BUTTON_BACK) && m_operator->GetRawButton(BUTTON_Y)
+	  {
+	    if (m_canResetArm)
+	    {
+	      m_armEncoder->Reset();
+	      m_armMotor->Set(0.0);
+	      m_armResetPos = m_armEncoder->GetDistance();
+	      m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"                     ");
+	    }
+	    else
+	    {
+	      if (dirToZero < 0)
+		m_armMotor->Set(0.2);
+	      else if (dirToZero > 0)
+		m_armMotor->Set(0.2);
+	      else
+		m_armMotor->Set(0.0);
+	    }
+	  }
+	  
+	  // PRINT MESSAGE **************************************************************
+	  
+	  else if (m_canResetArm && fabs(m_armEncoder->GetDistance()) > 10)
+	    m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"RESET ARM NOW PLEASE ");
+	  
+	  m_dsLCD->UpdateLCD();
 	}
 	
 	void RamrodInit(){
