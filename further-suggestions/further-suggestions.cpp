@@ -588,6 +588,7 @@ public:
 			MedRamFire();
 			RamrodOverride();
 			TeleopArm();
+			ArmReset();
 			TeleopBGrabber();
 			PrintData();
 			// TestArm();
