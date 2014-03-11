@@ -28,15 +28,17 @@
 
 #ifdef PracticeBot
 	// Place practice bot values here
-	#define FLOOR_PICKING_POS 363.0
-	#define MED_SHOOT_POS 100.0
-	#define MED_SHOT_BACK -190.0
-	#define GUARDED_SHOT_FRONT 75.0
-	#define GUARDED_SHOT_BACK -155.5
-	#define LONG_SHOOT_POS -141
-	#define CATCH_POS -1.0
+	#define FLOOR_PICKING_POS 378.0
+	#define MED_SHOOT_POS 115.0
+	#define MED_SHOT_BACK -175.0
+	#define GUARDED_SHOT_FRONT 90.0
+	#define GUARDED_SHOT_BACK -130.5
+	#define LONG_SHOOT_POS -126
+	#define CATCH_POS 14.0
 	#define BGRABBER_SAFE 3
 	#define AUTON_SHOOT_POS 1
+
+	#define ARM_RESET_WIDTH 68.0
 
 	#define AUTON_DRIVE_FORWARD_DIST 200
 	#define AUTON_DRIVE_BACK_DIST 30
@@ -80,6 +82,8 @@
 	#define CATCH_POS -1.0
 	#define BGRABBER_SAFE 3
 	#define AUTON_SHOOT_POS 1
+
+	#define ARM_RESET_WIDTH 83.0
 
 	#define AUTON_DRIVE_FORWARD_DIST 200
 	#define AUTON_DRIVE_BACK_DIST 30

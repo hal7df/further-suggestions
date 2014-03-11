@@ -7,7 +7,7 @@
 #include "CameraHandler.h"
 
 /**
- * HOTBOT 2014 v1.5 - Build Date: 3/6/14
+ * HOTBOT 2014 v1.9 - Build Date: 3/11/14
  * 
  * See the wiki on the GitHub repository for more information
  * 
@@ -212,14 +212,15 @@ private:
 	
 	//Auton Selector Variables
 	AutonChoice autonChoice;
-	int m_selectorCountdown;
+	float m_selectorCountdown;
 	int m_selectorPage;
 	
 	//Arm reset variables
 	double m_armResetPos;
+	double m_armOffset;
 	bool m_armResetFlag;
 	bool m_canResetArm;
-	int m_armResetCase;
+	bool m_armResetStop;
 	
 	
 	// Auton Steps
@@ -363,9 +364,10 @@ public:
 		
 		//Arm reset variables
 		m_armResetPos = 0;
-		m_armResetFlag = false;
+		m_armOffset = 0.0;
 		m_canResetArm = false;
-		m_armResetCase = 0;
+		m_armResetFlag = false;
+		m_armResetStop = false;
 		
 		//Auton Selector Variables
 		m_selectorCountdown = 100;
@@ -404,7 +406,7 @@ public:
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"                     ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"                     ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"                     ");
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"                     ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
 		m_dsLCD->UpdateLCD();
 	}
 
@@ -426,7 +428,7 @@ public:
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"                     ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"                     ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"                     ");
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"                     ");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
 		m_dsLCD->UpdateLCD();
 	}
 	
@@ -437,7 +439,7 @@ public:
 	/********************************** Periodic Routines *************************************/
 	void DisabledPeriodic()  {
 		
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.3-06-14 v1.5");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.3-11-14 v1.9");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"  ||   ||  __  ----- ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"  ||--|| /    \\   |  ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"  ||   || \\__/   |   ");
@@ -511,7 +513,7 @@ public:
 			if (m_selectorCountdown > 0)
 			{
 				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
-				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...%d"+m_selectorCountdown);
+				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...%f ",m_selectorCountdown);
 				m_selectorCountdown--;
 			}
 			else
@@ -591,17 +593,17 @@ public:
 			ArmReset();
 			TeleopBGrabber();
 			PrintData();
-			// TestArm();
 			
 		}
 	
 	void TestPeriodic () {
 		ManageCompressor();
-		// TestArm();
+		TestArm();
 		TestDrive();
 		TestBGrabber();
 		TestRamMotion();
 		TestRamLock();
+		TestFindSensorWidth();
 		PrintData();
 	}
 
@@ -1028,41 +1030,41 @@ public:
 		if (m_operator->GetRawButton(BUTTON_A)) {
 			// Floor Picking
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint (FLOOR_PICKING_POS);
+			m_armPID->SetSetpoint (ApplyArmOffset(FLOOR_PICKING_POS));
 			m_armPID->Enable();
 			
 		} else if (m_operator->GetRawButton(BUTTON_LB) && m_operator->GetRawButton(BUTTON_B))
 		{
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint (GUARDED_SHOT_BACK);
+			m_armPID->SetSetpoint (ApplyArmOffset(GUARDED_SHOT_BACK));
 			m_armPID->Enable();
 		} else if (m_operator->GetRawButton(BUTTON_B)) {
 			// Medium (12ft) Shoot Position
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint (MED_SHOT_BACK);
+			m_armPID->SetSetpoint (ApplyArmOffset(MED_SHOT_BACK));
 			m_armPID->Enable();
 			
 		} else if (m_operator->GetRawButton(BUTTON_LB) && m_operator->GetRawButton(BUTTON_X))
 		{
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint (GUARDED_SHOT_FRONT);
+			m_armPID->SetSetpoint (ApplyArmOffset(GUARDED_SHOT_FRONT));
 			m_armPID->Enable();
 		} else if (m_operator->GetRawButton(BUTTON_X)) {
 			// Long (18ft) Shoot Position
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint(MED_SHOOT_POS);
+			m_armPID->SetSetpoint(ApplyArmOffset(MED_SHOOT_POS));
 			m_armPID->Enable();
 			
 		} else if (m_operator->GetRawButton(BUTTON_Y) && !m_operator->GetRawButton(BUTTON_BACK)) {
 			// Catch Position
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint(0.0);
+			m_armPID->SetSetpoint(ApplyArmOffset(0.0));
 			m_armPID->Enable();
 			
 		} else if (m_operator->GetRawButton(BUTTON_LB))
 		{
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint(CATCH_POS);
+			m_armPID->SetSetpoint(ApplyArmOffset(CATCH_POS));
 			m_armPID->Enable();
 		}
 		else {
@@ -1096,20 +1098,37 @@ public:
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Right encoder count: %d",m_rEncode->Get());
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"Left encoder count: %d",m_lEncode->Get());
 	}
-	/*
+	
 	void TestArm ()
 	{
 		// Control Arm
-		m_arm->Set(m_operator->GetRawAxis(LEFT_Y));
+		m_armMotor->Set(m_operator->GetRawAxis(LEFT_Y));
 
 		// Reset Arm Encoder
 		if (m_operator->GetRawButton(BUTTON_L3)) {
-			m_arm->Reset();
+			m_armEncoder->Reset();
 		}
 		
 		
 	}
-	*/
+	
+	void TestFindSensorWidth ()
+	{
+		if (!m_armReset->Get() && !m_armResetFlag)
+		{
+			m_armResetPos = m_armEncoder->GetDistance();
+			m_armResetFlag = true;
+		}
+		if (m_armReset->Get() && m_armResetFlag)
+		{
+			m_armResetPos -= m_armEncoder->GetDistance();
+			m_armResetFlag = false;
+		}
+		
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"Reset Width: %f",(float)m_armResetPos);
+		m_dsLCD->UpdateLCD();
+	}
+	
 	void TestBGrabber()
 		{
 			//ROLLERS	
@@ -1178,86 +1197,73 @@ public:
 	{
 	  double dirToZero;
 	  
-	  // MOVING IN NEGATIVE DIRECITON (TOWARDS BACK) *******************************
-	  
-	  if (m_armEncoder->GetRate() < 0)
+	  if (!m_armReset->Get() && !m_armResetFlag)
 	  {
-	    if (!m_armReset->Get() && !m_armResetFlag)
-	    {
-	      m_armResetPos = m_armEncoder->GetDistance();
-	      m_canResetArm = true;
-	      m_armResetFlag = true;
-	    }
-	    
-	    m_armResetCase = 0;
+			  m_armResetPos = m_armEncoder->GetDistance();
+			  m_canResetArm = true;
+			  m_armResetFlag = true;
 	  }
-	  
-	  // MOVING IN POSITIVE DIRECTION (TOWARDS FRONT) ******************************
-	  
-	  if (m_armEncoder->GetRate() > 0)
-	  {
-	    switch (m_armResetCase)
-	    {
-	      case 0:
-		if (!m_armReset->Get())
-		  m_armResetCase++;
-		break;
-	      case 1:
-		if (m_armReset->Get())
-		{
-		  m_armResetPos = m_armEncoder->GetDistance();
-		  m_canResetArm = true;
-		  m_armResetCase = 0;
-		}
-		break;
-	    }
-	  }
-	  
-	  dirToZero = m_armEncoder->GetDistance() - m_armResetPos;
+	  else
+		  m_canResetArm = false;
 	  
 	  // RESET VARIABLES WHEN OUTSIDE RANGE *****************************************
 	  
 	  if (m_armReset->Get())
 	  {
+		m_canResetArm = false;
 	    m_armResetFlag = false;
-	    m_armResetCase = 0;
 	  }
+	  
+
+	  dirToZero = m_armEncoder->GetDistance() - m_armResetPos;
 	  
 	  SmartDashboard::PutNumber("Direction to Arm Zero: ",dirToZero);
 	  
-	  // CHECK TO SEE IF STILL IN RANGE *********************************************
-	  
-	  if (fabs(dirToZero) > 5)
-	    m_canResetArm = false;
-	  
 	  // RESET ARM ******************************************************************
 	  
-	  if (m_operator->GetRawButton(BUTTON_BACK) && m_operator->GetRawButton(BUTTON_Y)
+	  if (m_operator->GetRawButton(BUTTON_BACK) && m_operator->GetRawButton(BUTTON_Y))
 	  {
 	    if (m_canResetArm)
 	    {
-	      m_armEncoder->Reset();
-	      m_armMotor->Set(0.0);
-	      m_armResetPos = m_armEncoder->GetDistance();
-	      m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"                     ");
+	    	//Moving Towards Front
+	    	if (m_armEncoder->GetRate() > 0)
+	    		m_armOffset = m_armEncoder->GetDistance() + ARM_RESET_WIDTH;
+	    	
+	    	//Moving Towards Back
+	    	else if (m_armEncoder->GetRate() < 0)
+	    		m_armOffset = m_armEncoder->GetDistance();
+	    	
+	    	m_armMotor->Set(0.0);
+	        m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"                     ");
+	        m_armResetStop = true;
 	    }
 	    else
 	    {
-	      if (dirToZero < 0)
-		m_armMotor->Set(0.2);
-	      else if (dirToZero > 0)
-		m_armMotor->Set(0.2);
-	      else
-		m_armMotor->Set(0.0);
+	    	if (m_armResetStop)
+	    		m_armMotor->Set(0.0);
+	    	else if (dirToZero < 0)
+	    		m_armMotor->Set(0.2);
+	    	else if (dirToZero > 0)
+	    		m_armMotor->Set(-0.2);
 	    }
 	  }
 	  
 	  // PRINT MESSAGE **************************************************************
 	  
-	  else if (m_canResetArm && fabs(m_armEncoder->GetDistance()) > 10)
-	    m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"RESET ARM NOW PLEASE ");
+	  else
+	  {
+		  if (m_canResetArm && fabs(m_armEncoder->GetDistance()) > 10)
+			  m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"RESET ARM NOW PLEASE ");
+		  
+		  m_armResetStop = false;
+	  }
 	  
 	  m_dsLCD->UpdateLCD();
+	}
+	
+	double ApplyArmOffset (double input)
+	{
+		return input + m_armOffset;
 	}
 	
 	void RamrodInit(){
@@ -1524,6 +1530,7 @@ public:
 		SmartDashboard::PutNumber("Ram Time: ",m_ramTime->Get());
 		SmartDashboard::PutNumber("Medium Ramrod Fire Case: ",m_medRamCase);
 		
+		SmartDashboard::PutNumber("Arm Calc Position Offset: ", ApplyArmOffset(m_armEncoder->GetDistance()));
 		SmartDashboard::PutNumber("Arm Actual Position: ", m_armEncoder->GetDistance());
 		SmartDashboard::PutNumber("Arm Rate: ", m_armEncoder->GetRate());
 		SmartDashboard::PutNumber("Arm PID Input: ", m_armEncoder->PIDGet());
@@ -1536,10 +1543,8 @@ public:
 		SmartDashboard::PutBoolean("Drive Status: ", Drive_Status);
 
 		SmartDashboard::PutNumber("Arm Reset Position: ",m_armResetPos);
+		SmartDashboard::PutNumber("Arm Offset: ",m_armOffset);
 		SmartDashboard::PutBoolean("Arm Reset Sensor",m_armReset->Get());
-		SmartDashboard::PutBoolean("Arm Reset Check Flag",m_armResetCheck);
-		SmartDashboard::PutBoolean("Arm Reset Flag 1", m_armResetFlag[0]);
-		SmartDashboard::PutBoolean("Arm Reset Flag 2", m_armResetFlag[1]);
 		
 		// Auton
 		SmartDashboard::PutNumber("Auton Step: ", AutonDBSteps);
