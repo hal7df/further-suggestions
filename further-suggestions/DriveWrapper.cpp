@@ -52,6 +52,11 @@ void DriveStraightPID::PIDWrite(float output)
 {
 	m_pidOut = output;
 	
+	if (output > 0.8)
+		output = 0.8;
+	else if (output < -0.8)
+		output = -0.8;
+	
 	if (m_lEncode->GetDistance() + 5 > m_rEncode->GetDistance())
 		m_drive->TankDrive(output - 0.1, output + 0.1);
 	else if (m_rEncode->GetDistance() + 5 > m_lEncode->GetDistance())
