@@ -69,11 +69,11 @@ void DriveStraightPID::PIDWrite(float output)
 
 // ---------- Drive Rotate ----------
 /*
- * Left is Negative.
- * Angle is given in degree.
+ * Clockwise is Negative.
+ * Angle is measured in degrees.
  * Initial Angle is angle of the robot when the function runs.
  * Note:
- * 	When you use the functions with initial angle, you cannot run it again and agin in loop because they initialize initial angle again and again.
+ * 	When you use the functions with initial angle, you cannot run it again and again in loop because they initialize initial angle again and again.
  */
 DriveRotate::DriveRotate (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rEncoder)
 {
@@ -153,8 +153,19 @@ double DriveRotate::PIDGet ()
 	return (Dleft - Dright) / DEGREE_FACTOR;
 }
 
-void DriveRotate::PIDWrite(float input)
+void DriveRotate::PIDWrite(float output)
 {
-	SmartDashboard::PutNumber("Value from PID: ", input);
-	m_robotDrive->TankDrive(-input, input);
+	SmartDashboard::PutNumber("Value from PID: ", output);
+	
+	if (output > 0.8)
+	    output = 0.8;
+	else if (output < -0.8)
+	    output = -0.8;
+	
+	if (fabs(m_lEncoder->GetDistance()) + 5 > fabs(m_rEncoder->GetDistance()))
+	    m_robotDrive->TankDrive(-(output-0.1),(output+0.1));
+	else if (fabs(m_rEncoder->GetDistance()) + 5 > fabs(m_rEncoder->GetDistance()))
+	    m_robotDrive->TankDrive(-(output+-0.1),(output-0.1));
+	else
+	    m_robotDrive->TankDrive(-output, output);
 }
