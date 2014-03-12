@@ -849,11 +849,37 @@ public:
 		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2)
 			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
 		else
-			m_robotDrive->ArcadeDrive(0.0,0.0);
+		{
+			if (m_driver->GetRawButton(BUTTON_START) && m_driver->GetRawButton(BUTTON_Y)) {
+				if (!m_drvStraightPID->IsEnabled())
+				{
+					m_drvStraightPID->SetSetpoint(32.0);
+					m_drvStraightPID->Enable();
+				}
+			}
+			else if (m_driver->GetRawButton(BUTTON_START) && m_driver->GetRawButton(BUTTON_A)) {
+				m_driveRotate->SetAngle(45);
+				m_driveRotate->PIDEnable();
+				
+				m_shifters->Set(true);
+				
+				SmartDashboard::PutBoolean("Is Rotating: ", m_driveRotate->IsRotating());
+			}
+			else
+			{
+				
+				if (m_drvStraightPID->IsEnabled())
+				{
+					m_drvStraightPID->Disable();
+				}
+				m_robotDrive->ArcadeDrive(0.0,0.0);
+			}
+		}
+		
 		if (m_driver -> GetRawButton(BUTTON_LB)){
 			m_shifters -> Set(true);
 		}
-		else {
+		else if (!m_driveRotate->IsRotating()) {
 			m_shifters -> Set(false);
 		}
 		if(m_driver->GetRawButton(BUTTON_BACK))
@@ -861,10 +887,13 @@ public:
 			m_rEncode->Reset();
 			m_lEncode->Reset();
 		}
-		
+		/*
 		if (m_driver->GetRawButton(BUTTON_START)) {
 			AutonStraightDrive(1.0,32 * REV_IN);
 		}
+		*/
+		
+		
 	}
 	
 	 void TeleopBGrabber()
