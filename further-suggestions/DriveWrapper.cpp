@@ -83,7 +83,7 @@ DriveRotate::DriveRotate (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rE
 	m_rEncoder = rEncoder;
 	
 	// ----- Initialize PID -----
-	PID = new PIDController (0.01, 0.0, 0.0, this, this);
+	PID = new PIDController (0.05, 0.0, 0.0, this, this);
 }
 
 /*
@@ -109,6 +109,12 @@ void DriveRotate::PIDEnable()
 {
 	PID->Enable();
 	PIDFlag = true;
+	
+	// ----- Debug Display -----
+	SmartDashboard::PutNumber("Value to PID: ", PIDGet());
+	SmartDashboard::PutNumber("Left Encoder Ini: ", iniLEncoder);
+	SmartDashboard::PutNumber("Right Encoder Ini: ", iniREncoder);
+	SmartDashboard::PutNumber("Rotate Set Point: ", PID->GetSetpoint());
 }
 
 /*
@@ -117,9 +123,8 @@ void DriveRotate::PIDEnable()
  */
 void DriveRotate::PIDDisable()
 {
-	if (PIDFlag) {
+	if (PID->IsEnabled()) {
 		PID->Disable();
-		PIDFlag = false;
 		f_angleInitialized = false;
 	}
 }
@@ -133,7 +138,7 @@ bool DriveRotate::IsRotating (double gap)
 	double Dleft = iniLEncoder - m_lEncoder->GetDistance();
 	double Dright = iniREncoder - m_rEncoder->GetDistance();
 	
-	return fabs(Dleft - Dright) * DEGREE_FACTOR > gap;
+	return fabs(Dleft - Dright) / DEGREE_FACTOR > gap;
 }
 bool DriveRotate::IsRotating ()
 {
@@ -145,10 +150,11 @@ double DriveRotate::PIDGet ()
 {
 	double Dleft = iniLEncoder - m_lEncoder->GetDistance();
 	double Dright = iniREncoder - m_rEncoder->GetDistance();
-	return (Dleft - Dright) * DEGREE_FACTOR;
+	return (Dleft - Dright) / DEGREE_FACTOR;
 }
 
 void DriveRotate::PIDWrite(float input)
 {
-	m_robotDrive->TankDrive(input, -input);
+	SmartDashboard::PutNumber("Value from PID: ", input);
+	m_robotDrive->TankDrive(-input, input);
 }

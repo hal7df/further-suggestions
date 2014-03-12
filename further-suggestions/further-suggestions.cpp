@@ -931,15 +931,24 @@ public:
 			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
 		else
 		{
-			if (m_driver->GetRawButton(BUTTON_START)) {
+			if (m_driver->GetRawButton(BUTTON_START) && m_driver->GetRawButton(BUTTON_Y)) {
 				if (!m_drvStraightPID->IsEnabled())
 				{
 					m_drvStraightPID->SetSetpoint(32.0);
 					m_drvStraightPID->Enable();
 				}
 			}
+			else if (m_driver->GetRawButton(BUTTON_START) && m_driver->GetRawButton(BUTTON_A)) {
+				m_driveRotate->SetAngle(45);
+				m_driveRotate->PIDEnable();
+				
+				m_shifters->Set(true);
+				
+				SmartDashboard::PutBoolean("Is Rotating: ", m_driveRotate->IsRotating());
+			}
 			else
 			{
+				
 				if (m_drvStraightPID->IsEnabled())
 				{
 					m_drvStraightPID->Disable();
@@ -951,7 +960,7 @@ public:
 		if (m_driver -> GetRawButton(BUTTON_LB)){
 			m_shifters -> Set(true);
 		}
-		else {
+		else if (!m_driveRotate->IsRotating()) {
 			m_shifters -> Set(false);
 		}
 		if(m_driver->GetRawButton(BUTTON_BACK))
@@ -959,7 +968,7 @@ public:
 			m_rEncode->Reset();
 			m_lEncode->Reset();
 		}
-		
+		/*
 		if (m_driver->GetButtonPress(BUTTON_A))
 			m_drvStraightPID->SetPID((m_drvStraightPID->GetP()+0.01),m_drvStraightPID->GetI(),m_drvStraightPID->GetD());
 		else if (m_driver->GetButtonPress(BUTTON_B))
