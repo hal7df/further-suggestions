@@ -979,6 +979,7 @@ public:
 			m_drvStraightPID->SetPID(m_drvStraightPID->GetP(),m_drvStraightPID->GetI(),(m_drvStraightPID->GetD()+0.01));
 		else if (m_driver->GetButtonPress(BUTTON_Y))
 			m_drvStraightPID->SetPID(m_drvStraightPID->GetP(),m_drvStraightPID->GetI(),(m_drvStraightPID->GetD()-0.01));
+		*/
 	}
 	
 	 void TeleopBGrabber()
@@ -1261,7 +1262,7 @@ public:
 	  
 	  else
 	  {
-		  if (m_canResetArm && fabs(m_armEncoder->GetDistance()) > 10)
+		  if (m_canResetArm && ((fabs(ApplyArmOffset(m_armEncoder->GetDistance())) > 10) || (fabs(ApplyArmOffset(m_armEncoder->GetDistance()) - ARM_RESET_WIDTH) > 10)))
 			  m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"RESET ARM NOW PLEASE ");
 		  
 		  m_armResetStop = false;
