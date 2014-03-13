@@ -212,7 +212,7 @@ private:
 	
 	//Auton Selector Variables
 	AutonChoice autonChoice;
-	float m_selectorCountdown;
+	Timer* m_selectorCountdown;
 	int m_selectorPage;
 	
 	//Arm reset variables
@@ -370,7 +370,7 @@ public:
 		m_armResetStop = false;
 		
 		//Auton Selector Variables
-		m_selectorCountdown = 100;
+		m_selectorCountdown = new Timer();
 		m_selectorPage = 0;
 		
 		// Auton Steps
@@ -510,23 +510,35 @@ public:
 		
 		if (m_operator->GetRawButton(BUTTON_BACK) && autonChoice != AutonDoNothing)
 		{
-			if (m_selectorCountdown > 0)
+			if (m_selectorCountdown->Get() == 0.0)
 			{
+				m_selectorCountdown->Start();
+				
 				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
-				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...%f ",m_selectorCountdown);
-				m_selectorCountdown--;
+				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...%f ",(float)(2.0-m_selectorCountdown->Get()));
 			}
-			else
+			else if (m_selectorCountdown->HasPeriodPassed(2.0))
 			{
 				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...RELEASE");
 			}
+			else if (m_selectorCountdown->Get() < 2.0)
+			{
+				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
+				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...%f ",(float)(2.0-m_selectorCountdown->Get()));
+			}
 			m_selectorPage = 0;
 		}
-		else if (m_selectorCountdown == 0)
+		else if (m_selectorCountdown->HasPeriodPassed(2.0))
 		{
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"      DISABLED       ");
 			autonChoice = AutonDoNothing;
-			m_selectorCountdown = 100;
+			m_selectorCountdown->Stop();
+			m_selectorCountdown->Reset();
+		}
+		else
+		{
+			m_selectorCountdown->Stop();
+			m_selectorCountdown->Reset();
 		}
 		
 		switch (m_selectorPage)
