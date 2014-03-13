@@ -951,6 +951,8 @@ public:
 					m_drvStraightPID->SetSetpoint(32.0);
 					m_drvStraightPID->Enable();
 				}
+				
+				m_driveRotate->PIDDisable();
 			}
 			else if (m_driver->GetRawButton(BUTTON_START) && m_driver->GetRawButton(BUTTON_A)) {
 				m_driveRotate->SetAngle(45);
@@ -967,6 +969,7 @@ public:
 				{
 					m_drvStraightPID->Disable();
 				}
+				m_driveRotate->PIDDisable();
 				m_robotDrive->ArcadeDrive(0.0,0.0);
 			}
 		}
