@@ -51,8 +51,10 @@ public:
 	void SetAngle (double angle);
 	void PIDEnable ();
 	void PIDDisable ();
+	bool PIDIsEnabled ();
 	bool IsRotating (double gap);
 	bool IsRotating ();
+	bool Finished();
 
 	void PIDWrite(float input);
 	double PIDGet();

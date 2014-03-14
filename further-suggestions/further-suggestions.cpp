@@ -7,7 +7,7 @@
 #include "CameraHandler.h"
 
 /**
- * HOTBOT 2014 v1.9 - Build Date: 3/11/14
+ * HOTBOT 2014 v1.9 - Build Date: 3/14/14
  * 
  * See the wiki on the GitHub repository for more information
  * 
@@ -93,6 +93,8 @@ enum AutonChoice {
 		AutonDFshoot,
 		AutonCheckHotleft,
 		AutonCheckHotright,
+		AutonTurnleft,
+		AutonTurnright,
 		AutonDoNothing,
 		AutonDf,
 		AutonBalltrack
@@ -392,6 +394,7 @@ public:
 
 	void AutonomousInit() {
 		// Auton Steps
+		AutonSteps = 0;
 		AutonDBSteps = 1;
 		m_armEncoder->Reset();
 		m_ramEncode->Reset();
@@ -452,12 +455,12 @@ public:
 		}
 		else if (m_operator->GetButtonPress(BUTTON_B))
 		{
-			autonChoice = AutonCheckHotright;
+			autonChoice = AutonTurnright;
 			m_selectorPage = 0;
 		}
 		else if (m_operator->GetButtonPress(BUTTON_X))
 		{
-			autonChoice = AutonCheckHotleft;
+			autonChoice = AutonTurnleft;
 			m_selectorPage = 0;
 		}
 		else if (m_operator->GetButtonPress(BUTTON_Y))
@@ -470,14 +473,14 @@ public:
 			autonChoice = AutonDf;
 			m_selectorPage = 0;
 		}
-		else if (m_operator->GetButtonPress(BUTTON_LB))
+		/*else if (m_operator->GetButtonPress(BUTTON_LB))
 		{
 			autonChoice = AutonBalltrack;
 			m_selectorPage = 0;
-		}
+		}*/
 		else if (m_operator->GetButtonPress(BUTTON_START))
 		{
-			if (m_selectorPage == 2)
+			if (m_selectorPage == 1)
 				m_selectorPage = 0;
 			else
 				m_selectorPage++;
@@ -497,6 +500,12 @@ public:
 		case AutonCheckHotright:
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"   Check Right Hot   ");
 			break;
+		case AutonTurnright:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"      Turn Right     ");
+			break;
+		case AutonTurnleft:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"      Turn Left      ");
+			break;
 		case AutonDoNothing:
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"      DISABLED       ");
 			break;
@@ -510,19 +519,15 @@ public:
 		
 		if (m_operator->GetRawButton(BUTTON_BACK) && autonChoice != AutonDoNothing)
 		{
-			if (m_selectorCountdown->Get() == 0.0)
-			{
-				m_selectorCountdown->Start();
-				
-				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
-				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...%f ",(float)(2.0-m_selectorCountdown->Get()));
-			}
-			else if (m_selectorCountdown->HasPeriodPassed(2.0))
+			if (m_selectorCountdown->Get() > 2.0)
 			{
 				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...RELEASE");
 			}
-			else if (m_selectorCountdown->Get() < 2.0)
+			else
 			{
+				if (m_selectorCountdown->Get() == 0.0)
+					m_selectorCountdown->Start();
+				
 				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
 				m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"DISABLING...%f ",(float)(2.0-m_selectorCountdown->Get()));
 			}
@@ -549,10 +554,10 @@ public:
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"X: Check Right Hot   ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Y: Drive Back 2 Ball ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"RB: Drive Forward    ");
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"LB: Shoot & Ball Trk ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"Back (HOLD): Disable ");
 			break;
 		case 2:
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"Back (HOLD): Disable ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"                     ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"                     ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"                     ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"                     ");
@@ -579,6 +584,12 @@ public:
 			break;
 		case AutonDBrebound:
 			AutonDBRebound();
+			break;
+		case AutonTurnleft:
+			AutonTurnLeft();
+			break;
+		case AutonTurnright:
+			AutonTurnRight();
 			break;
 	/*	case AutonCheckHotleft:
 			AutonCheckHotLeft();
@@ -686,7 +697,7 @@ public:
 			}
 			break;
 		case 4:
-			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5)
+			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5 || m_autonTime->HasPeriodPassed(2.0))
 			{
 				m_autonTime->Stop();
 				m_autonTime->Start();
@@ -807,6 +818,95 @@ public:
 		{
 			m_drvStraightPID->SetSetpoint(-64.0);
 			m_drvStraightPID->Enable();
+		}
+	}
+	
+	void AutonTurnLeft()
+	{
+		switch (AutonSteps)
+		{
+		case 0:
+			m_driveRotate->SetAngle(18);
+			m_driveRotate->PIDEnable();
+			
+			m_armPID->SetSetpoint(MED_SHOT_BACK);
+			m_armPID->Enable();
+			
+			if (!m_driveRotate->IsRotating())
+			{
+				m_driveRotate->PIDDisable();
+				AutonSteps++;
+			}
+			break;
+		case 1:
+			m_drvStraightPID->SetSetpoint(-64);
+			m_drvStraightPID->Enable();
+			
+			if ((fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5) && (fabs(m_armEncoder->PIDGet() - m_armPID->GetSetpoint()) < 5))
+			{
+				m_drvStraightPID->Disable();
+				m_lEncode->Reset();
+				m_rEncode->Reset();
+				AutonSteps++;
+			}
+			break;
+		case 2:
+			m_ramCase = 0;
+			if (m_ramCase == 3)
+				AutonSteps++;
+			break;
+		case 3:
+			m_armPID->SetSetpoint(0.0);
+			
+			if ((fabs(m_armEncoder->PIDGet() - m_armPID->GetSetpoint()) < 5) && m_armPID->IsEnabled())
+				m_armPID->Disable();
+			
+			break;
+		}
+	}
+	
+	void AutonTurnRight ()
+	{
+
+		switch (AutonSteps)
+		{
+		case 0:
+			m_driveRotate->SetAngle(-18);
+			m_driveRotate->PIDEnable();
+			
+			m_armPID->SetSetpoint(MED_SHOT_BACK);
+			m_armPID->Enable();
+			
+			if (!m_driveRotate->IsRotating())
+			{
+				m_driveRotate->PIDDisable();
+				AutonSteps++;
+			}
+			break;
+		case 1:
+			m_drvStraightPID->SetSetpoint(-64);
+			m_drvStraightPID->Enable();
+			
+			if ((fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5) && (fabs(m_armEncoder->PIDGet() - m_armPID->GetSetpoint()) < 5))
+			{
+				m_drvStraightPID->Disable();
+				m_lEncode->Reset();
+				m_rEncode->Reset();
+				AutonSteps++;
+			}
+			break;
+		case 2:
+			m_ramCase = 0;
+			if (m_ramCase == 3)
+				AutonSteps++;
+			break;
+		case 3:
+			m_armPID->SetSetpoint(0.0);
+			
+			if ((fabs(m_armEncoder->PIDGet() - m_armPID->GetSetpoint()) < 5) && m_armPID->IsEnabled())
+				m_armPID->Disable();
+			
+			break;
 		}
 	}
 /*	
@@ -945,33 +1045,7 @@ public:
 			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
 		else
 		{
-			if (m_driver->GetRawButton(BUTTON_START) && m_driver->GetRawButton(BUTTON_Y)) {
-				if (!m_drvStraightPID->IsEnabled())
-				{
-					m_drvStraightPID->SetSetpoint(32.0);
-					m_drvStraightPID->Enable();
-				}
-				
-				m_driveRotate->PIDDisable();
-			}
-			else if (m_driver->GetRawButton(BUTTON_START) && m_driver->GetRawButton(BUTTON_A)) {
-				m_driveRotate->SetAngle(45);
-				m_driveRotate->PIDEnable();
-				
-				m_shifters->Set(true);
-				
-				SmartDashboard::PutBoolean("Is Rotating: ", m_driveRotate->IsRotating());
-			}
-			else
-			{
-				
-				if (m_drvStraightPID->IsEnabled())
-				{
-					m_drvStraightPID->Disable();
-				}
-				m_driveRotate->PIDDisable();
-				m_robotDrive->ArcadeDrive(0.0,0.0);
-			}
+			m_robotDrive->ArcadeDrive(0.0,0.0);
 		}
 		
 		if (m_driver -> GetRawButton(BUTTON_LB)){
@@ -1112,11 +1186,35 @@ public:
 		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2)
 			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
 		else
+		{
+			if (m_driver->GetRawButton(BUTTON_START) && m_driver->GetRawButton(BUTTON_Y)) {
+				if (!m_drvStraightPID->IsEnabled())
+				{
+					m_drvStraightPID->SetSetpoint(32.0);
+					m_drvStraightPID->Enable();
+				}
+				
+				m_driveRotate->PIDDisable();
+			}
+			else if (m_driver->GetRawButton(BUTTON_START) && m_driver->GetRawButton(BUTTON_A)) {
+				m_driveRotate->SetAngle(45);
+				m_driveRotate->PIDEnable();
+				
+				m_shifters->Set(true);
+			}
+			else
+			{
+				m_driveRotate->PIDDisable();
+				if (m_drvStraightPID->IsEnabled())
+					m_drvStraightPID->Disable();
+				m_robotDrive->ArcadeDrive(0.0,0.0);
+			}
 			m_robotDrive->ArcadeDrive(0.0,0.0);
+		}
 		if (m_driver -> GetRawButton(BUTTON_A)){
 			m_shifters -> Set(true);
 		}
-		else {
+		else if (m_driveRotate->Finished() || !m_driveRotate->PIDIsEnabled()){
 			m_shifters -> Set(false);
 		}
 		

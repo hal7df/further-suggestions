@@ -144,6 +144,14 @@ bool DriveRotate::IsRotating ()
 {
 	return IsRotating (ROTATE_ANGLE_GAP);
 }
+bool DriveRotate::Finished ()
+{
+	return (fabs(PID->GetSetpoint() - PIDGet()) < 5);
+}
+bool DriveRotate::PIDIsEnabled ()
+{
+	return PID->IsEnabled();
+}
 
 // ----- For PID Use -----
 double DriveRotate::PIDGet ()
