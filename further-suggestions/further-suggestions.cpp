@@ -566,6 +566,7 @@ public:
 			break;
 		}
 		
+		PrintData();
 		m_dsLCD->UpdateLCD();
 	}
 
@@ -718,7 +719,7 @@ public:
 			}
 		break;
 		case 5:	
-			m_drvStraightPID->SetSetpoint(-80.0);
+			m_drvStraightPID->SetSetpoint(-105.0);
 			m_drvStraightPID->Enable();
 		
 			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
@@ -1074,7 +1075,7 @@ public:
 	 void TeleopBGrabber()
 	{
 		//ROLLERS	
-		if (m_operator->GetRawAxis(TRIGGERS) > 0.4) {
+		if (m_operator->GetRawAxis(TRIGGERS) > 0.4 || m_driver->GetRawButton(BUTTON_RB)) {
 			m_roller->Set(1);
 		}
 		else if (m_operator->GetRawAxis(TRIGGERS) < -0.4)
@@ -1113,9 +1114,10 @@ public:
 		}
 		*/
 		//bArm OPEN / CLOSE
-		if (m_operator->GetButtonPress(BUTTON_START)) {
-			m_bArm->Set(!m_bArm->Get());
-		}
+		if (m_operator->GetRawButton(BUTTON_START))
+			m_bArm->Set(true);
+		else
+			m_bArm->Set(false);
 		
 	}
 		  
@@ -1157,15 +1159,10 @@ public:
 		} else if (m_operator->GetRawButton(BUTTON_Y) && !m_operator->GetRawButton(BUTTON_BACK)) {
 			// Catch Position
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint(ApplyArmOffset(0.0));
+			m_armPID->SetSetpoint(ApplyArmOffset(SELF_CATCH));
 			m_armPID->Enable();
 			
-		} else if (m_operator->GetRawButton(BUTTON_LB))
-		{
-			m_armPIDFlag = true;
-			m_armPID->SetSetpoint(ApplyArmOffset(CATCH_POS));
-			m_armPID->Enable();
-		}
+		} 
 		else {
 			if (m_armPIDFlag) {
 				m_armPID->Disable();
