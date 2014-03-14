@@ -75,9 +75,10 @@
 	// Place bot values here
 	#define FLOOR_PICKING_POS 381
 	#define MED_SHOOT_POS 135
-	#define MED_SHOT_BACK -170
+	#define MED_SHOT_BACK -167.0
 	#define GUARDED_SHOT_FRONT 104.0
 	#define GUARDED_SHOT_BACK -132.5
+	#define SELF_CATCH -31.0
 	#define LONG_SHOOT_POS -141
 	#define CATCH_POS -1.0
 	#define BGRABBER_SAFE 3
@@ -104,7 +105,7 @@
 
 	// RAMROD
 	#define RAM_LOCK_POSITION 930
-	#define RAM_MID_POSITION 450
+	#define RAM_MID_POSITION 350
 
 	// Drive Rotate
 	#define CAMERA_VIEW 1
