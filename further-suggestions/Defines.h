@@ -63,7 +63,7 @@
 
 	// Drive Rotate
 	#define CAMERA_VIEW 1
-	#define DEGREE_FACTOR 1
+	#define DEGREE_FACTOR 26.5
 	#define ANGLE_TO_HOTGOAL 28.13
 	#define ROTATE_ANGLE_GAP 5
 
@@ -110,7 +110,7 @@
 
 	// Drive Rotate
 	#define CAMERA_VIEW 1
-	#define DEGREE_FACTOR 1
+	#define DEGREE_FACTOR 26.5
 	#define ANGLE_TO_HOTGOAL 28.13
 	#define ROTATE_ANGLE_GAP 5
 
