@@ -209,7 +209,6 @@ private:
 	int m_medRamCase;
 	int m_ramCase;
 	bool m_ramInit;
-	bool Drive_Status;
 	bool m_armPIDFlag;
 	
 	//Auton Selector Variables
@@ -362,7 +361,6 @@ public:
 		m_medRamCase = -1;
 		countLoop = 0;
 		armCount = 0;
-		Drive_Status = false;
 		
 		//Arm reset variables
 		m_armResetPos = 0;
@@ -550,8 +548,8 @@ public:
 		{
 		case 1:
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"A: DF Shoot          ");
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"B: Check Left Hot    ");
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"X: Check Right Hot   ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"B: Turn Right        ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"X: Turn Left         ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Y: Drive Back 2 Ball ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"RB: Drive Forward    ");
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"Back (HOLD): Disable ");
@@ -724,14 +722,20 @@ public:
 		
 			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
 						
-			if((fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK) < AUTON_ANGLE_GAP) && fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5){
-				m_rEncode -> Reset();
-				m_lEncode -> Reset();		
-				m_drvStraightPID->Disable();
-				m_autonTime->Stop();
-				m_autonTime->Reset();
-				m_roller->Set(0.0);
-				AutonDBSteps++;
+			if((fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK) < AUTON_ANGLE_GAP))
+			{
+				if(fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 50 && m_ramCase == -1)
+					m_ramCase = 0;
+				else if(fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5){
+					m_rEncode -> Reset();
+					m_lEncode -> Reset();		
+					m_drvStraightPID->Disable();
+					m_autonTime->Stop();
+					m_autonTime->Reset();
+					m_roller->Set(0.0);
+					//AutonDBSteps++;
+					AutonDBSteps = 7;
+				}
 			}
 			break;	
 		case 6:
@@ -741,8 +745,10 @@ public:
 				AutonDBSteps++;
 			break;
 		case 7:
-			m_armPID->SetSetpoint(0.0);
-			m_armPID->Enable();
+			if (m_ramCase == -1)
+			{
+				m_armPID->SetSetpoint(ApplyArmOffset(SELF_CATCH));
+			}
 			
 			break;
 		}
@@ -779,13 +785,14 @@ public:
 	}
 /*
 	void AutonCheckHotLeft(){
-		AutonStraightDrive(-1, 32 * REV_IN);
+		m_drvStraightPID->SetSetpoint(-32);
+		m_drvStraigthPID->Enable();
 		RamFire();
 		switch(AutonSteps){
 		case 0:
 			m_arm->SetAngle(MED_SHOOT_POS);
 			m_arm->PIDEnable();
-			if (Drive_Status){
+			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5){
 				if (m_cameraHandler->getHotGoal() == kLeft){
 					m_ramCase = 0;		
 					AutonSteps = 1;
@@ -797,13 +804,14 @@ public:
 		}
 	}
 	void AutonCheckHotRight(){
-		AutonStraightDrive(-1, 32 * REV_IN);
+		m_drvStraightPID->SetSetpoint(-32);
+		m_drvStriaghtPID->Enable()
 		RamFire();
 		switch(AutonSteps){
 		case 0:
-			m_arm->SetAngle(MED_SHOOT_POS);
-			m_arm->PIDEnable();
-			if (Drive_Status){
+			m_armPID->SetSetpoint(ApplyArmOffset(MED_SHOOT_POS));
+			m_armPID->Enable();
+			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5){
 				if (m_cameraHandler->getHotGoal() == kRight){
 					m_ramCase = 0;	
 					AutonSteps = 1;	
@@ -814,6 +822,7 @@ public:
 		}
 	}
 */
+	
 	void AutonDF(){
 		if (!m_drvStraightPID->IsEnabled())
 		{
@@ -827,7 +836,7 @@ public:
 		switch (AutonSteps)
 		{
 		case 0:
-			m_driveRotate->SetAngle(18);
+			m_driveRotate->SetAngle(0,0,18);
 			m_driveRotate->PIDEnable();
 			
 			m_armPID->SetSetpoint(MED_SHOT_BACK);
@@ -872,7 +881,7 @@ public:
 		switch (AutonSteps)
 		{
 		case 0:
-			m_driveRotate->SetAngle(-18);
+			m_driveRotate->SetAngle(0,0,-18);
 			m_driveRotate->PIDEnable();
 			
 			m_armPID->SetSetpoint(MED_SHOT_BACK);
@@ -1039,11 +1048,23 @@ public:
 	
 	
 	/*********************** TELEOP FUNCTIONS **************************/
-	
 	void TeleopDrive()
 	{
-		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2)
+		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2){
 			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
+			m_driveRotate->PIDDisable();
+			if (!m_driver->GetRawButton(BUTTON_START)) 
+				m_driveRotate->PIDDisable();
+		}
+		else if (m_driver ->GetRawButton(BUTTON_A))
+			m_driveRotate->SetAngle(0, 0, 180);
+		
+		else if (m_driver ->GetRawButton(BUTTON_B))
+			m_driveRotate->SetAngle(.8, 48, 90);
+				
+		else if (m_driver->GetRawButton(BUTTON_START)) 
+			m_driveRotate->PIDEnable();
+		
 		else
 		{
 			m_robotDrive->ArcadeDrive(0.0,0.0);
@@ -1189,31 +1210,21 @@ public:
 				{
 					m_drvStraightPID->SetSetpoint(32.0);
 					m_drvStraightPID->Enable();
-				}
-				
-				m_driveRotate->PIDDisable();
+				}			
 			}
-			else if (m_driver->GetRawButton(BUTTON_START) && m_driver->GetRawButton(BUTTON_A)) {
-				m_driveRotate->SetAngle(45);
-				m_driveRotate->PIDEnable();
-				
-				m_shifters->Set(true);
-			}
+		
 			else
 			{
 				m_driveRotate->PIDDisable();
 				if (m_drvStraightPID->IsEnabled())
-					m_drvStraightPID->Disable();
+				m_drvStraightPID->Disable();
 				m_robotDrive->ArcadeDrive(0.0,0.0);
 			}
-			m_robotDrive->ArcadeDrive(0.0,0.0);
 		}
 		if (m_driver -> GetRawButton(BUTTON_A)){
 			m_shifters -> Set(true);
 		}
-		else if (m_driveRotate->Finished() || !m_driveRotate->PIDIsEnabled()){
-			m_shifters -> Set(false);
-		}
+		
 		
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Right encoder count: %d",m_rEncode->Get());
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"Left encoder count: %d",m_lEncode->Get());
@@ -1650,32 +1661,37 @@ public:
 		SmartDashboard::PutNumber("Ram Time: ",m_ramTime->Get());
 		SmartDashboard::PutNumber("Medium Ramrod Fire Case: ",m_medRamCase);
 		
-		SmartDashboard::PutNumber("Arm Calc Position Offset: ", ApplyArmOffset(m_armEncoder->GetDistance()));
+		SmartDashboard::PutNumber("Arm Calc Position Offset: ", (m_armEncoder->GetDistance() - m_armOffset));
 		SmartDashboard::PutNumber("Arm Actual Position: ", m_armEncoder->GetDistance());
+		
+		/*
 		SmartDashboard::PutNumber("Arm Rate: ", m_armEncoder->GetRate());
 		SmartDashboard::PutNumber("Arm PID Input: ", m_armEncoder->PIDGet());
 		SmartDashboard::PutNumber("Arm PID Output:",m_armPID->Get());
 		SmartDashboard::PutNumber("Arm Motor Input:",m_operator->GetRawAxis(LEFT_Y));
 		SmartDashboard::PutBoolean("Arm Difference Bool", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS) < AUTON_ANGLE_GAP);
+		*/
 		
 		SmartDashboard::PutNumber("lEncoder: ",m_rEncode->GetDistance());
 		SmartDashboard::PutNumber("rEncoder: ",m_lEncode->GetDistance());
-		SmartDashboard::PutBoolean("Drive Status: ", Drive_Status);
 
 		SmartDashboard::PutNumber("Arm Reset Position: ",m_armResetPos);
 		SmartDashboard::PutNumber("Arm Offset: ",m_armOffset);
 		SmartDashboard::PutBoolean("Arm Reset Sensor",m_armReset->Get());
 		
 		// Auton
-		SmartDashboard::PutNumber("Auton Step: ", AutonDBSteps);
+		SmartDashboard::PutNumber("2-Ball Auton Step: ", AutonDBSteps);
+		SmartDashboard::PutNumber("Auton Step: ",AutonSteps);
 		SmartDashboard::PutBoolean("Auton Time: ", m_autonTime->Get());
 		
+		/*
 		SmartDashboard::PutNumber("Drive PID Output: ",m_drvStraightPID->Get());
 		SmartDashboard::PutNumber("Drive PID Input: ",(m_lEncode->GetDistance()+m_rEncode->GetDistance())/(2.0*REV_IN));
 		SmartDashboard::PutNumber("Left Drive Set: ",m_lDrive->Get());
 		SmartDashboard::PutNumber("Right Drive Set: ",m_rDrive->Get());
 		SmartDashboard::PutNumber("Drive P: ",m_drvStraightPID->GetP());
 		SmartDashboard::PutNumber("Drive D: ",m_drvStraightPID->GetD());
+		*/
 	}
 };
 

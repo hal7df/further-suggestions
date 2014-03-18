@@ -48,7 +48,7 @@ class DriveRotate: public PIDSource, public PIDOutput
 public:
 	DriveRotate (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rEncoder);
 	
-	void SetAngle (double angle);
+	void SetAngle (double forwardspeed, double forwarddistance, double angle);
 	void PIDEnable ();
 	void PIDDisable ();
 	bool PIDIsEnabled ();
@@ -68,7 +68,9 @@ private:
 	PIDController* PID;
 	
 	// ----- Values -----
-	double iniLEncoder, iniREncoder;
+	double m_forwardspeed, m_forwarddistance;
+	
+	
 	
 	// ----- Flags -----
 	// TO Avoid initializing ini_angle in loop

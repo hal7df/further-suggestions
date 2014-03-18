@@ -71,7 +71,6 @@ void DriveStraightPID::PIDWrite(float output)
 /*
  * Clockwise is Negative.
  * Angle is measured in degrees.
- * Initial Angle is angle of the robot when the function runs.
  * Note:
  * 	When you use the functions with initial angle, you cannot run it again and again in loop because they initialize initial angle again and again.
  */
@@ -90,17 +89,19 @@ DriveRotate::DriveRotate (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rE
  * Angle should be given in degree -180 to +180
  * the Angle is difference from initial actual angle.
  */
-void DriveRotate::SetAngle (double angle)
+void DriveRotate::SetAngle (double forwardspeed, double forwarddistance, double angle)
 {
 	// Save Initilized Encoder Values
 	if (!f_angleInitialized) {
-		iniLEncoder = m_lEncoder->GetDistance();
-		iniREncoder = m_rEncoder->GetDistance();
+		m_lEncoder -> Reset();
+		m_rEncoder -> Reset();
 		f_angleInitialized = true;
 	}
 
 	// Start PID
 	PID->SetSetpoint(angle);
+	m_forwardspeed = forwardspeed;
+	m_forwarddistance = forwarddistance * REV_IN;
 }
 /*
  * Enable Set Angle PID
@@ -112,8 +113,6 @@ void DriveRotate::PIDEnable()
 	
 	// ----- Debug Display -----
 	SmartDashboard::PutNumber("Value to PID: ", PIDGet());
-	SmartDashboard::PutNumber("Left Encoder Ini: ", iniLEncoder);
-	SmartDashboard::PutNumber("Right Encoder Ini: ", iniREncoder);
 	SmartDashboard::PutNumber("Rotate Set Point: ", PID->GetSetpoint());
 }
 
@@ -135,8 +134,8 @@ void DriveRotate::PIDDisable()
  */
 bool DriveRotate::IsRotating (double gap)
 {
-	double Dleft = iniLEncoder - m_lEncoder->GetDistance();
-	double Dright = iniREncoder - m_rEncoder->GetDistance();
+	double Dleft = m_lEncoder->GetDistance();
+	double Dright = m_rEncoder->GetDistance();
 	
 	return fabs(Dleft - Dright) / DEGREE_FACTOR > gap;
 }
@@ -156,9 +155,9 @@ bool DriveRotate::PIDIsEnabled ()
 // ----- For PID Use -----
 double DriveRotate::PIDGet ()
 {
-	double Dleft = iniLEncoder - m_lEncoder->GetDistance();
-	double Dright = iniREncoder - m_rEncoder->GetDistance();
-	return (Dleft - Dright) / DEGREE_FACTOR;
+	double Dleft = m_lEncoder->GetDistance();
+	double Dright = m_rEncoder->GetDistance();
+	return (Dleft - Dright) / (2 * DEGREE_FACTOR);
 }
 
 void DriveRotate::PIDWrite(float output)
@@ -170,10 +169,10 @@ void DriveRotate::PIDWrite(float output)
 	else if (output < -0.8)
 	    output = -0.8;
 	
-	if (fabs(m_lEncoder->GetDistance()) + 5 > fabs(m_rEncoder->GetDistance()))
-	    m_robotDrive->TankDrive(-(output-0.1),(output+0.1));
-	else if (fabs(m_rEncoder->GetDistance()) + 5 > fabs(m_rEncoder->GetDistance()))
-	    m_robotDrive->TankDrive(-(output+-0.1),(output-0.1));
-	else
-	    m_robotDrive->TankDrive(-output, output);
+	double adveragedistance = (m_lEncoder ->GetDistance() - m_rEncoder->GetDistance())/2;
+    
+	if (m_forwarddistance <= adveragedistance - (5* REV_IN))
+    	m_robotDrive->ArcadeDrive(m_forwardspeed , -output);
+    else
+    	m_robotDrive->ArcadeDrive(0 , -output);
 }

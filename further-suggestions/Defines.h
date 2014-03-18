@@ -22,8 +22,8 @@
 //Universal constants
 #define CAMERA_ANGLE 0.82030475
 
-//#define PracticeBot
-#define CompetitionBot
+#define PracticeBot
+//#define CompetitionBot
 
 
 #ifdef PracticeBot
@@ -37,6 +37,7 @@
 	#define CATCH_POS 14.0
 	#define BGRABBER_SAFE 3
 	#define AUTON_SHOOT_POS 1
+	#define SELF_CATCH -31.0
 
 	#define ARM_RESET_WIDTH 68.0
 
