@@ -30,10 +30,11 @@
 	// Place practice bot values here
 	#define FLOOR_PICKING_POS 378.0
 	#define MED_SHOOT_POS 115.0
-	#define MED_SHOT_BACK -175.0
+	#define MED_SHOT_BACK -188.0 //-175.0
 	#define GUARDED_SHOT_FRONT 90.0
 	#define GUARDED_SHOT_BACK -130.5
 	#define LONG_SHOOT_POS -126
+	#define TRUSS_SHOT 49.0
 	#define CATCH_POS 14.0
 	#define BGRABBER_SAFE 3
 	#define AUTON_SHOOT_POS 1
