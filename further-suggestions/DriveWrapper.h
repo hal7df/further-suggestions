@@ -27,42 +27,41 @@ private:
 	
 };
 
+class DriveStraightSource: public PIDSource, public PIDOutput
+{
+public:
+	DriveStraightSource (DriveAuton *p);
+	
+	void Set(double dist);
+	void Enable();
+	void Disable();
+	double GetSetPoint();
+	bool IsFinished();
+	double PIDGet();
+	void PIDWrite(double output);
+private:
+	PIDController* PID;
+	DriveAuton *parent;
+};
+
+class DriveRotateSource : public PIDSource, public PIDOutput
+{
+public:
+	DriveRotateSource (DriveAuton *p);
+	
+	void Set(double angle);
+	void Enable();
+	void Disable();
+	double GetSetPoint();
+	bool IsFinished();
+	double PIDGet();
+	void PIDWrite(double output);
+private:
+	PIDController* PID;
+	DriveAuton *parent;
+};
 
 class DriveAuton {
-	// ----- Dummy Classes -----
-		class DummyStraight : public PIDSource, public PIDOutput
-		{
-		public:
-			DummyStraight (DriveAuton *p);
-			
-			void Set(double dist);
-			void Enable();
-			void Disable();
-			double GetSetPoint();
-			bool IsFinished();
-			double PIDGet();
-			void PIDWrite(double output);
-		private:
-			PIDController* PID;
-			DriveAuton *parent;
-		};
-		
-		class DummyRotate : public PIDSource, public PIDOutput
-		{
-		public:
-			DummyRotate (DriveAuton *p);
-			
-			void Set(double angle);
-			void Enable();
-			void Disable();
-			double GetSetPoint();
-			bool IsFinished();
-			double PIDGet();
-			void PIDWrite(double output);
-		private:
-			PIDController* PID;
-			DriveAuton *parent;
-		};
 public:
 	DriveAuton (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rEncoder);
 	
@@ -81,15 +80,15 @@ public:
 	
 private:
 	// ----- Dummy Objects -----
-	DummyStraight m_dStraight;
-	DummyRotate m_dRotate;
+	DriveStraightSource *m_dStraight;
+	DriveRotateSource *m_dRotate;
 	
 	// ----- Components -----
 	RobotDrive* m_robotDrive;
 	Encoder* m_lEncoder;
 	Encoder* m_rEncoder;
 	
-	// ----- Valuese -----
+	// ----- Values -----
 	double m_straightVal;
 	double m_rotateVal;
 	
