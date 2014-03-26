@@ -27,6 +27,78 @@ private:
 	
 };
 
+
+class DriveAuton {
+	// ----- Dummy Classes -----
+		class DummyStraight : public PIDSource, public PIDOutput
+		{
+		public:
+			DummyStraight (DriveAuton *p);
+			
+			void Set(double dist);
+			void Enable();
+			void Disable();
+			double GetSetPoint();
+			bool IsFinished();
+			double PIDGet();
+			void PIDWrite(double output);
+		private:
+			PIDController* PID;
+			DriveAuton *parent;
+		};
+		
+		class DummyRotate : public PIDSource, public PIDOutput
+		{
+		public:
+			DummyRotate (DriveAuton *p);
+			
+			void Set(double angle);
+			void Enable();
+			void Disable();
+			double GetSetPoint();
+			bool IsFinished();
+			double PIDGet();
+			void PIDWrite(double output);
+		private:
+			PIDController* PID;
+			DriveAuton *parent;
+		};
+public:
+	DriveAuton (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rEncoder);
+	
+	void Set(double dist, double angle);
+	void Enable();
+	void Disable();
+	bool IsEnabled();
+	double GetDist();
+	double GetAngle();
+	double GetSetDist();
+	double GetSetAngle();
+	bool IsFinished();
+	bool IsDriveFinished();
+	bool IsRotateFinished();
+	
+	
+private:
+	// ----- Dummy Objects -----
+	DummyStraight m_dStraight;
+	DummyRotate m_dRotate;
+	
+	// ----- Components -----
+	RobotDrive* m_robotDrive;
+	Encoder* m_lEncoder;
+	Encoder* m_rEncoder;
+	
+	// ----- Valuese -----
+	double m_straightVal;
+	double m_rotateVal;
+	
+	// ----- Flags -----
+	bool f_enabled;
+	bool f_setted;
+	
+};
+
 class DriveStraightPID: public PIDSource, public PIDOutput
 {
 public:

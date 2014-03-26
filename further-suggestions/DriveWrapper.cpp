@@ -34,6 +34,185 @@ void DriveWrapper::PIDWrite (float output)
 	Set(output);
 }
 
+// Drive Auton ***************************************
+
+DriveAuton::DriveAuton (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rEncoder)
+	: m_dStraight(this)
+	, m_dRotate(this)
+{
+	
+	// ----- Set Components ------
+	m_robotDrive = robotDrive;
+	m_lEncoder = lEncoder;
+	m_rEncoder = rEncoder;
+	
+	// ----- Reset Encoder -----
+	m_lEncoder->Reset();
+	m_rEncoder->Reset();
+	
+	// ----- Initialize -----
+	m_straightVal = 0.0;
+	m_rotateVal = 0.0;
+	f_enabled = false;
+	f_setted = false;
+}
+
+void DriveAuton::Set(double dist, double angle)
+{
+	if (!f_setted) {
+		m_dStraight.Set(dist);
+		m_dRotate.Set(angle);
+		f_setted = true;
+	}
+}
+
+void DriveAuton::Enable()
+{
+	m_dStraight.Enable();
+	m_dRotate.Enable();
+	f_enabled = true;
+}
+
+void DriveAuton::Disable()
+{
+	if (f_enabled) {
+		m_dStraight.Enable();
+		m_dRotate.Enable();
+		f_enabled = false;
+		f_setted = false;
+	}
+}
+
+bool DriveAuton::IsEnabled()
+{
+	return f_enabled;
+}
+
+double DriveAuton::GetDist()
+{
+	return m_dStraight.PIDGet();
+}
+
+double DriveAuton::GetSetDist()
+{
+	return m_dStraight.GetSetPoint();
+}
+
+double DriveAuton::GetAngle()
+{
+	return m_dRotate.PIDGet();
+}
+
+double DriveAuton::GetSetAngle()
+{
+	return m_dRotate.GetSetPoint();
+}
+
+bool DriveAuton::IsFinished()
+{
+	return IsDriveFinished() && IsRotateFinished();
+}
+
+bool DriveAuton::IsRotateFinished()
+{
+	return m_dRotate.IsFinished();
+}
+
+bool DriveAuton::IsDriveFinished()
+{
+	return m_dStraight.IsFinished();
+}
+		
+
+// Dummy Straight ***********************************
+
+DriveAuton::DummyStraight::DummyStraight(DriveAuton *p)
+{
+	parent = p;
+	PID = new PIDController(DRV_P, DRV_I, DRV_D, this, this);
+}
+
+void DriveAuton::DummyStraight::Set(double dist)
+{
+	PID->SetSetpoint(dist);
+}
+
+void DriveAuton::DummyStraight::Enable()
+{
+	PID->Enable();
+}
+
+void DriveAuton::DummyStraight::Disable()
+{
+	PID->Disable();
+}
+
+double DriveAuton::DummyStraight::GetSetPoint()
+{
+	return PID->GetSetpoint();
+}
+
+bool DriveAuton::DummyStraight::IsFinished()
+{
+	return fabs(PID->GetSetpoint() - PIDGet()) < 4;
+}
+
+double DriveAuton::DummyStraight::PIDGet()
+{
+	return (parent->m_lEncoder->GetDistance() - parent->m_rEncoder->GetDistance()) / (2 * REV_IN);
+}
+
+void DriveAuton::DummyStraight::PIDWrite(double output)
+{
+	parent->m_straightVal = output;
+	parent->m_robotDrive->ArcadeDrive(parent->m_straightVal, parent->m_rotateVal);
+}
+
+// Dummy Rotate *****************************************************
+
+DriveAuton::DummyRotate::DummyRotate(DriveAuton *p)
+{
+	parent = p;
+	PID = new PIDController(DRV_P, DRV_I, DRV_D, this, this);
+}
+
+void DriveAuton::DummyRotate::Set(double dist)
+{
+	PID->SetSetpoint(dist);
+}
+
+void DriveAuton::DummyRotate::Enable()
+{
+	PID->Enable();
+}
+
+void DriveAuton::DummyRotate::Disable()
+{
+	PID->Disable();
+}
+
+double DriveAuton::DummyRotate::GetSetPoint()
+{
+	return PID->GetSetpoint();
+}
+
+bool DriveAuton::DummyRotate::IsFinished()
+{
+	return fabs(PID->GetSetpoint() - PIDGet()) < 3;
+}
+
+double DriveAuton::DummyRotate::PIDGet()
+{
+	return (parent->m_lEncoder->GetDistance() + parent->m_rEncoder->GetDistance()) / (2 * DEGREE_FACTOR);
+	return 0.0;
+}
+
+void DriveAuton::DummyRotate::PIDWrite(double output)
+{
+	parent->m_rotateVal = output;
+	parent->m_robotDrive->ArcadeDrive(parent->m_straightVal, parent->m_rotateVal);
+}
+
 //Drive Straight PID***********************************
 
 DriveStraightPID::DriveStraightPID (RobotDrive* roboDrv, Encoder* leftEncode, Encoder* rightEncode)

@@ -237,7 +237,13 @@ private:
 	int AutonDBSteps;
 	int AutonSteps;
 	int autondance;
-
+	
+	
+	// TEST
+	DriveAuton* m_driveAuton;
+	DriveAutonWrapper* m_driveAutonTest;
+	PIDController* m_driveAutonTestPIDRotate;
+	PIDController* m_driveAutonTestPIDStraight;
 public:
 	
 	
@@ -396,6 +402,11 @@ public:
 		AutonDBSteps = 1;
 		AutonSteps = 0;
 		autondance = 0;
+		
+		// TEST
+		m_driveAutonTest = new DriveAutonWrapper(m_robotDrive, m_lEncode, m_rEncode);
+		m_driveAutonTestPIDRotate = new PIDController(DRV_P, DRV_I, DRV_D, m_driveAutonTest->m_dRotate, m_driveAutonTest->m_dRotate);
+		m_driveAutonTestPIDStraight = new PIDController(DRV_P, DRV_I, DRV_D, m_driveAutonTest->m_dStraight, m_driveAutonTest->m_dStraight);
 	}
 
 	/********************************** Init Routines *************************************/
@@ -659,6 +670,7 @@ public:
 			TeleopBGrabber();
 			PrintData();
 			
+			TeleopTest();
 		}
 	
 	void TestPeriodic () {
@@ -670,6 +682,15 @@ public:
 		TestRamLock();
 		TestFindSensorWidth();
 		PrintData();
+	}
+	
+	/******************************** TEST ***************************/
+	void TeleopTest()
+	{
+		if (m_driver->GetRawButton(BUTTON_A))
+		{
+			m_driveAuton->Set(24.0, 0.0);
+		}
 	}
 
 /********************************** External Routines *************************************/
@@ -1235,15 +1256,6 @@ public:
 			if (!m_driver->GetRawButton(BUTTON_START)) 
 				m_driveRotate->PIDDisable();
 		}
-		else if (m_driver ->GetRawButton(BUTTON_A))
-			m_driveRotate->SetAngle(0, 0, 180);
-		
-		else if (m_driver ->GetRawButton(BUTTON_B))
-			m_driveRotate->SetAngle(.8, 48, 90);
-				
-		else if (m_driver->GetRawButton(BUTTON_START)) 
-			m_driveRotate->PIDEnable();
-		
 		else
 		{
 			m_robotDrive->ArcadeDrive(0.0,0.0);
@@ -1252,9 +1264,9 @@ public:
 		if (m_driver -> GetRawButton(BUTTON_LB)){
 			m_shifters -> Set(true);
 		}
-		else {
-			m_shifters -> Set(false);
-		}
+		else 
+			m_shifters->Set(false);
+		
 		if(m_driver->GetRawButton(BUTTON_BACK))
 		{
 			m_rEncode->Reset();
@@ -1455,9 +1467,6 @@ public:
 				m_drvStraightPID->Disable();
 				m_robotDrive->ArcadeDrive(0.0,0.0);
 			}
-		}
-		if (m_driver -> GetRawButton(BUTTON_A)){
-			m_shifters -> Set(true);
 		}
 		
 		
@@ -2016,5 +2025,6 @@ public:
 		}
 	}
 };
+
 
 START_ROBOT_CLASS(BuiltinDefaultCode);
