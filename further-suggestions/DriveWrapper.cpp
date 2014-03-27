@@ -163,7 +163,7 @@ double DriveStraightSource::PIDGet()
 	return (parent->m_lEncoder->GetDistance() - parent->m_rEncoder->GetDistance()) / (2 * REV_IN);
 }
 
-void DriveStraightSource::PIDWrite(double output)
+void DriveStraightSource::PIDWrite(float output)
 {
 	parent->m_straightVal = output;
 	parent->m_robotDrive->ArcadeDrive(parent->m_straightVal, parent->m_rotateVal);
@@ -208,7 +208,7 @@ double DriveRotateSource::PIDGet()
 	return 0.0;
 }
 
-void DriveRotateSource::PIDWrite(double output)
+void DriveRotateSource::PIDWrite(float output)
 {
 	parent->m_rotateVal = output;
 	parent->m_robotDrive->ArcadeDrive(parent->m_straightVal, parent->m_rotateVal);

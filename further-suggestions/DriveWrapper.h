@@ -5,6 +5,10 @@
 #ifndef DRIVEWRAPPER_H
 #define DRIVEWRAPPER_H
 
+class DriveAuton;
+class DriveStraightSource;
+class DriveRotateSource;
+
 class DriveWrapper : public SpeedController {
 public:
 	//Constructor
@@ -27,7 +31,7 @@ private:
 	
 };
 
-class DriveStraightSource: public PIDSource, public PIDOutput
+class DriveStraightSource : public PIDSource, public PIDOutput
 {
 public:
 	DriveStraightSource (DriveAuton *p);
@@ -38,10 +42,10 @@ public:
 	double GetSetPoint();
 	bool IsFinished();
 	double PIDGet();
-	void PIDWrite(double output);
+	void PIDWrite(float output);
 private:
 	PIDController* PID;
-	DriveAuton *parent;
+	DriveAuton* parent;
 };
 
 class DriveRotateSource : public PIDSource, public PIDOutput
@@ -55,7 +59,7 @@ public:
 	double GetSetPoint();
 	bool IsFinished();
 	double PIDGet();
-	void PIDWrite(double output);
+	void PIDWrite(float output);
 private:
 	PIDController* PID;
 	DriveAuton *parent;
@@ -64,6 +68,9 @@ private:
 class DriveAuton {
 public:
 	DriveAuton (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rEncoder);
+	
+	friend class DriveStraightSource;
+	friend class DriveRotateSource;
 	
 	void Set(double dist, double angle);
 	void Enable();
@@ -77,12 +84,7 @@ public:
 	bool IsDriveFinished();
 	bool IsRotateFinished();
 	
-	
-private:
-	// ----- Dummy Objects -----
-	DriveStraightSource *m_dStraight;
-	DriveRotateSource *m_dRotate;
-	
+protected:
 	// ----- Components -----
 	RobotDrive* m_robotDrive;
 	Encoder* m_lEncoder;
@@ -91,6 +93,10 @@ private:
 	// ----- Values -----
 	double m_straightVal;
 	double m_rotateVal;
+private:
+	// ----- Dummy Objects -----
+	DriveStraightSource *m_dStraight;
+	DriveRotateSource *m_dRotate;
 	
 	// ----- Flags -----
 	bool f_enabled;

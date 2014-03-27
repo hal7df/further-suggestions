@@ -241,9 +241,6 @@ private:
 	
 	// TEST
 	DriveAuton* m_driveAuton;
-	DriveAutonWrapper* m_driveAutonTest;
-	PIDController* m_driveAutonTestPIDRotate;
-	PIDController* m_driveAutonTestPIDStraight;
 public:
 	
 	
@@ -402,11 +399,6 @@ public:
 		AutonDBSteps = 1;
 		AutonSteps = 0;
 		autondance = 0;
-		
-		// TEST
-		m_driveAutonTest = new DriveAutonWrapper(m_robotDrive, m_lEncode, m_rEncode);
-		m_driveAutonTestPIDRotate = new PIDController(DRV_P, DRV_I, DRV_D, m_driveAutonTest->m_dRotate, m_driveAutonTest->m_dRotate);
-		m_driveAutonTestPIDStraight = new PIDController(DRV_P, DRV_I, DRV_D, m_driveAutonTest->m_dStraight, m_driveAutonTest->m_dStraight);
 	}
 
 	/********************************** Init Routines *************************************/
