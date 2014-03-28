@@ -472,6 +472,8 @@ public:
 		m_lEncode->Reset();
 		//m_armEncoder->Reset();
 		m_armPID->Disable();
+		m_armPID->SetPID(ARM_P,ARM_I,ARM_D);
+		m_armPID->Reset();
 		AutonDBSteps = 0;
 		m_robotDrive->TankDrive(0.,0.);
 		m_drvStraightPID->Disable();
@@ -1630,6 +1632,7 @@ public:
 	    		m_armOffset = m_armEncoder->GetDistance();
 	    	
 	    	m_armMotor->Set(0.0);
+	    	m_armPID->Reset();
 	        m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"                     ");
 	        m_armResetStop = true;
 	    }
