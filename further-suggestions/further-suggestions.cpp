@@ -634,7 +634,7 @@ public:
 	*/
 		}
 		
-		if (m_armPID->IsEnabled() && fabs(m_armEncoder->GetDistance() - m_armPID->GetSetpoint()) < 15)
+		if (m_armPID->IsEnabled() && fabs(m_armEncoder->GetDistance() - m_armPID->GetSetpoint()) < 15 && m_armPID->GetSetpoint() != MED_SHOT_BACK+1)
 		{
 			m_armPID->SetPID(ARM_P,0.003,ARM_D);
 		}
@@ -1406,7 +1406,7 @@ public:
 			
 		}
 		
-		if (m_armPID->IsEnabled() && m_operator->GetRawButton(BUTTON_B) && fabs(m_armEncoder->GetDistance() - m_armPID->GetSetpoint()) < 15)
+		if (m_armPID->IsEnabled() && !m_operator->GetRawButton(BUTTON_B) && fabs(m_armEncoder->GetDistance() - m_armPID->GetSetpoint()) < 15)
 		{
 			m_armPID->SetPID(m_armPID->GetP(),0.003,m_armPID->GetD());
 		}
@@ -1675,9 +1675,12 @@ public:
 	
 	void WatchArm ()
 	{
-		if (fabs(ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance()) < 100 && m_operator->GetRawButton(BUTTON_B))
+		if (fabs(ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance()) < 100 && (m_operator->GetRawButton(BUTTON_B) || m_ds->IsAutonomous()))
 		{
-			m_armPID->SetPID((ARM_P-.005)*(fabs((ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance())/100))+.005,m_armPID->GetI(),0);
+			/*if (fabs(m_lEncode->GetRate()+m_rEncode->GetRate())/2 > 5 && fabs(ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance()) < 10)
+				m_armPID->SetPID(0.15,0,0);
+			else*/
+				m_armPID->SetPID((ARM_P-.005)*(fabs((ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance())/100))+.005,0,0);
 		}
 		else
 		{
