@@ -923,7 +923,7 @@ public:
 			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
 			if(fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK) < AUTON_ANGLE_GAP)
 			{
-				if(fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 80 &&  m_ramCase == -1)
+				if(fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 100 &&  m_ramCase == -1)
 				{
 					m_ramCase = 0;
 					m_roller->Set(0.0);
