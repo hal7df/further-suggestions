@@ -7,7 +7,7 @@
 #include "CameraHandler.h"
 
 /**
- * HOTBOT 2014 v1.9 - Build Date: 3/14/14
+ * HOTBOT 2014 v2.0 - Build Date: 3/28/14
  * 
  * See the wiki on the GitHub repository for more information
  * 
@@ -423,7 +423,37 @@ public:
 		
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"      AUTONOMOUS     ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"         Mode:       ");
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"                     ");
+
+		switch (autonChoice)
+		{
+		case AutonDFshoot:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"       DF Shoot      ");
+			break;
+		case AutonDf:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"     Drive Forward   ");
+			break;
+		case AutonDBrebound:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"        2 Ball       ");
+			break;
+		case AutonDoNothing:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"       DISABLED      ");
+			break;
+		case AutonTurnleft:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"      Turn Left      ");
+			break;
+		case AutonTurnright:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"      Turn Right     ");
+			break;
+		case AutonCheckHotleft:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"    Check Hot Left   ");
+			break;
+		case AutonCheckHotright:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"    Check Hot Right  ");
+			break;
+		case AutonBalltrack:
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"     Ball Tracking   ");
+		}
+		
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"                     ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"                     ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
@@ -462,7 +492,7 @@ public:
 	/********************************** Periodic Routines *************************************/
 	void DisabledPeriodic()  {
 		
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.3-11-14 v1.9");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.3-28-14 v2.0");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"  ||   ||  __  ----- ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"  ||--|| /    \\   |  ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"  ||   || \\__/   |   ");
@@ -512,7 +542,7 @@ public:
 		switch (autonChoice)
 		{
 		case AutonDBrebound:
-			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"      DB 2 Ball      ");
+			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"       2 Ball       ");
 			break;
 		case AutonDFshoot:
 			m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"      DF Shoot       ");
@@ -1677,14 +1707,12 @@ public:
 	{
 		if (fabs(ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance()) < 100 && (m_operator->GetRawButton(BUTTON_B) || m_ds->IsAutonomous()))
 		{
-			/*if (fabs(m_lEncode->GetRate()+m_rEncode->GetRate())/2 > 5 && fabs(ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance()) < 10)
-				m_armPID->SetPID(0.15,0,0);
-			else*/
-				m_armPID->SetPID((ARM_P-.005)*(fabs((ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance())/100))+.005,0,0);
+			m_armPID->SetPID((ARM_P-.005)*(fabs((ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance())/100))+.005,0,0);
 		}
 		else
 		{
-			m_armPID->SetPID(ARM_P,m_armPID->GetI(),ARM_D);
+			if (m_armPID->GetP() != ARM_P)
+				m_armPID->SetPID(ARM_P,m_armPID->GetI(),ARM_D);
 		}
 	}
 
