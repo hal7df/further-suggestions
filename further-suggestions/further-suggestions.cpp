@@ -181,6 +181,7 @@ private:
 	// OTHER ABSTRACTION OBJECTS *************************
 	
 	ArmWrapper* m_arm;
+	ArmWrite* m_armWrite;
 	
 	//Declare camera handler object
 	//CameraHandler* m_cameraHandler;
@@ -341,10 +342,11 @@ public:
 		// OTHER ABSTRACTION OBJECTS *************************
 		
 		m_arm = new ArmWrapper (6, 8, 5, 6, 10);
+		m_armWrite = new ArmWrite (m_armMotor);
 		
 		// PID CONTROLLERS ***********************************
 				
-		m_armPID = new PIDController(ARM_P, ARM_I, ARM_D, m_armEncoder, m_armMotor);
+		m_armPID = new PIDController(ARM_P, ARM_I, ARM_D, m_armEncoder, m_armWrite);
 		m_drvStraightPID = new PIDController(DRV_P, DRV_I, DRV_D, m_drvSource, m_drvSource);
 		
 		// DRIVER INTERFACE OBJECTS **************************
@@ -474,6 +476,7 @@ public:
 		m_armPID->Disable();
 		m_armPID->SetPID(ARM_P,ARM_I,ARM_D);
 		m_armPID->Reset();
+		m_armWrite->Reset();
 		AutonDBSteps = 0;
 		m_robotDrive->TankDrive(0.,0.);
 		m_drvStraightPID->Disable();
@@ -870,6 +873,7 @@ public:
 				m_autonTime->Stop();
 				m_autonTime->Start();
 				m_autonTime->Reset();
+				m_armWrite->Reset();
 				AutonDBSteps++;
 			}
 			break;
@@ -904,6 +908,7 @@ public:
 				m_rEncode -> Reset();
 				m_lEncode -> Reset();
 				m_drvStraightPID->Disable();
+				m_armWrite->Reset();
 				m_armPID->SetSetpoint(MED_SHOT_BACK - 8);
 				AutonDBSteps++;
 			}
@@ -928,7 +933,7 @@ public:
 					m_ramCase = 0;
 					m_roller->Set(0.0);
 				}
-				else if(fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5 && m_ramCase > 4){
+				else if(fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5 && m_ramCase >= 4){
 					m_rEncode -> Reset();
 					m_lEncode -> Reset();		
 					m_drvStraightPID->Disable();
@@ -1428,6 +1433,7 @@ public:
 		else {
 			if (m_armPIDFlag) {
 				m_armPID->Disable();
+				m_armWrite->Reset();
 				m_armPIDFlag = false;
 			}		
 			
@@ -1452,11 +1458,11 @@ public:
 			m_armPID->SetPID((m_armPID->GetP()+0.01),m_armPID->GetI(),m_armPID->GetD());
 		else if (m_driver->GetButtonPress(BUTTON_B))
 			m_armPID->SetPID((m_armPID->GetP()-0.01),m_armPID->GetI(),m_armPID->GetD());
-		*/
 		if (m_driver->GetButtonPress(BUTTON_X))
-			m_armDOffset += 0.001;
+			m_armWrite->ChangeMaxThrottle(0.001);
 		else if (m_driver->GetButtonPress(BUTTON_Y))
-			m_armDOffset -= 0.001;
+			m_armWrite->ChangeMaxThrottle(-0.001);
+		*/
 		
 		SmartDashboard::PutBoolean("Arm PID enabled ", m_armPID->IsEnabled());
 		SmartDashboard::PutNumber("Arm Difference: ", fabs(m_armEncoder->GetDistance()) - m_armPID->GetSetpoint());
@@ -2012,7 +2018,7 @@ public:
 			
 			
 			SmartDashboard::PutNumber("Arm PID Input: ", m_armEncoder->PIDGet());
-			SmartDashboard::PutNumber("Arm PID Output:",m_armPID->Get());
+			
 			SmartDashboard::PutNumber("Arm Motor Input:",m_operator->GetRawAxis(LEFT_Y));
 			SmartDashboard::PutBoolean("Arm Difference Bool", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS) < AUTON_ANGLE_GAP);
 			*/
@@ -2025,6 +2031,11 @@ public:
 			SmartDashboard::PutBoolean("Arm Reset Sensor",m_armReset->Get());
 			SmartDashboard::PutBoolean("Can reset arm? ",m_canResetArm);
 			SmartDashboard::PutBoolean("Arm reset flag: ",m_armResetFlag);
+			
+			SmartDashboard::PutNumber("Max Arm Throttle: ", m_armWrite->GetMaxThrottle());
+			SmartDashboard::PutNumber("Current Arm Throttle: ",m_armMotor->Get());
+			SmartDashboard::PutNumber("Last Arm Throttle: ", m_armWrite->GetLastValue());
+			SmartDashboard::PutNumber("Arm PID Output:",m_armPID->Get());
 			
 			SmartDashboard::PutBoolean("dunRollin: ", m_dunRollin);
 			SmartDashboard::PutNumber("Roll Time: ",m_rollTime->Get());
