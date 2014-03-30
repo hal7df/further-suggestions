@@ -1,4 +1,4 @@
-#include "cameraHandler.h"
+#include "CameraHandler.h"
 #define TWO_IMAGES
 	CameraHandler::CameraHandler(AxisCamera *camera, DriverStationLCD *m_dsLCD, Relay *relay)
 	{
