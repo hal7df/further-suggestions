@@ -1,7 +1,10 @@
 #include "WPILib.h"
+#include <cmath>
 
 #ifndef ARMWRAPPER_H
 #define ARMWRAPPER_H
+
+class ArmWrite;
 
 	class ArmWrapper: public PIDOutput {
 
@@ -62,6 +65,24 @@
 		void SetMaxPeriod (double);
 		double GetDistPerPulse ();
 		double GetMaxPeriod ();
+	};
+	
+	class ArmWrite: public PIDOutput
+	{
+	public:
+		ArmWrite(SpeedController* output);
+		
+		void PIDWrite (float output);
+		
+		float GetMaxThrottle ();
+		float GetLastValue ();
+		void ChangeMaxThrottle (float deltaThrottle);
+		
+		void Reset();
+	private:
+		SpeedController* m_arm;
+		float m_lastValue;
+		float m_maxThrottle;
 	};
 
 #endif

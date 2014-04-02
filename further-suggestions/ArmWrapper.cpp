@@ -147,3 +147,42 @@ double ArmWrapper::GetDistPerPulse () {
 double ArmWrapper::GetMaxPeriod () {
 	return c_maxPeriod;
 }
+
+//ARM WRITE WRAPPER****************************
+
+ArmWrite::ArmWrite (SpeedController* output)
+{
+	m_arm = output;
+	m_maxThrottle = 0.2;
+	m_lastValue = 0;
+}
+
+void ArmWrite::PIDWrite (float output)
+{
+	if (m_lastValue > 1)
+		m_arm->Set(output);
+	else {
+		m_arm->Set(output * m_lastValue);
+		m_lastValue += m_maxThrottle;
+	}
+}
+
+float ArmWrite::GetLastValue ()
+{
+	return m_lastValue;
+}
+
+float ArmWrite::GetMaxThrottle ()
+{
+	return m_maxThrottle;
+}
+
+void ArmWrite::ChangeMaxThrottle (float deltaThrottle)
+{
+	m_maxThrottle += deltaThrottle;
+}
+
+void ArmWrite::Reset ()
+{
+	m_lastValue = 0;
+}
