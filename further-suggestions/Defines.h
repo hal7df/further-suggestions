@@ -22,8 +22,8 @@
 //Universal constants
 #define CAMERA_ANGLE 0.82030475
 
-#define PracticeBot
-//#define CompetitionBot
+//#define PracticeBot
+#define CompetitionBot
 
 
 #ifdef PracticeBot
