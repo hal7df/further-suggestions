@@ -76,8 +76,8 @@
 #ifdef CompetitionBot
 	// Place bot values here
 	#define FLOOR_PICKING_POS 381
-	#define MED_SHOOT_POS 138
-	#define MED_SHOT_BACK -163.0
+	#define MED_SHOOT_POS 135
+	#define MED_SHOT_BACK -180.0
 	#define GUARDED_SHOT_FRONT 104.0
 	#define GUARDED_SHOT_BACK -132.5
 	#define SELF_CATCH -15.0
