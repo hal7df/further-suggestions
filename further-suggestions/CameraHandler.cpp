@@ -97,7 +97,7 @@
 		}
 	}
 
-	state_t CameraHandler::getHotGoal ()
+	CameraHandler::state_t CameraHandler::getHotGoal ()
 	{
 		unsigned x;
 
@@ -124,7 +124,7 @@
 
 		if (particles->size() == 1) {
 			// Find Only One Particle
-			return kNone;
+			return CameraHandler::kNone;
 		} else if (particles->size() > 0 && particles->size() < 30) {
 			// Sort by size
 			sort(particles->begin(), particles->end(), particleSort);

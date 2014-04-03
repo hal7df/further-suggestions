@@ -39,6 +39,7 @@ public:
 	void Set(double dist);
 	void Enable();
 	void Disable();
+	bool IsEnabled();
 	double GetSetPoint();
 	bool IsFinished();
 	double PIDGet();
@@ -56,6 +57,7 @@ public:
 	void Set(double angle);
 	void Enable();
 	void Disable();
+	bool IsEnabled();
 	double GetSetPoint();
 	bool IsFinished();
 	double PIDGet();

@@ -54,13 +54,14 @@ DriveAuton::DriveAuton (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rEnc
 	// ----- Initialize -----
 	m_straightVal = 0.0;
 	m_rotateVal = 0.0;
-	f_enabled = false;
 	f_setted = false;
 }
 
 void DriveAuton::Set(double dist, double angle)
 {
 	if (!f_setted) {
+		m_lEncoder->Reset();
+		m_rEncoder->Reset();
 		m_dStraight->Set(dist);
 		m_dRotate->Set(angle);
 		f_setted = true;
@@ -69,24 +70,25 @@ void DriveAuton::Set(double dist, double angle)
 
 void DriveAuton::Enable()
 {
+	
 	m_dStraight->Enable();
 	m_dRotate->Enable();
-	f_enabled = true;
+	
 }
 
 void DriveAuton::Disable()
 {
-	if (f_enabled) {
-		m_dStraight->Enable();
-		m_dRotate->Enable();
-		f_enabled = false;
+	if (IsEnabled())
+	{
+		m_dStraight->Disable();
+		m_dRotate->Disable();
 		f_setted = false;
 	}
 }
 
 bool DriveAuton::IsEnabled()
 {
-	return f_enabled;
+	return m_dStraight->IsEnabled() || m_dRotate->IsEnabled();
 }
 
 double DriveAuton::GetDist()
@@ -148,6 +150,11 @@ void DriveStraightSource::Disable()
 	PID->Disable();
 }
 
+bool DriveStraightSource::IsEnabled()
+{
+	return PID->IsEnabled();
+}
+
 double DriveStraightSource::GetSetPoint()
 {
 	return PID->GetSetpoint();
@@ -160,7 +167,7 @@ bool DriveStraightSource::IsFinished()
 
 double DriveStraightSource::PIDGet()
 {
-	return (parent->m_lEncoder->GetDistance() - parent->m_rEncoder->GetDistance()) / (2 * REV_IN);
+	return (parent->m_lEncoder->GetDistance() + parent->m_rEncoder->GetDistance()) / (2 * REV_IN);
 }
 
 void DriveStraightSource::PIDWrite(float output)
@@ -192,6 +199,11 @@ void DriveRotateSource::Disable()
 	PID->Disable();
 }
 
+bool DriveRotateSource::IsEnabled()
+{
+	return PID->IsEnabled();
+}
+
 double DriveRotateSource::GetSetPoint()
 {
 	return PID->GetSetpoint();
@@ -204,7 +216,7 @@ bool DriveRotateSource::IsFinished()
 
 double DriveRotateSource::PIDGet()
 {
-	return (parent->m_lEncoder->GetDistance() + parent->m_rEncoder->GetDistance()) / (2 * DEGREE_FACTOR);
+	return - (parent->m_lEncoder->GetDistance() - parent->m_rEncoder->GetDistance()) / (2 * DEGREE_FACTOR);
 	return 0.0;
 }
 

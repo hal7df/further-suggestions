@@ -120,6 +120,7 @@ private:
 	//Declare bGrabber motor
 	Talon* m_roller;
 	
+	
 	// SERVOS ********************************************
 	
 	//Declare ramrod servo
@@ -152,6 +153,7 @@ private:
 	RobotDrive* m_robotDrive;
 	DriveRotate* m_driveRotate;
 	DriveStraightPID* m_drvSource;
+	DriveAuton* m_autonDrive;
 	
 	// SENSORS *******************************************
 	
@@ -273,6 +275,7 @@ public:
 		//initialize bGrabber motor
 		m_roller = new Talon (7);
 		
+		
 		// SERVOS ********************************************
 		
 		//Initialize ramrod servo
@@ -340,6 +343,7 @@ public:
 		//Initialize Drive Rotate
 		m_driveRotate = new DriveRotate (m_robotDrive, m_lEncode, m_rEncode);
 		m_drvSource = new DriveStraightPID (m_robotDrive, m_lEncode, m_rEncode);
+		m_autonDrive = new DriveAuton(m_robotDrive, m_lEncode, m_rEncode);
 		
 		// OTHER ABSTRACTION OBJECTS *************************
 		
@@ -661,13 +665,14 @@ public:
 		case AutonTurnright:
 			AutonTurnRight();
 			break;
+			/*
         case AutonCheckHotleft:
 			AutonCheckHotLeft();
 			break;
 		case AutonCheckHotright:
 			AutonCheckHotRight();
 			break;
-    /*	case AutonBalltrack:
+		case AutonBalltrack:
 			//Ball tracker auton
 			break;
 	*/
@@ -685,21 +690,21 @@ public:
 
 	
 	void TeleopPeriodic() {
-			ManageCompressor();
-			TeleopDrive();
-			RamrodInit();
-			RamFire();
-			MedRamFire();
-			RamrodOverride();
-			TeleopArm();
-			WatchArm();
-			ArmReset();
-			//AutoArmReset();
-			TeleopBGrabber();
-			PrintData();
-			
-			TeleopTest();
-		}
+		
+		ManageCompressor();
+		TeleopDrive();
+		RamrodInit();
+		RamFire();
+		MedRamFire();
+		RamrodOverride();
+		TeleopArm();
+		WatchArm();
+		ArmReset();
+		//AutoArmReset();
+		TeleopBGrabber();
+		PrintData();
+	
+	}
 	
 	void TestPeriodic () {
 		ManageCompressor();
@@ -715,9 +720,33 @@ public:
 	/******************************** TEST ***************************/
 	void TeleopTest()
 	{
+		SmartDashboard::PutBoolean("Is Finished: ", m_autonDrive->IsFinished());
+		SmartDashboard::PutBoolean("Is Enabled: ", m_autonDrive->IsEnabled());
+		SmartDashboard::PutNumber("Get Dist: ", m_autonDrive->GetDist());
+		SmartDashboard::PutNumber("Get Set Dist: ", m_autonDrive->GetSetDist());
+		SmartDashboard::PutNumber("Get Angle: ", m_autonDrive->GetAngle());
+		SmartDashboard::PutNumber("Get Set Angle: ", m_autonDrive->GetSetAngle());
+		
 		if (m_driver->GetRawButton(BUTTON_A))
 		{
-			m_driveAuton->Set(24.0, 0.0);
+			m_autonDrive->Set(24.0, 0.0);
+			m_autonDrive->Enable();
+		}
+		else if (m_driver->GetRawButton(BUTTON_B))
+		{
+			m_shifters->Set(true);
+			m_autonDrive->Set(0.0, 90.0);
+			m_autonDrive->Enable();
+		}
+		else if (m_driver->GetRawButton(BUTTON_Y))
+		{
+			m_shifters->Set(true);
+			m_autonDrive->Set(48.0, 90.0);
+			m_autonDrive->Enable();
+		}
+		else
+		{
+			m_autonDrive->Disable();
 		}
 	}
 
@@ -850,10 +879,11 @@ public:
 	}
 	
 	void AutonTwoBallTwoHot(){
-		static stat_t hotGoal;
-		m_drvStraightPID->SetSetpoint(-32);
-		m_drvStraigthPID->Enable();
+		CameraHandler::state_t hotGoal;
 		RamFire();
+		hotGoal = m_cameraHandler->getHotGoal();
+		
+			
 		switch(AutonSteps){
 		case 0:
 			if (!m_armPID->IsEnabled())
@@ -862,30 +892,96 @@ public:
 				m_armPID->Enable();
 			}
 			
-			if (!m_drvStraightPID->IsEnabled())
-			{
-				m_drvStraightPID->SetSetpoint(-64.0);
-				m_drvStraightPID->Enable();
-			}
+			m_autonDrive->Set(-64.0, 0.0);
+			m_autonDrive->Enable();
 			
-			hotGoal = m_cameraHandler->GetHotGoal();
 			
-			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5)
+			if (m_autonDrive->IsFinished())
 			{
+				m_autonDrive->Disable();
 				AutonSteps++;
 			}
-			
+			break;
 		case 1:
-			if (hotGoal == stat_t::kLeft)
+			if (hotGoal == CameraHandler::kLeft)
 			{
 				// Left is Hot
-				m_shifter->Set(true);
-				m_robotDrive->ArcadeDrive(0.0, m_cameraHandler->GetCenter());
+				m_shifters->Set(true);
+				m_autonDrive->Set(0.0, 30.0);
 			}
-			else if (hotGoal == stat_t::kRight)
+			else
 			{
-				m_
+				m_shifters->Set(true);
+				m_autonDrive->Set(0.0, -30.0);
 			}
+			
+			if (m_autonDrive->IsFinished())
+			{
+				m_autonDrive->Disable();
+				//m_ramCase = 0;
+				AutonSteps++;
+			}
+			break;
+		case 2:
+			m_autonTime->Start();
+			if(m_autonTime->HasPeriodPassed(.2))
+			{
+			m_roller->Set(-1.0);
+			m_armPID->SetSetpoint(FLOOR_PICKING_POS);
+			
+			if (hotGoal == CameraHandler::kLeft)
+			{
+				m_shifters->Set(true);
+				m_autonDrive->Set(64.0, -30.0);
+			}
+			else
+			{
+				m_shifters->Set(true);
+				m_autonDrive->Set(64.0, 30.0);
+			}
+			}
+			if (m_autonDrive->IsFinished() && fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS) < AUTON_ANGLE_GAP)
+			{
+				AutonSteps++;
+				m_autonDrive->Disable();
+				m_autonTime->Stop();
+				m_autonTime->Reset();
+			}
+			break;
+		case 3:
+			m_roller->Set(-1.0);
+			m_autonDrive->Set(24.0, 0.0);
+			if (m_autonDrive->IsFinished())
+				AutonSteps++;
+			break;
+		case 4:
+			m_armPID->SetSetpoint(MED_SHOT_BACK);
+			m_autonDrive->Set(-64.0,0);
+			if (m_autonDrive->IsFinished() && fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK) < AUTON_ANGLE_GAP)
+			{
+				m_autonDrive->Disable();
+				AutonSteps++;
+			}
+			break;
+		case 5:
+			if (hotGoal == CameraHandler::kLeft)
+			{
+				m_shifters->Set(true);
+				m_autonDrive->Set(-36.0, -30.0);
+			}
+			else
+			{
+				m_shifters->Set(true);
+				m_autonDrive->Set(-36.0, 30.0);
+			}
+			break;
+		case 6:
+			//m_ramCase = 0;
+			if (m_ramCase > 2)
+				AutonSteps++;
+			break;
+		case 7:
+			break;
 		}
 	}
 
@@ -1053,7 +1149,7 @@ public:
 		break;
 		}
 	}
-
+	/*
     void AutonCheckHotLeft(){
 		m_drvStraightPID->SetSetpoint(-32);
         m_drvStraightPID->Enable();
@@ -1091,7 +1187,7 @@ public:
 		break;
 		}
 	}
-
+	*/
 	
 	void AutonDF(){
 		if (!m_drvStraightPID->IsEnabled())
