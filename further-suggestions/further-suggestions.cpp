@@ -217,7 +217,8 @@ private:
 	bool m_dunRollin;
 	bool m_armPIDFlag;
 	float m_armDOffset;
-	
+	double m_currentVal;
+	//double aCCEL_CAP;
 	//Auton Selector Variables
 	AutonChoice autonChoice;
 	Timer* m_selectorCountdown;
@@ -232,6 +233,7 @@ private:
 	bool m_armResetFlag;
 	bool m_canResetArm;
 	bool m_armResetStop;
+	bool m_shiftOverride;
 	
 	
 	// Auton Steps
@@ -239,6 +241,9 @@ private:
 	int AutonSteps;
 	int autondance;
 
+	//Current Sensor
+	AnalogChannel *m_currentSensor;
+	Timer *m_currentTimer;
 public:
 	
 	
@@ -263,7 +268,7 @@ public:
 		m_ramMotor = new Talon (5);
 		
 		//Initialize relays
-		m_camLight = new Relay (2);
+		m_camLight = new Relay (3);
 		
 		//Initialize Arm
 		m_armMotor = new Talon (6);
@@ -386,9 +391,12 @@ public:
 		m_canResetArm = false;
 		m_armResetFlag = false;
 		m_armResetStop = false;
+		m_shiftOverride = false;
+		m_currentVal = 0;
+		//ACCEL_CAP = 0;
 		
 		//Auton Selector Variables
-		m_selectorCountdown = new Timer();
+		m_selectorCountdown = new Timer;
 		m_selectorPage = 0;
 		
 		//Print Data Disable Override
@@ -398,6 +406,10 @@ public:
 		AutonDBSteps = 1;
 		AutonSteps = 0;
 		autondance = 0;
+
+		//Current Sensor
+		m_currentSensor = new AnalogChannel(1);
+		m_currentTimer = new Timer;
 	}
 
 	/********************************** Init Routines *************************************/
@@ -692,6 +704,7 @@ public:
 			ArmReset();
 			//AutoArmReset();
 			TeleopBGrabber();
+			AutoDownShift();
 			PrintData();
 			
 		}
@@ -1264,10 +1277,36 @@ public:
 	
 	
 	/*********************** TELEOP FUNCTIONS **************************/
+	double accelCap(double newValue)
+	{
+		double diff = newValue - m_currentVal;
+				if(diff >= 0 )
+				{
+					if(diff > ACCEL_CAP)
+					{
+						diff = ACCEL_CAP;
+					}
+				}
+				else
+				{
+					if(diff < -ACCEL_CAP)
+					{
+						diff = -ACCEL_CAP;
+					}
+				}
+			m_currentVal += diff;
+			//SmartDashboard::PutNumber("accelCap diff: ", diff);
+			//SmartDashboard::PutNumber("accelCap newValue: ", newValue);
+			//SmartDashboard::PutNumber("accelCap m_currentVal: ", m_currentVal);
+			//SmartDashboard::PutNumber("accelCap: ", ACCEL_CAP);
+		return m_currentVal;
+	}
+	
+	
 	void TeleopDrive()
 	{
 		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2){
-			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y),-m_driver->GetRawAxis(RIGHT_X));
+			m_robotDrive->ArcadeDrive(accelCap(-m_driver->GetRawAxis(LEFT_Y)),-m_driver->GetRawAxis(RIGHT_X));
 			m_driveRotate->PIDDisable();
 			if (!m_driver->GetRawButton(BUTTON_START)) 
 				m_driveRotate->PIDDisable();
@@ -1285,13 +1324,22 @@ public:
 		{
 			m_robotDrive->ArcadeDrive(0.0,0.0);
 		}
-		
-		if (m_driver -> GetRawButton(BUTTON_LB)){
+		//Shifting
+		if(m_shiftOverride == true)
+		{
+			m_shifters -> Set(true);	
+		}
+		else if(m_shiftOverride == false) 
+		{
+				m_shifters -> Set(false);
+		}
+		//Shift and Shift Override disable
+		if (m_driver -> GetRawButton(BUTTON_LB))
+		{
 			m_shifters -> Set(true);
+			m_shiftOverride = false;
 		}
-		else {
-			m_shifters -> Set(false);
-		}
+		
 		if(m_driver->GetRawButton(BUTTON_BACK))
 		{
 			m_rEncode->Reset();
@@ -1455,14 +1503,14 @@ public:
 		
 		/*
 		if (m_driver->GetButtonPress(BUTTON_A))
-			m_armPID->SetPID((m_armPID->GetP()+0.01),m_armPID->GetI(),m_armPID->GetD());
+			aCCEL_CAP +=0.1;
 		else if (m_driver->GetButtonPress(BUTTON_B))
-			m_armPID->SetPID((m_armPID->GetP()-0.01),m_armPID->GetI(),m_armPID->GetD());
-		if (m_driver->GetButtonPress(BUTTON_X))
-			m_armWrite->ChangeMaxThrottle(0.001);
-		else if (m_driver->GetButtonPress(BUTTON_Y))
-			m_armWrite->ChangeMaxThrottle(-0.001);
-		*/
+			aCCEL_CAP -=0.11;*/
+		//if (m_driver->GetButtonPress(BUTTON_X))
+		//	m_armWrite->ChangeMaxThrottle(0.001);
+		//else if (m_driver->GetButtonPress(BUTTON_Y))
+		//	m_armWrite->ChangeMaxThrottle(-0.001);
+		
 		
 		SmartDashboard::PutBoolean("Arm PID enabled ", m_armPID->IsEnabled());
 		SmartDashboard::PutNumber("Arm Difference: ", fabs(m_armEncoder->GetDistance()) - m_armPID->GetSetpoint());
@@ -1776,6 +1824,46 @@ public:
 	    }
 	}
 	
+	void AutoDownShift(){
+		/*
+		if((fabs(m_driver->GetRawAxis(LEFT_Y)) > .75) && fabs(((m_lEncode->GetRate()+m_rEncode->GetRate()) < 1000)))
+		{
+			if(m_currentTimer->Get() == 0.0)
+			{
+				m_currentTimer->Start();
+				m_currentTimer->Reset();
+			}
+			if (m_currentTimer->HasPeriodPassed(.5))
+			{
+				m_shiftOverride = true;
+			}
+		}
+		else if(m_currentTimer->HasPeriodPassed(.75))
+		{
+			m_currentTimer->Stop();
+			m_currentTimer->Reset();
+		}*/
+		
+		if (m_currentSensor->GetAverageVoltage() * 100 > 200)
+		{
+			if(m_currentTimer->Get() == 0.0)
+			{
+				m_currentTimer->Start();
+				m_currentTimer->Reset();
+			}
+			if (m_currentTimer->HasPeriodPassed(1.0))
+			{
+				m_shiftOverride = true;
+			}
+		}
+		else
+		{
+			m_currentTimer->Stop();
+			m_currentTimer->Reset();
+		}
+		
+	}
+	
 	void RamFire()
 	{
 		//Do the thing with bGrabber
@@ -2025,6 +2113,7 @@ public:
 			
 			SmartDashboard::PutNumber("lEncoder: ",m_rEncode->GetDistance());
 			SmartDashboard::PutNumber("rEncoder: ",m_lEncode->GetDistance());
+			SmartDashboard::PutNumber("Encoders Added:", (m_lEncode->GetRate() + m_rEncode->GetRate()));
 	
 			SmartDashboard::PutNumber("Arm Reset Position: ",m_armResetPos);
 			SmartDashboard::PutNumber("Arm Offset: ",m_armOffset);
@@ -2049,6 +2138,10 @@ public:
 			SmartDashboard::PutNumber("2-Ball Auton Step: ", AutonDBSteps);
 			SmartDashboard::PutNumber("Auton Step: ",AutonSteps);
 			SmartDashboard::PutBoolean("Auton Time: ", m_autonTime->Get());
+			SmartDashboard::PutNumber("Driver Y Axis: ",fabs(m_driver->GetRawAxis(LEFT_Y)));
+			SmartDashboard::PutNumber("Current Timer: ", m_currentTimer->Get());
+			SmartDashboard::PutNumber("Current Sensor (A): ", m_currentSensor->GetAverageVoltage() * 100);
+			SmartDashboard::PutBoolean("Shift Override: ", m_shiftOverride); 
 			
 			/*
 			SmartDashboard::PutNumber("Drive PID Output: ",m_drvStraightPID->Get());
