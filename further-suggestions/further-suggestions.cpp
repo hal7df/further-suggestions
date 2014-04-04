@@ -2,9 +2,9 @@
 #include "JoystickWrapper.h"
 #include "DriveWrapper.h"
 #include "ArmWrapper.h"
+#include "CameraHandler.h"
 #include "Defines.h"
 #include <cmath>
-#include "CameraHandler.h"
 
 /**
  * HOTBOT 2014 v2.0 - Build Date: 3/28/14
@@ -198,7 +198,6 @@ private:
 	
 	// MISCELLANEOUS *************************************
 	
-	
 	//Timers
 	Timer *m_ramTime;
 	Timer *m_rollTime;
@@ -241,7 +240,6 @@ private:
 	int AutonDBSteps;
 	int AutonSteps;
 	int autondance;
-	
 
 	//Current Sensor
 	AnalogChannel *m_currentSensor;
@@ -373,7 +371,6 @@ public:
 		m_dsLCD = DriverStationLCD::GetInstance();
 		
 		// MISCELLANEOUS *************************************
-		
 		
 		//Timers
 		m_ramTime = new Timer;
@@ -889,7 +886,7 @@ public:
 	void AutonTwoBallTwoHot(){
 		static stat_t hotGoal;
 		m_drvStraightPID->SetSetpoint(-32);
-		m_drvStraigthtPID->Enable();
+		m_drvStraigthPID->Enable();
 		RamFire();
 		switch(AutonSteps){
 		case 0:
@@ -1383,59 +1380,12 @@ public:
 	
 	void TeleopDrive()
 	{
-		
-		/*if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2){
+		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2){
 			m_robotDrive->ArcadeDrive(accelCap(-m_driver->GetRawAxis(LEFT_Y)),-m_driver->GetRawAxis(RIGHT_X));
 			m_driveRotate->PIDDisable();
 			if (!m_driver->GetRawButton(BUTTON_START)) 
 				m_driveRotate->PIDDisable();
-			*/
-		// Current Safety
-		if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2)
-		{
-			if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.8 && fabs(m_lEncode->GetRate() + m_rEncode->GetRate()) < 1000 && !m_shiftOverride)	
-			{
-				if (m_currentTimer->Get() == 0.0)
-				{
-					m_currentTimer->Start();
-				}
-				else if (m_currentTimer->Get() < 0.5)
-				{
-					m_robotDrive->ArcadeDrive(accelCap(-m_driver->GetRawAxis(LEFT_Y)),-m_driver->GetRawAxis(RIGHT_X));
-				}
-			}
-			else
-			{
-				m_currentTimer->Stop();
-				m_currentTimer->Reset();
-			}
-			
-			
-			if (m_currentTimer->Get() > 1.0)
-			{
-				m_currentTimer->Stop();
-				m_currentTimer->Reset();
-			}
-			else if (m_currentTimer->Get() > 0.5)
-			{
-				m_robotDrive->ArcadeDrive(0.0, 0.0);
-				m_shiftOverride = true;
-			}
-			else
-			{
-				m_robotDrive->ArcadeDrive(accelCap(-m_driver->GetRawAxis(LEFT_Y)),-m_driver->GetRawAxis(RIGHT_X));
-			}
 		}
-		else
-		{
-			m_currentTimer->Stop();
-			m_currentTimer->Reset();
-			m_robotDrive->ArcadeDrive(0.0,0.0);
-		}
-		
-		
-			
-		/*
 		else if (m_driver ->GetRawButton(BUTTON_A))
 			m_driveRotate->SetAngle(0, 0, 180);
 		
@@ -1444,10 +1394,11 @@ public:
 				
 		else if (m_driver->GetRawButton(BUTTON_START)) 
 			m_driveRotate->PIDEnable();
-		*/
 		
-		
-		
+		else
+		{
+			m_robotDrive->ArcadeDrive(0.0,0.0);
+		}
 		//Shifting
 		if(m_shiftOverride == true)
 		{
@@ -1950,11 +1901,34 @@ public:
 	
 	void AutoDownShift(){
 		/*
-		if (m_driver->GetRawAxis(LEFT_Y) > 0.9 && (m_lEncode->GetRate() + m_rEncode->GetRate()) < 1000)
+		if((fabs(m_driver->GetRawAxis(LEFT_Y)) > .75) && fabs(((m_lEncode->GetRate()+m_rEncode->GetRate()) < 1000)))
 		{
-			if (m_currentTimer->Get() == 0.0)
+			if(m_currentTimer->Get() == 0.0)
 			{
 				m_currentTimer->Start();
+				m_currentTimer->Reset();
+			}
+			if (m_currentTimer->HasPeriodPassed(.5))
+			{
+				m_shiftOverride = true;
+			}
+		}
+		else if(m_currentTimer->HasPeriodPassed(.75))
+		{
+			m_currentTimer->Stop();
+			m_currentTimer->Reset();
+		}*/
+		
+		if (m_currentSensor->GetAverageVoltage() * 100 > 200)
+		{
+			if(m_currentTimer->Get() == 0.0)
+			{
+				m_currentTimer->Start();
+				m_currentTimer->Reset();
+			}
+			if (m_currentTimer->HasPeriodPassed(1.0))
+			{
+				m_shiftOverride = true;
 			}
 		}
 		else
@@ -1962,13 +1936,6 @@ public:
 			m_currentTimer->Stop();
 			m_currentTimer->Reset();
 		}
-		
-		if (m_currentTimer->Get() > 0.25)
-		{
-			
-		}
-				m_shiftOverride = true;
-			*/
 		
 	}
 	
