@@ -240,8 +240,6 @@ private:
 	int AutonDBSteps;
 	int AutonSteps;
 	int autondance;
-	
-	AnalogChannel* m_currentSensor;
 
 	//Current Sensor
 	AnalogChannel *m_currentSensor;
@@ -270,7 +268,7 @@ public:
 		m_ramMotor = new Talon (5);
 		
 		//Initialize relays
-		m_camLight = new Relay (3);
+		m_camLight = new Relay (2);
 		
 		//Initialize Arm
 		m_armMotor = new Talon (6);
@@ -364,7 +362,8 @@ public:
 		
 		//Initialize camera handler object
 		//Initialize camera handler object
-		AxisCamera *camera = &AxisCamera::GetInstance("10.0.67.11");
+		
+		AxisCamera *camera = &AxisCamera::GetInstance("10.0.67.20");
 		m_cameraHandler = new CameraHandler (camera, m_dsLCD, m_camLight);
 		
 		//Grab driver station object
@@ -502,6 +501,9 @@ public:
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"                     ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
 		m_dsLCD->UpdateLCD();
+		
+		// Camera Debug
+		SmartDashboard::PutBoolean("GetHotGoal Called: ", false);
 	}
 	
 	void TestInit () {
@@ -709,7 +711,38 @@ public:
 			AutoDownShift();
 			PrintData();
 			
-		}
+			// ----- Camera Test -----
+			/*
+			m_camLight->Set(Relay::kForward);
+			if (m_driver->GetRawButton(BUTTON_A))
+			{
+				AxisCamera *camera = &AxisCamera::GetInstance("10.0.67.20");
+				camera->WriteResolution(AxisCamera::kResolution_320x240);
+				if (camera)
+				{
+				  ColorImage* pImage = camera->GetImage();
+				  if (pImage)
+				  {
+				    if (pImage->GetHeight() == 0 || pImage->GetWidth()==0)
+				    	m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Image size error"); 
+				    else
+				    {
+				      pImage->Write("Image.jpg");
+				      m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Image wrote"); 
+				    }
+
+				    delete pImage;
+				  }
+				  else
+				    m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Image was null"); 
+				}
+				else
+				  printf("Never got the camera instance. Big error.\n");
+				//SmartDashboard::PutNumber("Hot Goal Detection: ", m_cameraHandler->getHotGoal());
+				m_dsLCD->UpdateLCD();
+			}
+			*/
+	}
 	
 	void TestPeriodic () {
 		ManageCompressor();
@@ -732,7 +765,7 @@ public:
 			
 			if (!m_armPID->IsEnabled())
 			{
-				m_armPID->SetSetpoint(MED_SHOT_BACK - 7);
+				m_armPID->SetSetpoint(MED_SHOT_BACK);
 				m_armPID->Enable();
 			}
 			
@@ -849,7 +882,7 @@ public:
 			
 		}
 	}
-	
+	/*
 	void AutonTwoBallTwoHot(){
 		static stat_t hotGoal;
 		m_drvStraightPID->SetSetpoint(-32);
@@ -889,14 +922,14 @@ public:
 			}
 		}
 	}
-
+	*/
 	void AutonDBReboundRun(){
 		switch(AutonDBSteps) {
 		case 1:
 			
 			if (!m_armPID->IsEnabled())
 			{
-				m_armPID->SetSetpoint(MED_SHOT_BACK - 6);
+				m_armPID->SetSetpoint(MED_SHOT_BACK);
 				m_armPID->Enable();
 			}
 			
@@ -964,7 +997,7 @@ public:
 				m_lEncode -> Reset();
 				m_drvStraightPID->Disable();
 				m_armWrite->Reset();
-				m_armPID->SetSetpoint(MED_SHOT_BACK - 8);
+				m_armPID->SetSetpoint(MED_SHOT_BACK);
 				AutonDBSteps++;
 			}
 			
@@ -1031,7 +1064,7 @@ public:
 			
 			if (!m_armPID->IsEnabled())
 			{
-				m_armPID->SetSetpoint(MED_SHOT_BACK - 3);
+				m_armPID->SetSetpoint(MED_SHOT_BACK);
 				m_armPID->Enable();
 			}
 			

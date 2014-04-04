@@ -6,7 +6,7 @@
 		camera->WriteResolution(AxisCamera::kResolution_320x240);
 		camera->WriteBrightness(40);
 
-		this->img = new ColorImage(IMAQ_IMAGE_HSL);
+		this->img = new ColorImage(IMAQ_IMAGE_RGB);
 		//this->img2 = new ColorImage(IMAQ_IMAGE_HSL);
 		this->camera = camera;
 		this->m_dsLCD = m_dsLCD;
@@ -50,7 +50,7 @@
 		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_DILATE);
 		//Perform particle analysis on BinaryImage, creates vector with all particles found
 		particles = binImg->GetOrderedParticleAnalysisReports();
-		
+
 		printf("Particles found: %d",(int)particles->size());
 
 		//Print numbers of particles found to driver station
@@ -107,13 +107,15 @@
 		int largestHeightVal;	// Actual Height
 
 		BinaryImage* binImg;
+		ColorImage* colImg;
 		vector<ParticleAnalysisReport>* particles;
 
 		// Get Camera Image
 		camera->GetImage(img);
-
+		img->Write("bobnormal.bmp");
 		// Filter out Background
 		binImg = img->ThresholdHSL(52, 255, 71, 188, 76, 219);
+		binImg->Write("bob");
 
 		// Make picture clear
 		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_PCLOSE);
@@ -175,7 +177,7 @@
 		return getHotGoal() == kRight;
 	}
 
-	
+
 	double CameraHandler::getBallX ()
 	{
 		unsigned x;
@@ -203,7 +205,7 @@
 		particles = binImg->GetOrderedParticleAnalysisReports();
 
 		SmartDashboard::PutNumber("DEBUG Particle size: ", particles->size());
-		
+
 		if (particles->size() > 0 && particles->size() < 30)
 		{
 			sort(particles->begin(),particles->end(),particleSort);
@@ -212,18 +214,18 @@
 
 			largestArea = 25.0;
 			ballNum = -1;
-			
+
 			for (x = 0; ((x < particles->size()) && x < 5); x++)
 			{
 				sizeRatio = (double)(*particles)[x].boundingRect.height/(*particles)[x].boundingRect.width;
-				
+
 				if (((*particles)[x].particleArea > largestArea) && (sizeRatio > 0.75 && sizeRatio < 1.25))
 				{
 					largestArea = (*particles)[x].particleArea;
 					ballNum = x;
 				}
 			}
-			
+
 			if (ballNum == -1)
 			{
 				return -2.0;
@@ -265,7 +267,7 @@
 		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_ERODE);
 
 		particles = binImg->GetOrderedParticleAnalysisReports();
-		
+
 		SmartDashboard::PutNumber("DEBUG Particle size: ", particles->size());
 
 		if (particles->size() > 0 && particles->size() < 30)
@@ -280,7 +282,7 @@
 			for (x = 0; ((x < particles->size()) && x < 5); x++)
 			{
 				sizeRatio = (double)(*particles)[x].boundingRect.height/(*particles)[x].boundingRect.width;
-				
+
 				if (((*particles)[x].particleArea > largestArea) && (sizeRatio > 0.75 && sizeRatio < 1.25))
 				{
 					largestArea = (*particles)[x].particleArea;
@@ -298,5 +300,3 @@
 		else
 			return -1.0;
     }
-
-

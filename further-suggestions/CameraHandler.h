@@ -4,10 +4,10 @@
 	#include "Defines.h"
 
 	enum state_t {
-		kNone,
-		kLeft,
-		kRight,
-		kError
+		kNone,		// 0
+		kLeft,		// 1
+		kRight,		// 2
+		kError		// 3
 	};
 
 	class CameraHandler	
