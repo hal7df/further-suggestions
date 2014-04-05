@@ -7,7 +7,7 @@
 #include <cmath>
 
 /**
- * HOTBOT 2014 v2.0 - Build Date: 3/28/14
+ * HOTBOT 2014 v2.9 - Build Date: 4/5/14
  * 
  * See the wiki on the GitHub repository for more information
  * 
@@ -185,6 +185,7 @@ private:
 	
 	//Declare camera handler object
     CameraHandler* m_cameraHandler;
+    AxisCamera* m_camera;
 	
 	// DRIVER INTERFACE OBJECTS **************************
 	
@@ -363,8 +364,8 @@ public:
 		//Initialize camera handler object
 		//Initialize camera handler object
 		
-		AxisCamera *camera = &AxisCamera::GetInstance("10.0.67.20");
-		m_cameraHandler = new CameraHandler (camera, m_dsLCD, m_camLight);
+		m_camera = &AxisCamera::GetInstance("10.0.67.20");
+		m_cameraHandler = new CameraHandler (m_camera, m_dsLCD, m_camLight);
 		
 		//Grab driver station object
 		m_ds = DriverStation::GetInstance();
@@ -508,12 +509,15 @@ public:
 	
 	void TestInit () {
 		AutonDBSteps = 0;
+		
+		m_dsLCD->Clear();
+		m_dsLCD->UpdateLCD();
 	}
 
 	/********************************** Periodic Routines *************************************/
 	void DisabledPeriodic()  {
 		
-		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.3-28-14 v2.0");
+		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"HOTBOT b.4-05-14 v2.9");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"  ||   ||  __  ----- ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"  ||--|| /    \\   |  ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"  ||   || \\__/   |   ");
@@ -710,38 +714,6 @@ public:
 			TeleopBGrabber();
 			AutoDownShift();
 			PrintData();
-			
-			// ----- Camera Test -----
-			/*
-			m_camLight->Set(Relay::kForward);
-			if (m_driver->GetRawButton(BUTTON_A))
-			{
-				AxisCamera *camera = &AxisCamera::GetInstance("10.0.67.20");
-				camera->WriteResolution(AxisCamera::kResolution_320x240);
-				if (camera)
-				{
-				  ColorImage* pImage = camera->GetImage();
-				  if (pImage)
-				  {
-				    if (pImage->GetHeight() == 0 || pImage->GetWidth()==0)
-				    	m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Image size error"); 
-				    else
-				    {
-				      pImage->Write("Image.jpg");
-				      m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Image wrote"); 
-				    }
-
-				    delete pImage;
-				  }
-				  else
-				    m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Image was null"); 
-				}
-				else
-				  printf("Never got the camera instance. Big error.\n");
-				//SmartDashboard::PutNumber("Hot Goal Detection: ", m_cameraHandler->getHotGoal());
-				m_dsLCD->UpdateLCD();
-			}
-			*/
 	}
 	
 	void TestPeriodic () {
@@ -753,6 +725,51 @@ public:
 		TestRamLock();
 		TestFindSensorWidth();
 		PrintData();
+		
+		// ----- Camera Test -----
+		m_camLight->Set(Relay::kForward);
+		if (m_driver->GetRawButton(BUTTON_Y))
+		{
+			// camera->WriteResolution(AxisCamera::kResolution_320x240);
+			
+			if (m_camera)
+			{
+				ColorImage* pImage = m_camera->GetImage();
+				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line2,"GetImage: %s",(bool)pImage ? "yes" : "no");
+				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line3,"Width: %f", (float)pImage->GetWidth());
+				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line4,"Height: %f",(float)pImage->GetHeight());
+				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line5,"Resolution: %s",m_camera->GetResolution() == AxisCameraParams::kResolution_320x240 ? "yes" : "no");
+				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line5,"Image Status: %s",pImage->StatusIsFatal() ? "false" : "true");
+			}
+		}
+		/*
+			if (camera)
+			{
+			  ColorImage* pImage = camera->GetImage();
+			  if (pImage)
+			  {
+				if (pImage->GetHeight() == 0 || pImage->GetWidth()==0)
+					m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Image size error"); 
+				else
+				{
+				  pImage->Write("Image.jpg");
+				  m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Image wrote"); 
+				}
+				
+				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line5,"Width: %f",(float)pImage->GetWidth());
+				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line6,"Height: %f",(float)pImage->GetHeight());
+
+				delete pImage;
+			  }
+			  else
+				m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Image was null"); 
+			}
+			else
+			  printf("Never got the camera instance. Big error.\n");
+			//SmartDashboard::PutNumber("Hot Goal Detection: ", m_cameraHandler->getHotGoal());
+			m_dsLCD->UpdateLCD();
+		}
+		*/
 	}
 
 /********************************** External Routines *************************************/
@@ -1621,9 +1638,10 @@ public:
 			m_shifters -> Set(true);
 		}
 		
-		
+		/*
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"Right encoder count: %d",m_rEncode->Get());
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line3,1,"Left encoder count: %d",m_lEncode->Get());
+		*/
 	}
 	
 	void TestArm ()
