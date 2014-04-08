@@ -55,9 +55,9 @@
 	#define ARM_D 0.0
 
 	// Drive PID
-	#define DRV_P 0.0625
+	#define DRV_P 0.1
 	#define DRV_I 0.000
-	#define DRV_D 0.210
+	#define DRV_D 0.0
 	#define REV_IN 100.0
 
 	// RAMROD

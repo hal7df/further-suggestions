@@ -162,7 +162,8 @@ double DriveStraightSource::GetSetPoint()
 
 bool DriveStraightSource::IsFinished()
 {
-	return fabs(PID->GetSetpoint() - PIDGet()) < 4;
+	SmartDashboard::PutNumber("Straight Is Finished(Range: 10)", fabs(PID->GetSetpoint() - PIDGet()));
+	return fabs(PID->GetSetpoint() - PIDGet()) < 10;
 }
 
 double DriveStraightSource::PIDGet()
@@ -211,7 +212,8 @@ double DriveRotateSource::GetSetPoint()
 
 bool DriveRotateSource::IsFinished()
 {
-	return fabs(PID->GetSetpoint() - PIDGet()) < 3;
+	SmartDashboard::PutNumber("Rotate Is Finished(Range: 8)", fabs(PID->GetSetpoint() - PIDGet()));
+	return fabs(PID->GetSetpoint() - PIDGet()) < 8;
 }
 
 double DriveRotateSource::PIDGet()
