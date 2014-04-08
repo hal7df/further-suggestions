@@ -1,4 +1,4 @@
-#include "cameraHandler.h"
+#include "CameraHandler.h"
 #define TWO_IMAGES
 	CameraHandler::CameraHandler(AxisCamera *camera, DriverStationLCD *m_dsLCD, Relay *relay)
 	{
@@ -97,7 +97,7 @@
 		}
 	}
 
-	state_t CameraHandler::getHotGoal ()
+	CameraHandler::state_t CameraHandler::getHotGoal ()
 	{
 		unsigned x;
 
@@ -126,7 +126,7 @@
 		SmartDashboard::PutNumber("Num of Particles: ",particles->size());
 		if (particles->size() == 1) {
 			// Find Only One Particle
-			return kNone;
+			return CameraHandler::kNone;
 		} else if (particles->size() > 0 && particles->size() < 30) {
 			// Sort by size
 			sort(particles->begin(), particles->end(), particleSort);
