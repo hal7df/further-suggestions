@@ -93,6 +93,7 @@ enum AutonChoice {
 		AutonDFshoot,
 		AutonCheckHotleft,
 		AutonCheckHotright,
+		AutonHot2Ball,
 		AutonTurnleft,
 		AutonTurnright,
 		AutonDoNothing,
@@ -364,7 +365,7 @@ public:
 		//Initialize camera handler object
 		//Initialize camera handler object
 		
-		m_camera = &AxisCamera::GetInstance("10.0.67.20");
+		m_camera = &AxisCamera::GetInstance("10.0.67.11");
 		m_cameraHandler = new CameraHandler (m_camera, m_dsLCD, m_camLight);
 		
 		//Grab driver station object
@@ -714,6 +715,36 @@ public:
 			TeleopBGrabber();
 			AutoDownShift();
 			PrintData();
+			if(m_driver->GetRawButton(BUTTON_A))
+			{
+				SmartDashboard::PutNumber("Hot Goal Detection: ", m_cameraHandler->getHotGoal());
+			}
+			if (m_driver->GetRawButton(BUTTON_B))
+			{
+			  ColorImage* pImage = m_camera->GetImage();
+			  if (pImage)
+			  {
+				if (pImage->GetHeight() == 0 || pImage->GetWidth()==0)
+					m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Image size error"); 
+				else
+				{
+				  pImage->Write("Image.jpg");
+				  m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Image wrote"); 
+				}
+				
+				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line5,"Width: %f",(float)pImage->GetWidth());
+				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line6,"Height: %f",(float)pImage->GetHeight());
+
+				delete pImage;
+			  }
+			  else
+				m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"Image was null"); 
+			}
+			else
+			  printf("Never got the camera instance. Big error.\n");
+			//SmartDashboard::PutNumber("Hot Goal Detection: ", m_cameraHandler->getHotGoal());
+			m_dsLCD->UpdateLCD();
+
 	}
 	
 	void TestPeriodic () {
@@ -901,7 +932,7 @@ public:
 	}
 	/*
 	void AutonTwoBallTwoHot(){
-		static stat_t hotGoal;
+		static state_t hotGoal;
 		m_drvStraightPID->SetSetpoint(-32);
 		m_drvStraigthPID->Enable();
 		RamFire();
@@ -1106,7 +1137,7 @@ public:
 	}
 
     void AutonCheckHotLeft(){
-		m_drvStraightPID->SetSetpoint(-32);
+		m_drvStraightPID->SetSetpoint(-64.0);
         m_drvStraightPID->Enable();
         m_armPID->SetSetpoint(MED_SHOT_BACK);
         m_armPID->Enable();
@@ -1124,7 +1155,7 @@ public:
 		}
 	}
     void AutonCheckHotRight(){
-		m_drvStraightPID->SetSetpoint(-32);
+		m_drvStraightPID->SetSetpoint(-64.0);
         m_drvStraightPID->Enable();
         m_armPID->SetSetpoint(MED_SHOOT_POS);
         m_armPID->Enable();

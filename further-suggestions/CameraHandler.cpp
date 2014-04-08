@@ -4,7 +4,7 @@
 	{
 		//This runs once when cameraHandler Class is initilized
 		camera->WriteResolution(AxisCamera::kResolution_320x240);
-		camera->WriteBrightness(40);
+		camera->WriteBrightness(16);
 
 		this->img = new ColorImage(IMAQ_IMAGE_RGB);
 		//this->img2 = new ColorImage(IMAQ_IMAGE_HSL);
@@ -114,8 +114,8 @@
 		camera->GetImage(img);
 		img->Write("bobnormal.bmp");
 		// Filter out Background
-		binImg = img->ThresholdHSL(52, 255, 71, 188, 76, 219);
-		binImg->Write("bob");
+		binImg = img->ThresholdHSL(103, 156, 252, 255, 33, 109);
+		binImg->Write("bobbin.bmp");
 
 		// Make picture clear
 		frcMorphology(binImg->GetImaqImage(),binImg->GetImaqImage(),IMAQ_PCLOSE);
@@ -123,7 +123,7 @@
 
 		// Get Particle Analysis
 		particles = binImg->GetOrderedParticleAnalysisReports();
-
+		SmartDashboard::PutNumber("Num of Particles: ",particles->size());
 		if (particles->size() == 1) {
 			// Find Only One Particle
 			return kNone;

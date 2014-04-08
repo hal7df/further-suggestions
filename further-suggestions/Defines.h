@@ -23,15 +23,15 @@
 //Universal constants
 #define CAMERA_ANGLE 0.82030475
 
-//#define PracticeBot
-#define CompetitionBot
+#define PracticeBot
+//#define CompetitionBot
 
 
 #ifdef PracticeBot
 	// Place practice bot values here
 	#define FLOOR_PICKING_POS 378.0
 	#define MED_SHOOT_POS 115.0
-	#define MED_SHOT_BACK -188.0 //-175.0
+	#define MED_SHOT_BACK -198.0 //-175.0
 	#define GUARDED_SHOT_FRONT 90.0
 	#define GUARDED_SHOT_BACK -130.5
 	#define LONG_SHOOT_POS -126
