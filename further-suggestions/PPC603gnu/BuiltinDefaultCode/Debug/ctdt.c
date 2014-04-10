@@ -7,6 +7,8 @@
 /*       -fdollars-in-identifiers flag.                   */
 
 
+void _GLOBAL__I_C__WindRiver_workspace_further_suggestions_further_suggestions_CheesyVisionReceiver_cpp_05647D79_B98982D7();
+
 void _GLOBAL__I__Z20FRC_userClassFactoryv();
 
 void _GLOBAL__I__ZN10ArmWrapperC2EP15SpeedControllerS1_P7EncoderP12DigitalInput();
@@ -72,6 +74,7 @@ void _GLOBAL__I__ZN11StringArray19STRING_ARRAY_RAW_IDE();
 extern void (*_ctors[])();
 void (*_ctors[])() =
     {
+    _GLOBAL__I_C__WindRiver_workspace_further_suggestions_further_suggestions_CheesyVisionReceiver_cpp_05647D79_B98982D7,
     _GLOBAL__I__Z20FRC_userClassFactoryv,
     _GLOBAL__I__ZN10ArmWrapperC2EP15SpeedControllerS1_P7EncoderP12DigitalInput,
     _GLOBAL__I__ZN12DriveWrapperC2EP15SpeedControllerS1_,
@@ -105,6 +108,8 @@ void (*_ctors[])() =
     _GLOBAL__I__ZN11StringArray19STRING_ARRAY_RAW_IDE,
     0
     };
+
+void _GLOBAL__D__GLOBAL__I_C__WindRiver_workspace_further_suggestions_further_suggestions_CheesyVisionReceiver_cpp_05647D79_B98982D7();
 
 void _GLOBAL__D__Z20FRC_userClassFactoryv();
 
@@ -161,6 +166,7 @@ void _GLOBAL__D__ZN11StringArray19STRING_ARRAY_RAW_IDE();
 extern void (*_dtors[])();
 void (*_dtors[])() =
     {
+    _GLOBAL__D__GLOBAL__I_C__WindRiver_workspace_further_suggestions_further_suggestions_CheesyVisionReceiver_cpp_05647D79_B98982D7,
     _GLOBAL__D__Z20FRC_userClassFactoryv,
     _GLOBAL__D__ZN10ArmWrapperC2EP15SpeedControllerS1_P7EncoderP12DigitalInput,
     _GLOBAL__D__ZN12DriveWrapperC2EP15SpeedControllerS1_,

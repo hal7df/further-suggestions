@@ -216,7 +216,7 @@ private:
 	int m_medRamCase;
 	int m_ramCase;
 	bool m_ramInit;
-	bool Drive_Status;
+	bool m_autonShot; //bool to determine whether we have shot or not
 	bool m_rollIn;
 	bool m_dunRollin;
 	bool m_armPIDFlag;
@@ -388,6 +388,7 @@ public:
 		countLoop = 0;
 		armCount = 0;
 		m_rollIn = false;
+		m_autonShot = false;
 		m_dunRollin = true;
 		
 		m_armDOffset = 0.0;
@@ -670,6 +671,8 @@ public:
 		WatchArm();
 		PrintData();
 		RamFire();
+		
+		m_camLight->Set(Relay::kForward);
 		
 		switch (autonChoice)
 		{
@@ -982,7 +985,11 @@ public:
 	
 	void AutonTwoBallTwoHot(){
 		static CameraHandler::state_t hotGoal;
+		
+		// We always shift down
 		m_shifters->Set(true);
+		
+		
 		switch(AutonSteps){
 		case 0:		// Drive Forward, Move Arm, Detect Hotgoal
 			if (!m_armPID->IsEnabled())
@@ -993,11 +1000,7 @@ public:
 			
 			m_autonDrive->Set(-64.0, 0.0);
 			m_autonDrive->Enable();
-			
-			SmartDashboard::PutBoolean("Case 1 AutonDrive Finished: ", m_autonDrive->IsFinished());
-			SmartDashboard::PutNumber("Case 1 AutonDrive Straight: ", m_autonDrive->GetDist());
-			SmartDashboard::PutNumber("Case 1 AutonDrive Angle: ", m_autonDrive->GetAngle());
-			
+				
 			hotGoal = m_cameraHandler->getHotGoal();
 			
 			if (m_autonDrive->IsFinished())
@@ -1012,27 +1015,32 @@ public:
 			{
 				// Left is Hot
 				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line4,"Hot Goal Left");
-				m_shifters->Set(true);
 				m_autonDrive->Set(0.0, 30.0);
 				m_autonDrive->Enable();
 			}
 			else
 			{
 				// Right is Hot
-				m_shifters->Set(true);
 				m_autonDrive->Set(0.0, -30.0);
 				m_autonDrive->Enable();
 			}
 			
-			SmartDashboard::PutBoolean("Case 1 AutonDrive Finished: ", m_autonDrive->IsFinished());
-			SmartDashboard::PutNumber("Case 1 AutonDrive Straight: ", m_autonDrive->GetDist());
-			SmartDashboard::PutNumber("Case 1 AutonDrive Angle: ", m_autonDrive->GetAngle());
-			
 			if (m_autonDrive->IsFinished())
 			{
-				m_autonDrive->Disable();
-				//m_ramCase = 0;
-				AutonSteps++;
+				if (m_autonTime->Get() == 0.0)
+				{
+					m_autonTime->Start();
+				}
+				else if (m_autonTime->Get() > 0.25)
+				{
+					m_autonTime->Stop();
+					m_autonTime->Reset();
+					
+					m_autonDrive->Disable();
+					m_roller->Set(0.0);
+					m_ramCase = 0;
+					AutonSteps++;
+				}
 			}
 			break;
 			
@@ -1046,13 +1054,11 @@ public:
 				
 				if (hotGoal == CameraHandler::kLeft)
 				{
-					m_shifters->Set(true);
 					m_autonDrive->Set(0.0, -30.0);
 					m_autonDrive->Enable();
 				}
 				else
 				{
-					m_shifters->Set(true);
 					m_autonDrive->Set(0.0, 30.0);
 					m_autonDrive->Enable();
 				}
@@ -1069,7 +1075,45 @@ public:
 			break;
 			
 		case 3:		// Drive Back, Move Roller
-			m_autonDrive->Set(76.0, 0.0);
+			m_autonDrive->Set(55.0, 0.0);
+			m_autonDrive->Enable();
+			
+			m_roller->Set(-1.0);
+			
+			if (m_autonDrive->IsFinished())
+			{
+				m_autonDrive->Disable();
+				m_autonTime->Stop();
+				m_autonTime->Reset();
+				m_autonTime->Start();
+				AutonSteps++;
+			}
+			break;
+		
+		case 4:		// Second Move Back to Make Sure we got the Ball
+			if (m_autonTime->Get() > 0.5)
+			{
+				m_autonDrive->Set(40.0, 0.0);
+				m_autonDrive->Enable();
+			}
+			
+			m_roller->Set(-1.0);
+			
+			if (m_autonDrive->IsFinished())
+			{
+				m_autonTime->Stop();
+				m_autonTime->Reset();
+				
+				m_autonDrive->Disable();
+				
+				AutonSteps++;
+			}
+			
+			break;
+			
+		case 5:		// Move Foward, Move Arm
+			m_armPID->SetSetpoint(MED_SHOT_BACK);
+			m_autonDrive->Set(-105.0,0);
 			m_autonDrive->Enable();
 			
 			m_roller->Set(-1.0);
@@ -1080,38 +1124,42 @@ public:
 				AutonSteps++;
 			}
 			break;
-
-		case 4:		// Move Foward, Move Arm
-			m_armPID->SetSetpoint(MED_SHOT_BACK);
-			m_autonDrive->Set(-76.0,0);
-			m_autonDrive->Enable();
 			
-			if (m_autonDrive->IsFinished())
-			{
-				m_autonDrive->Disable();
-				AutonSteps++;
-			}
-			break;
-			
-		case 5:
+		case 6:
 			if (hotGoal == CameraHandler::kLeft)
 			{
-				m_shifters->Set(true);
-				m_autonDrive->Set(-36.0, -30.0);
+				m_autonDrive->Set(0.0, -30.0);
 				m_autonDrive->Enable();
 			}
 			else
 			{
-				m_shifters->Set(true);
-				m_autonDrive->Set(-36.0, 30.0);
+				m_autonDrive->Set(0.0, 30.0);
 				m_autonDrive->Enable();
 			}
+			
 			if (m_autonDrive->IsFinished())
 			{
-				m_autonDrive->Disable();
-				//m_ramCase = 0;
-				AutonSteps++;
+				if (m_autonTime->Get() == 0.0)
+				{
+					m_autonTime->Start();
+				}
+				else if (m_autonTime->Get() > 0.25)
+				{
+					m_autonTime->Stop();
+					m_autonTime->Reset();
+					
+					m_autonDrive->Disable();
+					m_roller->Set(0.0);
+					m_ramCase = 0;
+					AutonSteps++;
+					AutonDBSteps = 7;
+				}
 			}
+			break;
+			
+		case 7:
+			SmartDashboard::PutNumber("Auton Total Time: ", m_ds->GetMatchTime());
+			AutonSteps++;
 			break;
 			
 		}
@@ -1119,7 +1167,7 @@ public:
 
 	void AutonDBReboundRun(){
 		switch(AutonDBSteps) {
-		case 1:
+		case 1:		// Move Arm, Drive Forward, Shoot
 			
 			if (!m_armPID->IsEnabled())
 			{
@@ -1143,7 +1191,7 @@ public:
 			}
 			break;
 			
-		case 2:
+		case 2:		// Make sure we shoot
 			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - LONG_SHOOT_POS));
 			if (fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK) < AUTON_ANGLE_GAP && m_ramCase == -1) {
 				m_ramCase = 0;
@@ -1160,7 +1208,7 @@ public:
 			}
 			break;
 
-		case 3:
+		case 3:		// Move back
 			m_armPID->SetSetpoint(FLOOR_PICKING_POS);
 			m_roller->Set(-1.0);
 			if(m_autonTime->HasPeriodPassed(0.5))
@@ -1181,7 +1229,16 @@ public:
 				AutonDBSteps++;
 			}
 			break;
-		case 4:
+			
+		case 4:		// Second Move back and get ball
+			if (m_autonTime->HasPeriodPassed(.5))
+			{
+				m_autonTime->Stop();
+				m_autonTime->Reset();
+				m_drvStraightPID->SetSetpoint(40.0);
+				m_drvStraightPID->Enable();
+			}
+			
 			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5)
 			{
 				m_autonTime->Stop();
@@ -1194,16 +1251,9 @@ public:
 				m_armPID->SetSetpoint(MED_SHOT_BACK);
 				AutonDBSteps++;
 			}
+			break;
 			
-			if (m_autonTime->HasPeriodPassed(.5))
-			{
-				m_autonTime->Stop();
-				m_autonTime->Reset();
-				m_drvStraightPID->SetSetpoint(40.0);
-				m_drvStraightPID->Enable();
-			}
-		break;
-		case 5:	
+		case 5:		// Move Foward	
 			m_drvStraightPID->SetSetpoint(-105.0);
 			m_drvStraightPID->Enable();
 		
@@ -1226,7 +1276,8 @@ public:
 				}
 			}
 		break;	
-		case 6:
+		
+		case 6:		// Make sure we shoot
 			if (m_ramCase == -1)
 				m_ramCase = 0;
 			else if (m_ramCase == 3)
@@ -1247,6 +1298,9 @@ public:
 
 	
 	void AutonDFShoot(){
+		
+		AutonShotSafety();
+		
 		switch(AutonSteps){
 		case 0:
 			
@@ -1282,20 +1336,25 @@ public:
 		}
 	}
     void AutonCheckHotLeft(){
-		m_drvStraightPID->SetSetpoint(-64.0);
+    	m_drvStraightPID->SetSetpoint(-64.0);
         m_drvStraightPID->Enable();
         m_armPID->SetSetpoint(MED_SHOT_BACK);
         m_armPID->Enable();
+		
+        AutonShotSafety();
+        
 		switch(AutonSteps){
         case 0:
 			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5){
 				if (m_cameraHandler->getHotGoal() == CameraHandler::kLeft){
 					m_ramCase = 0;		
-					AutonSteps = 1;
+					AutonSteps++;
+					m_autonShot = true;
 				}		
 			}
 		break;
 		case 1:
+			AutonDBSteps = 7;
 		break;
 		}
 	}
@@ -1304,20 +1363,23 @@ public:
         m_drvStraightPID->Enable();
         m_armPID->SetSetpoint(MED_SHOOT_POS);
         m_armPID->Enable();
+		
+        AutonShotSafety();
 
 		switch(AutonSteps){
         case 0:
 			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5){
-				if (m_cameraHandler->getHotGoal() == CameraHandler::kRight){
+				if (m_cameraHandler->getHotGoal() != CameraHandler::kLeft || (!m_autonShot && m_ds->GetMatchTime() > 8.0)){
 					m_ramCase = 0;	
-					AutonSteps = 1;	
+					AutonSteps++;
+					m_autonShot = true;
 				}
 			}
             break;
 		case 1:
 		break;
 		}
-	}
+    }
 	
 	void AutonDF(){
 		if (!m_drvStraightPID->IsEnabled())
@@ -1413,6 +1475,15 @@ public:
 				m_armPID->Disable();
 			
 			break;
+		}
+	}
+	
+	void AutonShotSafety()
+	{
+		if ((fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5) && (!m_autonShot && m_ds->GetMatchTime() > 8.0))
+		{
+			m_ramCase = 0;
+			m_autonShot = true;
 		}
 	}
 /*	
