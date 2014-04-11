@@ -1,14 +1,12 @@
-	#include "WPILib.h"
+
+#ifndef _CAMERAHANDLER_H
+#define _CAMERAHANDLER_H
+
+#include "WPILib.h"
 	#include <cmath>
 	#include "nivision.h"
 	#include "Defines.h"
 
-typedef enum state_t {
-	kNone,		// 0
-	kLeft,		// 1
-	kRight,		// 2
-	kError		// 3
-};
 
 	class CameraHandler	
 	{
@@ -51,3 +49,5 @@ typedef enum state_t {
 		ColorImage *img2;
 		Relay *light;
 	};
+	
+#endif

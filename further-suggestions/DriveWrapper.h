@@ -1,9 +1,11 @@
+
+#ifndef _DRIVEWRAPPER_H
+#define _DRIVEWRAPPER_H
+
 #include "WPILib.h"
 #include "Defines.h"
 #include <cmath>
 
-#ifndef DRIVEWRAPPER_H
-#define DRIVEWRAPPER_H
 
 class DriveAuton;
 class DriveStraightSource;

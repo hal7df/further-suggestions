@@ -1,8 +1,9 @@
 #include "WPILib.h"
 #include "JoystickWrapper.h"
 #include "DriveWrapper.h"
-#include "ArmWrapper.h"
-#include "CameraHandler.h"
+// #include "ArmWrapper.h"
+// #include "CameraHandler.h"
+#include "CheesyVisionServer.h"
 #include "Defines.h"
 #include <cmath>
 
@@ -187,8 +188,7 @@ private:
 	ArmWrite* m_armWrite;
 	
 	//Declare camera handler object
-    CameraHandler* m_cameraHandler;
-    AxisCamera* m_camera;
+    
 	
 	// DRIVER INTERFACE OBJECTS **************************
 	
@@ -248,6 +248,9 @@ private:
 	//Current Sensor
 	AnalogChannel *m_currentSensor;
 	Timer *m_currentTimer;
+	
+	CheesyVisionServer *m_cheesyVisionServer;
+	
 public:
 	
 	
@@ -369,8 +372,6 @@ public:
 		//Initialize camera handler object
 		//Initialize camera handler object
 		
-		m_camera = &AxisCamera::GetInstance("10.0.67.11");
-		m_cameraHandler = new CameraHandler (m_camera, m_dsLCD, m_camLight);
 		
 		//Grab driver station object
 		m_ds = DriverStation::GetInstance();
@@ -418,17 +419,24 @@ public:
 		//Current Sensor
 		m_currentSensor = new AnalogChannel(1);
 		m_currentTimer = new Timer;
+		
+		m_cheesyVisionServer = CheesyVisionServer::GetInstance();
 	}
 
 	/********************************** Init Routines *************************************/
 
 
 	void RobotInit() {
-	  
+		m_cheesyVisionServer->SetPort(1180);
+		m_cheesyVisionServer->StartListening();
+		
+		// m_cheesyVisionServer->Reset();
+		// m_cheesyVisionServer->StartSamplingCounts();
 	}
 	
 	void DisabledInit() {
 		autonChoice = AutonDFshoot;
+		// m_cheesyVisionServer->StopSamplingCounts();
 	}
 
 	void AutonomousInit() {
@@ -441,8 +449,11 @@ public:
 		m_lEncode->Reset();
 		m_ramCase = -1;
 		m_medRamCase = -1;
-		//m_shifters -> Set(true);
 		
+		// Make Thread for CheesyVision
+		m_cheesyVisionServer->Reset();
+		m_cheesyVisionServer->StartSamplingCounts();
+				
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line1,1,"      AUTONOMOUS     ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line2,1,"         Mode:       ");
 
@@ -512,8 +523,12 @@ public:
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line6,1,"                     ");
 		m_dsLCD->UpdateLCD();
 		
-		// Camera Debug
-		SmartDashboard::PutBoolean("GetHotGoal Called: ", false);
+		// SmartDashboard::PutBoolean("Left Goal Hot (Count): ", m_cheesyVisionServer->GetLeftCount() > 20);
+		// SmartDashboard::PutBoolean("Right Goal Hot (Count): ", m_cheesyVisionServer->GetRightCount() > 20);
+		
+		m_cheesyVisionServer->Reset();
+		m_cheesyVisionServer->StartSamplingCounts();
+			
 	}
 	
 	void TestInit () {
@@ -532,37 +547,42 @@ public:
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line4,1,"  ||   || \\__/   |   ");
 		m_dsLCD->Printf(DriverStationLCD::kUser_Line5,1,"        Auton:       ");
 		
-		if (m_operator->GetButtonPress(BUTTON_A))
+		if (m_operator->GetRawButton(BUTTON_A))
 		{
 			autonChoice = AutonDFshoot;
 			m_selectorPage = 0;
 		}
-        else if (m_operator->GetButtonPress(BUTTON_B))
+        else if (m_operator->GetRawButton(BUTTON_B))
 		{
             autonChoice = AutonTwoBallTwohot;
 			m_selectorPage = 0;
 		}
-		else if (m_operator->GetButtonPress(BUTTON_X))
+        else if (m_operator->GetRawButton(BUTTON_X) && m_operator->GetRawButton(BUTTON_LB))
+		{
+			autonChoice = AutonCheckHotright;
+			m_selectorPage = 0;
+		}
+		else if (m_operator->GetRawButton(BUTTON_X))
 		{
             autonChoice = AutonCheckHotleft;
 			m_selectorPage = 0;
-        }
-		else if (m_operator->GetButtonPress(BUTTON_Y))
+		}
+		else if (m_operator->GetRawButton(BUTTON_Y))
 		{
 			autonChoice = AutonDBrebound;
 			m_selectorPage = 0;
 		}
-		else if (m_operator->GetButtonPress(BUTTON_RB))
+		else if (m_operator->GetRawButton(BUTTON_RB))
 		{
 			autonChoice = AutonDf;
 			m_selectorPage = 0;
 		}
-		/*else if (m_operator->GetButtonPress(BUTTON_LB))
+		/*else if (m_operator->GetRawButton(BUTTON_LB))
 		{
 			autonChoice = AutonBalltrack;
 			m_selectorPage = 0;
 		}*/
-		else if (m_operator->GetButtonPress(BUTTON_START))
+		else if (m_operator->GetRawButton(BUTTON_START))
 		{
 			if (m_selectorPage == 1)
 				m_selectorPage = 0;
@@ -570,7 +590,7 @@ public:
 				m_selectorPage++;
 		}
 		
-		if (m_driver->GetButtonPress(BUTTON_BACK))
+		if (m_driver->GetRawButton(BUTTON_BACK))
 			m_printDataInMatch = !m_printDataInMatch;
 		
 		switch (autonChoice)
@@ -672,7 +692,7 @@ public:
 		PrintData();
 		RamFire();
 		
-		m_camLight->Set(Relay::kForward);
+		// m_camLight->Set(Relay::kForward);
 		
 		switch (autonChoice)
 		{
@@ -697,14 +717,14 @@ public:
 		case AutonCheckHotright:
 			AutonCheckHotRight();
 			break;
+		/*
 		case AutonTwoBallTwohot:
 			AutonTwoBallTwoHot();
 			break;
-	/*
 		case AutonBalltrack:
 			//Ball tracker auton
 			break;
-	*/
+		*/
 		}
 		
 		if (m_armPID->IsEnabled() && fabs(m_armEncoder->GetDistance() - m_armPID->GetSetpoint()) < 15 && m_armPID->GetSetpoint() != MED_SHOT_BACK+1)
@@ -732,8 +752,14 @@ public:
 			TeleopBGrabber();
 			AutoDownShift();
 			PrintData();
-		
+			// m_camLight->Set(Relay::kForward);
 			
+			// SmartDashboard::PutBoolean("Left Goal Hot (Count): ", m_cheesyVisionServer->GetLeftCount() > 20);
+			// SmartDashboard::PutBoolean("Right Goal Hot (Count): ", m_cheesyVisionServer->GetRightCount() > 20);
+					
+			
+		
+			/*
 			if(m_driver->GetRawButton(BUTTON_A))
 			{
 				SmartDashboard::PutNumber("Hot Goal Detection: ", m_cameraHandler->getHotGoal());
@@ -763,7 +789,12 @@ public:
 			  printf("Never got the camera instance. Big error.\n");
 			//SmartDashboard::PutNumber("Hot Goal Detection: ", m_cameraHandler->getHotGoal());
 			m_dsLCD->UpdateLCD();
-
+			
+			*/
+			//SmartDashboard::PutBoolean("Left Hot: ", m_cheesyVisionServer->GetLeftStatus());
+			//SmartDashboard::PutNumber("Left Count: ", m_cheesyVisionServer->GetLeftCount());
+			//SmartDashboard::PutBoolean("Right Hot: ", m_cheesyVisionServer->GetRightStatus());
+			//SmartDashboard::PutNumber("Right Count: ", m_cheesyVisionServer->GetLeftCount());
 	}
 	
 	void TestPeriodic () {
@@ -776,8 +807,11 @@ public:
 		TestFindSensorWidth();
 		PrintData();
 		
+		
+		
 		// ----- Camera Test -----
 		m_camLight->Set(Relay::kForward);
+		/*
 		if (m_driver->GetRawButton(BUTTON_Y))
 		{
 			// camera->WriteResolution(AxisCamera::kResolution_320x240);
@@ -792,7 +826,7 @@ public:
 				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line5,"Image Status: %s",pImage->StatusIsFatal() ? "false" : "true");
 			}
 		}
-		/*
+		
 			if (camera)
 			{
 			  ColorImage* pImage = camera->GetImage();
@@ -984,7 +1018,7 @@ public:
 	}
 	
 	void AutonTwoBallTwoHot(){
-		static CameraHandler::state_t hotGoal;
+		static bool leftStatus;	
 		
 		// We always shift down
 		m_shifters->Set(true);
@@ -1000,39 +1034,39 @@ public:
 			
 			m_autonDrive->Set(-64.0, 0.0);
 			m_autonDrive->Enable();
-				
-			hotGoal = m_cameraHandler->getHotGoal();
+			
+			leftStatus = m_cheesyVisionServer->GetLeftStatus();
+			// rightStatus = m_cheesyVisionServer->GetRightStatus();
 			
 			if (m_autonDrive->IsFinished())
 			{
+				m_autonTime->Stop();
+				m_autonTime->Reset();
+				m_autonTime->Start();
 				m_autonDrive->Disable();
 				AutonSteps++;
 			}
 			break;
 			
 		case 1:		// Turn to Hotgoal, Shoot
-			if (hotGoal == CameraHandler::kLeft)
+			if (m_autonTime->Get() > 0.5)
 			{
-				// Left is Hot
-				m_dsLCD->PrintfLine(DriverStationLCD::kUser_Line4,"Hot Goal Left");
-				m_autonDrive->Set(0.0, 30.0);
-				m_autonDrive->Enable();
-			}
-			else
-			{
-				// Right is Hot
-				m_autonDrive->Set(0.0, -30.0);
-				m_autonDrive->Enable();
-			}
-			
-			if (m_autonDrive->IsFinished())
-			{
-				if (m_autonTime->Get() == 0.0)
+				if (leftStatus)
 				{
-					m_autonTime->Start();
+					// Left is Hot
+					m_autonDrive->Set(0.0, 30.0);
+					m_autonDrive->Enable();
 				}
-				else if (m_autonTime->Get() > 0.25)
+				else
 				{
+					// Right is Hot
+					m_autonDrive->Set(0.0, -30.0);
+					m_autonDrive->Enable();
+				}
+				
+				if (m_autonDrive->IsFinished())
+				{
+					
 					m_autonTime->Stop();
 					m_autonTime->Reset();
 					
@@ -1040,19 +1074,18 @@ public:
 					m_roller->Set(0.0);
 					m_ramCase = 0;
 					AutonSteps++;
+				
 				}
 			}
 			break;
 			
 		case 2:		// Turn Back, Move Arm
-			if(m_autonTime->Get() == 0)
-				m_autonTime->Start();
-			if(m_autonTime->HasPeriodPassed(3.0))
+			if (m_ramCase >= 4)
 			{
 				m_roller->Set(-1.0);
 				m_armPID->SetSetpoint(FLOOR_PICKING_POS);
 				
-				if (hotGoal == CameraHandler::kLeft)
+				if (leftStatus)
 				{
 					m_autonDrive->Set(0.0, -30.0);
 					m_autonDrive->Enable();
@@ -1069,24 +1102,28 @@ public:
 					m_autonDrive->Disable();
 					m_autonTime->Stop();
 					m_autonTime->Reset();
+					m_autonTime->Start();
 				}
 			}
 			
 			break;
 			
 		case 3:		// Drive Back, Move Roller
-			m_autonDrive->Set(55.0, 0.0);
-			m_autonDrive->Enable();
-			
-			m_roller->Set(-1.0);
-			
-			if (m_autonDrive->IsFinished())
+			if (m_autonTime->Get() > 0.5)
 			{
-				m_autonDrive->Disable();
-				m_autonTime->Stop();
-				m_autonTime->Reset();
-				m_autonTime->Start();
-				AutonSteps++;
+				m_autonDrive->Set(55.0, 0.0);
+				m_autonDrive->Enable();
+				
+				m_roller->Set(-1.0);
+				
+				if (m_autonDrive->IsFinished())
+				{
+					m_autonDrive->Disable();
+					m_autonTime->Stop();
+					m_autonTime->Reset();
+					m_autonTime->Start();
+					AutonSteps++;
+				}
 			}
 			break;
 		
@@ -1095,55 +1132,60 @@ public:
 			{
 				m_autonDrive->Set(40.0, 0.0);
 				m_autonDrive->Enable();
-			}
-			
-			m_roller->Set(-1.0);
-			
-			if (m_autonDrive->IsFinished())
-			{
-				m_autonTime->Stop();
-				m_autonTime->Reset();
 				
-				m_autonDrive->Disable();
-				
-				AutonSteps++;
+				m_roller->Set(-1.0);
+							
+				if (m_autonDrive->IsFinished())
+				{
+					m_autonTime->Stop();
+					m_autonTime->Reset();
+					m_autonTime->Start();
+					
+					m_autonDrive->Disable();
+					
+					AutonSteps++;
+				}
 			}
 			
 			break;
 			
 		case 5:		// Move Foward, Move Arm
-			m_armPID->SetSetpoint(MED_SHOT_BACK);
-			m_autonDrive->Set(-105.0,0);
-			m_autonDrive->Enable();
-			
-			m_roller->Set(-1.0);
-			
-			if (m_autonDrive->IsFinished())
+			if (m_autonTime->Get() > 0.5)
 			{
-				m_autonDrive->Disable();
-				AutonSteps++;
+				m_armPID->SetSetpoint(MED_SHOT_BACK);
+				m_autonDrive->Set(-105.0,0);
+				m_autonDrive->Enable();
+				
+				m_roller->Set(-1.0);
+				
+				if (m_autonDrive->IsFinished())
+				{
+					m_autonDrive->Disable();
+					AutonSteps++;
+					
+					m_autonTime->Stop();
+					m_autonTime->Reset();
+					m_autonTime->Start();
+				}
 			}
 			break;
 			
 		case 6:
-			if (hotGoal == CameraHandler::kLeft)
+			if (m_autonTime->Get() > 0.5)
 			{
-				m_autonDrive->Set(0.0, -30.0);
-				m_autonDrive->Enable();
-			}
-			else
-			{
-				m_autonDrive->Set(0.0, 30.0);
-				m_autonDrive->Enable();
-			}
-			
-			if (m_autonDrive->IsFinished())
-			{
-				if (m_autonTime->Get() == 0.0)
+				
+				if (leftStatus)
 				{
-					m_autonTime->Start();
+					m_autonDrive->Set(0.0, -30.0);
+					m_autonDrive->Enable();
 				}
-				else if (m_autonTime->Get() > 0.25)
+				else
+				{
+					m_autonDrive->Set(0.0, 30.0);
+					m_autonDrive->Enable();
+				}
+				
+				if (m_autonDrive->IsFinished())
 				{
 					m_autonTime->Stop();
 					m_autonTime->Reset();
@@ -1164,7 +1206,7 @@ public:
 			
 		}
 	}
-
+	
 	void AutonDBReboundRun(){
 		switch(AutonDBSteps) {
 		case 1:		// Move Arm, Drive Forward, Shoot
@@ -1318,6 +1360,7 @@ public:
 			
 			if (fabs(MED_SHOT_BACK - m_armEncoder->GetDistance()) < AUTON_ANGLE_GAP && fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5) {
 				m_ramCase = 0;
+				m_autonShot = true;
 				AutonSteps++;
 			}	
 		break;
@@ -1336,51 +1379,72 @@ public:
 		}
 	}
     void AutonCheckHotLeft(){
-    	m_drvStraightPID->SetSetpoint(-64.0);
-        m_drvStraightPID->Enable();
-        m_armPID->SetSetpoint(MED_SHOT_BACK);
-        m_armPID->Enable();
-		
         AutonShotSafety();
         
 		switch(AutonSteps){
         case 0:
-			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5){
-				if (m_cameraHandler->getHotGoal() == CameraHandler::kLeft){
-					m_ramCase = 0;		
-					AutonSteps++;
-					m_autonShot = true;
-				}		
+        	//m_autonDrive->Set(-64.0, 0.0);
+        	//m_autonDrive->Enable();
+        	if (!m_armPID->IsEnabled())
+			{
+				m_armPID->SetSetpoint(MED_SHOT_BACK);
+				m_armPID->Enable();
 			}
-		break;
+			
+			if (!m_drvStraightPID->IsEnabled())
+			{
+				m_drvStraightPID->SetSetpoint(-64.0);
+				m_drvStraightPID->Enable();
+			}
+			
+			if (m_cheesyVisionServer->GetLeftCount() > 10){
+				if(!m_autonShot)
+					m_ramCase = 0;
+				AutonSteps++;
+				m_armPID->Disable();
+				m_drvStraightPID->Disable();
+				m_autonShot = true;
+			}
+			break;
 		case 1:
-			AutonDBSteps = 7;
-		break;
+			if(m_ramCase >= 3)
+				AutonDBSteps = 7;
+			break;
 		}
 	}
     void AutonCheckHotRight(){
-		m_drvStraightPID->SetSetpoint(-64.0);
-        m_drvStraightPID->Enable();
-        m_armPID->SetSetpoint(MED_SHOOT_POS);
-        m_armPID->Enable();
-		
         AutonShotSafety();
-
+            
 		switch(AutonSteps){
-        case 0:
-			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5){
-				if (m_cameraHandler->getHotGoal() != CameraHandler::kLeft || (!m_autonShot && m_ds->GetMatchTime() > 8.0)){
-					m_ramCase = 0;	
-					AutonSteps++;
-					m_autonShot = true;
-				}
+		case 0:
+			//m_autonDrive->Set(-64.0, 0.0);
+			//m_autonDrive->Enable();
+			if (!m_armPID->IsEnabled())
+			{
+				m_armPID->SetSetpoint(MED_SHOT_BACK);
+				m_armPID->Enable();
 			}
-            break;
+			
+			if (!m_drvStraightPID->IsEnabled())
+			{
+				m_drvStraightPID->SetSetpoint(-64.0);
+				m_drvStraightPID->Enable();
+			}
+			if (m_cheesyVisionServer->GetRightCount() > 10){
+				if(!m_autonShot)
+					m_ramCase = 0;
+				AutonSteps++;
+				m_armPID->Disable();
+				m_drvStraightPID->Disable();
+				m_autonShot = true;
+			}
+			break;
 		case 1:
-		break;
+			if(m_ramCase >= 3)
+				AutonDBSteps = 7;
+			break;
 		}
-    }
-	
+	}
 	void AutonDF(){
 		if (!m_drvStraightPID->IsEnabled())
 		{
@@ -1480,7 +1544,7 @@ public:
 	
 	void AutonShotSafety()
 	{
-		if ((fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5) && (!m_autonShot && m_ds->GetMatchTime() > 8.0))
+		if (!m_autonShot && m_ds->GetMatchTime() > 8.0)
 		{
 			m_ramCase = 0;
 			m_autonShot = true;
@@ -1688,14 +1752,13 @@ public:
 			m_lEncode->Reset();
 		}
 		/*
-		/*
-		if (m_driver->GetButtonPress(BUTTON_A))
+		if (m_driver->GetRawButton(BUTTON_A))
 			m_drvStraightPID->SetPID((m_drvStraightPID->GetP()+0.01),m_drvStraightPID->GetI(),m_drvStraightPID->GetD());
-		else if (m_driver->GetButtonPress(BUTTON_B))
+		else if (m_driver->GetRawButton(BUTTON_B))
 			m_drvStraightPID->SetPID((m_drvStraightPID->GetP()-0.01),m_drvStraightPID->GetI(),m_drvStraightPID->GetD());
-		else if (m_driver->GetButtonPress(BUTTON_X))
+		else if (m_driver->GetRawButton(BUTTON_X))
 			m_drvStraightPID->SetPID(m_drvStraightPID->GetP(),m_drvStraightPID->GetI(),(m_drvStraightPID->GetD()+0.01));
-		else if (m_driver->GetButtonPress(BUTTON_Y))
+		else if (m_driver->GetRawButton(BUTTON_Y))
 			m_drvStraightPID->SetPID(m_drvStraightPID->GetP(),m_drvStraightPID->GetI(),(m_drvStraightPID->GetD()-0.01));
 		*/
 	}
@@ -1816,7 +1879,7 @@ public:
 		} else if (m_operator->GetRawButton(BUTTON_Y) && !m_operator->GetRawButton(BUTTON_BACK)) {
 			// Catch Position
 			m_armPIDFlag = true;
-			m_armPID->SetSetpoint(ApplyArmOffset(SELF_CATCH));
+			m_armPID->SetSetpoint(ApplyArmOffset(TRUSS_SHOT));
 			m_armPID->Enable();
 			
 		} 
@@ -1844,13 +1907,13 @@ public:
 		}
 		
 		/*
-		if (m_driver->GetButtonPress(BUTTON_A))
+		if (m_driver->GetRawButton(BUTTON_A))
 			aCCEL_CAP +=0.1;
-		else if (m_driver->GetButtonPress(BUTTON_B))
+		else if (m_driver->GetRawButton(BUTTON_B))
 			aCCEL_CAP -=0.11;*/
-		//if (m_driver->GetButtonPress(BUTTON_X))
+		//if (m_driver->GetRawButton(BUTTON_X))
 		//	m_armWrite->ChangeMaxThrottle(0.001);
-		//else if (m_driver->GetButtonPress(BUTTON_Y))
+		//else if (m_driver->GetRawButton(BUTTON_Y))
 		//	m_armWrite->ChangeMaxThrottle(-0.001);
 		
 		
@@ -2486,6 +2549,13 @@ public:
 			//Current sensor
 			SmartDashboard::PutNumber("Current: ",m_currentSensor->GetVoltage() * 100);
 			SmartDashboard::PutNumber("Current(Average): ",m_currentSensor->GetAverageVoltage() * 100);
+			
+			// CheesyVisionServer
+			SmartDashboard::PutBoolean("Left Hot: ", m_cheesyVisionServer->GetLeftStatus());
+			SmartDashboard::PutNumber("Left Count: ", m_cheesyVisionServer->GetLeftCount());
+			SmartDashboard::PutBoolean("Right Hot: ", m_cheesyVisionServer->GetRightStatus());
+			SmartDashboard::PutNumber("Right Count: ", m_cheesyVisionServer->GetRightCount());
+			SmartDashboard::PutBoolean("Has Client: ", m_cheesyVisionServer->HasClientConnection());
 			/*
 			SmartDashboard::PutNumber("Drive PID Output: ",m_drvStraightPID->Get());
 			SmartDashboard::PutNumber("Drive PID Input: ",(m_lEncode->GetDistance()+m_rEncode->GetDistance())/(2.0*REV_IN));
@@ -2493,6 +2563,10 @@ public:
 			SmartDashboard::PutNumber("Right Drive Set: ",m_rDrive->Get());
 			SmartDashboard::PutNumber("Drive P: ",m_drvStraightPID->GetP());
 			SmartDashboard::PutNumber("Drive D: ",m_drvStraightPID->GetD());
+			SmartDashboard::PutBoolean("Left Hot: ", m_cheesyVisionServer->GetLeftStatus());
+			SmartDashboard::PutNumber("Left Count: ", m_cheesyVisionServer->GetLeftCount());
+			SmartDashboard::PutBoolean("Right Hot: ", m_cheesyVisionServer->GetRightStatus());
+			SmartDashboard::PutNumber("Right Count: ", m_cheesyVisionServer->GetLeftCount());
 			*/
 		}
 	}

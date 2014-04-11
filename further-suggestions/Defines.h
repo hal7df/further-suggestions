@@ -1,3 +1,7 @@
+
+#ifndef _DEFINES_H
+#define _DEFINES_H
+
 // Buttons
 
 #define BUTTON_A 1
@@ -23,8 +27,8 @@
 //Universal constants
 #define CAMERA_ANGLE 0.82030475
 
-#define PracticeBot
-//#define CompetitionBot
+//#define PracticeBot
+#define CompetitionBot
 
 
 #ifdef PracticeBot
@@ -119,4 +123,6 @@
 
 	//Special PWMs
 	#define ROLLER_PWM 8
+#endif
+
 #endif
