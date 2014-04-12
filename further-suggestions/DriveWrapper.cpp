@@ -41,6 +41,7 @@ DriveAuton::DriveAuton (RobotDrive* robotDrive, Encoder* lEncoder, Encoder* rEnc
 	// ----- Initialize drive source objects -----
 	m_dStraight = new DriveStraightSource (this);
 	m_dRotate = new DriveRotateSource (this);
+
 	
 	// ----- Set Components ------
 	m_robotDrive = robotDrive;
@@ -125,14 +126,48 @@ bool DriveAuton::IsDriveFinished()
 {
 	return m_dStraight->IsFinished();
 }
-		
 
+void DriveAuton::SetRotatePID(float p, float i, float d)
+{
+	m_dRotate->SetPID(p, i, d);
+}
+
+void DriveAuton::SetStraightPID(float p, float i, float d)
+{
+	m_dStraight->SetPID(p, i, d);
+}
+
+float DriveAuton::GetRotateP()
+{
+	return m_dRotate->GetP();
+}
+float DriveAuton::GetRotateI()
+{
+	return m_dRotate->GetI();
+}
+float DriveAuton::GetRotateD()
+{
+	return m_dRotate->GetD();
+}
+
+float DriveAuton::GetStraightP()
+{
+	return m_dStraight->GetP();
+}
+float DriveAuton::GetStraightI()
+{
+	return m_dStraight->GetI();
+}
+float DriveAuton::GetStraightD()
+{
+	return m_dStraight->GetD();
+}
 // Dummy Straight ***********************************
 
 DriveStraightSource::DriveStraightSource(DriveAuton *p)
 {
 	parent = p;
-	PID = new PIDController(DRV_P, DRV_I, DRV_D, this, this);
+	PID = new PIDController(AUTONDRV_STRAIGHT_P, AUTONDRV_STRAIGHT_I, AUTONDRV_STRAIGHT_D, this, this);
 }
 
 void DriveStraightSource::Set(double dist)
@@ -166,6 +201,26 @@ bool DriveStraightSource::IsFinished()
 	return fabs(PID->GetSetpoint() - PIDGet()) < 10;
 }
 
+void DriveStraightSource::SetPID(float p, float i, float d)
+{
+	PID->SetPID(p, i, d);
+}
+
+float DriveStraightSource::GetP()
+{
+	return PID->GetP();
+}
+
+float DriveStraightSource::GetI()
+{
+	return PID->GetI();
+}
+
+float DriveStraightSource::GetD()
+{
+	return PID->GetD();
+}
+
 double DriveStraightSource::PIDGet()
 {
 	return (parent->m_lEncoder->GetDistance() + parent->m_rEncoder->GetDistance()) / (2 * REV_IN);
@@ -182,7 +237,7 @@ void DriveStraightSource::PIDWrite(float output)
 DriveRotateSource::DriveRotateSource (DriveAuton *p)
 {
 	parent = p;
-	PID = new PIDController(DRV_P, DRV_I, DRV_D, this, this);
+	PID = new PIDController(AUTONDRV_ROTATE_P, AUTONDRV_ROTATE_I, AUTONDRV_ROTATE_D, this, this);
 }
 
 void DriveRotateSource::Set(double dist)
@@ -215,6 +270,27 @@ bool DriveRotateSource::IsFinished()
 	SmartDashboard::PutNumber("Rotate Is Finished(Range: 8)", fabs(PID->GetSetpoint() - PIDGet()));
 	return fabs(PID->GetSetpoint() - PIDGet()) < 8;
 }
+
+void DriveRotateSource::SetPID(float p, float i, float d)
+{
+	PID->SetPID(p, i, d);
+}
+
+float DriveRotateSource::GetP()
+{
+	return PID->GetP();
+}
+
+float DriveRotateSource::GetI()
+{
+	return PID->GetI();
+}
+
+float DriveRotateSource::GetD()
+{
+	return PID->GetD();
+}
+
 
 double DriveRotateSource::PIDGet()
 {

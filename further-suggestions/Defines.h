@@ -82,8 +82,9 @@
 	// Place bot values here
 	#define FLOOR_PICKING_POS 381
 	#define MED_SHOOT_POS 134
-	#define MED_SHOT_BACK -182.0
+	#define MED_SHOT_BACK -188.0
 	#define GUARDED_SHOT_FRONT 104.0
+	#define GUARDED_SHOT 50
 	#define GUARDED_SHOT_BACK -132.5
 	#define SELF_CATCH -15.0
 	#define TRUSS_SHOT 49.0
@@ -110,6 +111,14 @@
 	#define DRV_I 0.000
 	#define DRV_D 0.210
 	#define REV_IN 100.0
+
+	#define AUTONDRV_STRAIGHT_P 0.15
+	#define AUTONDRV_STRAIGHT_I 0.00
+	#define AUTONDRV_STRAIGHT_D 0.210
+	
+	#define AUTONDRV_ROTATE_P 0.300
+	#define AUTONDRV_ROTATE_I 0.000
+	#define AUTONDRV_ROTATE_D 0.000
 
 	// RAMROD
 	#define RAM_LOCK_POSITION 930

@@ -44,6 +44,13 @@ public:
 	bool IsEnabled();
 	double GetSetPoint();
 	bool IsFinished();
+	
+	void SetPID(float p, float i, float d);
+	float GetP();
+	float GetI();
+	float GetD();
+		
+	
 	double PIDGet();
 	void PIDWrite(float output);
 private:
@@ -62,6 +69,13 @@ public:
 	bool IsEnabled();
 	double GetSetPoint();
 	bool IsFinished();
+	
+	void SetPID(float p, float i, float d);
+	float GetP();
+	float GetI();
+	float GetD();
+		
+	
 	double PIDGet();
 	void PIDWrite(float output);
 private:
@@ -87,6 +101,15 @@ public:
 	bool IsFinished();
 	bool IsDriveFinished();
 	bool IsRotateFinished();
+	
+	void SetRotatePID(float p, float i, float d);
+	void SetStraightPID(float p, float i, float d);
+	float GetRotateP();
+	float GetRotateI();
+	float GetRotateD();
+	float GetStraightP();
+	float GetStraightI();
+	float GetStraightD();
 	
 protected:
 	// ----- Components -----
