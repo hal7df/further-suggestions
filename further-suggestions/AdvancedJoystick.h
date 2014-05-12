@@ -1,4 +1,24 @@
 #include "WPILib.h"
+#include <cmath>
+
+/* AdvancedJoystick -- Enhancements for the Joystick class.
+ *
+ * Currently optimized for Xbox 360 controllers.
+ *
+ * Added -
+ *
+ * Builtin deadband control:
+ * - Set the deadband width (SetDeadband)
+ * - Turn the deadband into a quadratic, cubic, sinuoid ramp (SetDeadbandType)
+ *
+ * Treat the triggers like buttons in GetRawButton or GetButtonPress.
+ *
+ * Builtin timer for button presses. (GetButtonPress)
+ *
+ * Get the value from just one trigger in GetRawAxis.
+ */
+
+#define M_PI_2 1.57079632679489661923
 
 #define JOYSTICK_TIMEOUT 0.1
 #define JOYSTICK_DEADBAND 0.2
@@ -25,8 +45,9 @@ public:
     typedef enum {
         kNone,
         kFlat,
-        kQuadratic,
-        kCubic
+        kQuad,
+        kCube,
+        kSine
     }deadband_t;
 
     typedef enum {
@@ -35,11 +56,17 @@ public:
         kRawTrigger = 3,
         kRightX = 4,
         kRightY = 5,
-        kTriggerL = 6,
-        kTriggerR = 7
+        kLeftTrigger = 6,
+        kRightTrigger = 7
     }axis_t;
 
     //CONSTRUCTORS --------------
+    /* Default values:
+     *
+     * deadbandType: None, unless a deadband is provided, then flat
+     * deadband: JOYSTICK_DEADBAND
+     * timeout: JOYSTICK_TIMEOUT
+     */
     AdvancedJoystick (Joystick* gamepad);
     AdvancedJoystick (Joystick* gamepad, deadband_t deadbandType, float deadband, float timeout);
     AdvancedJoystick (Joystick* gamepad, deadband_t deadbandType);
@@ -81,10 +108,11 @@ public:
 private:
     // INTERNAL FUNCTIONS ------
     //Deadband
-    float applyDeadband (float);
-    float applyDeadbandFlat (float);
-    float applyDeadbandQuad (float);
-    float applyDeadbandCube (float);
+    float applyDeadband (float input);
+    float applyDeadbandFlat (float input);
+    float applyDeadbandQuad (float input);
+    float applyDeadbandCube (float input);
+    float applyDeadbandSine (float input);
 
     void trackTimer();
 

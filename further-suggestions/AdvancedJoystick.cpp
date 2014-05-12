@@ -162,7 +162,16 @@ float AdvancedJoystick::GetRawAxis (int channel) {
 /**** INTERNAL FUNCTIONS ****/
 
 float AdvancedJoystick::applyDeadband (float input) {
-
+    if (m_deadbandType == kFlat)
+        return applyDeadbandFlat(input);
+    else if (m_deadbandType == kQuad)
+        return applyDeadbandQuad(input);
+    else if (m_deadbandType == kCube)
+        return applyDeadbandQuad(input);
+    else if (m_deadbandType == kSine)
+        return applyDeadbandSine(input);
+    else
+        return input;
 }
 
 float AdvancedJoystick::applyDeadbandFlat (float input)
@@ -178,12 +187,47 @@ float AdvancedJoystick::applyDeadbandFlat (float input)
 
 float AdvancedJoystick::applyDeadbandQuad (float input)
 {
-
+    if (fabs(input) < m_deadband)
+    {
+        if (input > 0)
+            return pow((input/m_deadband),2.0);
+        else if (input < 0)
+            return -pow((input/m_deadband),2.0);
+        else
+            return 0.0;
+    }
+    else
+        return input;
 }
 
 float AdvancedJoystick::applyDeadbandCube (float input)
 {
+    if (fabs(input) < m_deadband)
+    {
+        if (input > 0)
+            return pow((input/m_deadband),3.0);
+        else if (input < 0)
+            return -pow((input/m_deadband),3.0);
+        else
+            return 0.0;
+    }
+    else
+        return input;
+}
 
+float AdvancedJoystick::applyDeadbandSine (float input)
+{
+    if (fabs(input) < m_deadband)
+    {
+        if (input > 0)
+            return sin(M_PI_2*(input/m_deadband));
+        else if (input < 0)
+            return -sin(M_PI_2*(input/m_deadband));
+        else
+            return 0.0;
+    }
+    else
+        return input;
 }
 
 void AdvancedJoystick::trackTimer () {
@@ -192,4 +236,9 @@ void AdvancedJoystick::trackTimer () {
 		m_timer->Stop();
 		m_timer->Reset();
 	}
+}
+
+void AdvancedJoystick::update ()
+{
+    trackTimer();
 }
