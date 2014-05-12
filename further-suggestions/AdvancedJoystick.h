@@ -1,6 +1,7 @@
 #include "WPILib.h"
 
 #define JOYSTICK_TIMEOUT 0.1
+#define JOYSTICK_DEADBAND 0.2
 
 class AdvancedJoystick {
 public:
@@ -24,8 +25,8 @@ public:
     typedef enum {
         kNone,
         kFlat,
-        kLinear,
-        kQuadratic
+        kQuadratic,
+        kCubic
     }deadband_t;
 
     typedef enum {
@@ -34,18 +35,29 @@ public:
         kRawTrigger = 3,
         kRightX = 4,
         kRightY = 5,
-        kLeftTrigger = 6,
-        kRightTrigger = 7
+        kTriggerL = 6,
+        kTriggerR = 7
     }axis_t;
 
     //CONSTRUCTORS --------------
-    AdvancedJoystick (Joystick*);
-    AdvancedJoystick (int);
+    AdvancedJoystick (Joystick* gamepad);
+    AdvancedJoystick (Joystick* gamepad, deadband_t deadbandType, float deadband, float timeout);
+    AdvancedJoystick (Joystick* gamepad, deadband_t deadbandType);
+    AdvancedJoystick (Joystick* gamepad, float deadband, float timeout);
+
+    AdvancedJoystick (int channel, deadband_t deadbandType, float deadband, fl);
+    AdvancedJoystick (int channel, deadband_t deadbandType, float deadband, float timeout);
+    AdvancedJoystick (int channel, deadband_t deadbandType);
+    AdvancedJoystick (int channel, float deadband, float timeout);
 
     //JOYSTICK ACCESS FUNCTIONS ---
-    bool GetRawButton (button_t);
-    bool GetButtonPress (button_t);
-    float GetRawAxis (axis_t);
+    /* You can pass the enum values
+     * to these functions, they're
+     * typecast to ints.
+     */
+    bool GetRawButton (int);
+    bool GetButtonPress (int);
+    float GetRawAxis (int);
 
     //CONFIGURATION FUNCTIONS --------
     void SetPressTimeout (float);
@@ -68,12 +80,18 @@ public:
 
 private:
     // INTERNAL FUNCTIONS ------
-    float adjust (float);
+    //Deadband
+    float applyDeadband (float);
+    float applyDeadbandFlat (float);
+    float applyDeadbandQuad (float);
+    float applyDeadbandCube (float);
+
     void trackTimer();
 
     // MEMBER OBJECTS --------
     Joystick* m_gamepad;
     Timer* m_timer;
     float m_buttonTimeout;
+    float m_deadband;
     deadband_t m_deadbandType;
 };
