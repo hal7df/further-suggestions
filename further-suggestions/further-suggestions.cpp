@@ -1,4 +1,5 @@
 #include "WPILib.h"
+#include "AdvancedJoystick.h"
 #include "JoystickWrapper.h"
 #include "DriveWrapper.h"
 #include "ArmWrapper.h"
@@ -190,7 +191,7 @@ private:
 	
 	//Declare joysticks
 	JoystickWrapper* m_driver;
-	JoystickWrapper* m_operator;
+    JoystickWrapper* m_operator;
 	
 	//Declare driver station
 	DriverStation* m_ds;

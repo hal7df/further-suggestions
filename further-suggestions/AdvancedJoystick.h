@@ -72,7 +72,7 @@ public:
     AdvancedJoystick (Joystick* gamepad, deadband_t deadbandType);
     AdvancedJoystick (Joystick* gamepad, float deadband, float timeout);
 
-    AdvancedJoystick (int channel, deadband_t deadbandType, float deadband, fl);
+    AdvancedJoystick (int channel);
     AdvancedJoystick (int channel, deadband_t deadbandType, float deadband, float timeout);
     AdvancedJoystick (int channel, deadband_t deadbandType);
     AdvancedJoystick (int channel, float deadband, float timeout);
