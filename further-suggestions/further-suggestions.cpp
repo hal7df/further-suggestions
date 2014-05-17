@@ -1041,17 +1041,10 @@ public:
 
 		// We always shift down
 		m_shifters->Set(true);
-		m_autonDrive->SetRotatePID(AUTONDRV_ROTATE_P, AUTONDRV_ROTATE_I,
-				AUTONDRV_ROTATE_D);
-		m_autonDrive->SetRotatePID(AUTONDRV_ROTATE_P, AUTONDRV_ROTATE_I,
-				AUTONDRV_ROTATE_D);
+		m_autonDrive->SetRotatePID(AUTONDRV_ROTATE_P, AUTONDRV_ROTATE_I, AUTONDRV_ROTATE_D);
 
 		switch (AutonSteps) {
 		case 0: // Drive Forward, Move Arm, Detect Hotgoal
-			m_autonDrive->SetRotatePID(AUTONDRV_ROTATE_P, AUTONDRV_ROTATE_I,
-					AUTONDRV_ROTATE_D);
-			m_autonDrive->SetRotatePID(AUTONDRV_ROTATE_P, AUTONDRV_ROTATE_I,
-					AUTONDRV_ROTATE_D);
 
 			if (!m_armPID->IsEnabled()) {
 				m_armPID->SetSetpoint(MED_SHOT_BACK - 6);
@@ -1086,15 +1079,17 @@ public:
 				}
 
 				if (m_autonDrive->IsFinished()) {
-
+					// Turning is End
 					m_autonTime->Stop();
 					m_autonTime->Reset();
 
 					m_autonDrive->Disable();
+					
+					// Shoot
 					m_roller->Set(0.0);
-					m_ramCase = 0;
+					m_ramCase = 0;	// Shoot: Do we need to wait?
+					
 					AutonSteps++;
-
 				}
 			}
 			break;
@@ -1105,19 +1100,24 @@ public:
 				m_armPID->SetSetpoint(FLOOR_PICKING_POS);
 
 				if (leftStatus) {
+					// Left Was Hot
 					m_autonDrive->Set(0.0, -30.0);
 					m_autonDrive->Enable();
 				} else {
+					// Right Was Hot
 					m_autonDrive->Set(0.0, 30.0);
 					m_autonDrive->Enable();
 				}
 
 				if (m_autonDrive->IsFinished()) {
-					AutonSteps++;
+					// Turning Back is End
 					m_autonDrive->Disable();
+					
 					m_autonTime->Stop();
 					m_autonTime->Reset();
 					m_autonTime->Start();
+					
+					AutonSteps++;					
 				}
 			}
 
@@ -1131,10 +1131,13 @@ public:
 				m_roller->Set(-1.0);
 
 				if (m_autonDrive->IsFinished()) {
+					
 					m_autonDrive->Disable();
+					
 					m_autonTime->Stop();
 					m_autonTime->Reset();
 					m_autonTime->Start();
+					
 					AutonSteps++;
 				}
 			}
@@ -1148,7 +1151,8 @@ public:
 				m_roller->Set(-1.0);
 
 				if (m_autonDrive->IsFinished()) {
-					m_armPID->SetSetpoint(MED_SHOT_BACK);
+					m_armPID->SetSetpoint(MED_SHOT_BACK);	// Need to wait? Shouldn't it be next case?
+					
 					m_autonTime->Stop();
 					m_autonTime->Reset();
 					m_autonTime->Start();
@@ -1161,9 +1165,8 @@ public:
 
 			break;
 
-		case 5: // Move Foward, Move Arm
+		case 5: // Move Foward, The Arm is moving
 			if (m_autonTime->Get() > 0.5) {
-				m_armPID->SetSetpoint(MED_SHOT_BACK);
 				m_autonDrive->Set(-105.0, 0);
 				m_autonDrive->Enable();
 
@@ -1171,16 +1174,17 @@ public:
 
 				if (m_autonDrive->IsFinished()) {
 					m_autonDrive->Disable();
-					AutonSteps++;
 
 					m_autonTime->Stop();
 					m_autonTime->Reset();
 					m_autonTime->Start();
+					
+					AutonSteps++;
 				}
 			}
 			break;
 
-		case 6:
+		case 6:	// Turn to Hot
 			if (m_autonTime->Get() > 0.5) {
 
 				if (leftStatus) {
@@ -1205,8 +1209,7 @@ public:
 			break;
 
 		case 7:
-			SmartDashboard::PutNumber("Auton Total Time: ",
-					m_ds->GetMatchTime());
+			// SmartDashboard::PutNumber("Auton Total Time: ", m_ds->GetMatchTime());
 			AutonSteps++;
 			break;
 
@@ -1227,21 +1230,18 @@ public:
 				m_drvStraightPID->Enable();
 			}
 
-			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint())
-					< 5) {
+			if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint())< 5) {
 				AutonDBSteps++;
 				m_drvStraightPID->Disable();
 			}
 
-			if (fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK)
-					< AUTON_ANGLE_GAP && m_ramCase == -1) {
+			if (fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK) < AUTON_ANGLE_GAP && m_ramCase == -1) {
 				m_ramCase = 0;
 			}
 			break;
 
 		case 2: // Make sure we shoot
-			SmartDashboard::PutNumber("Arm Difference",
-					fabs(m_armEncoder->GetDistance() - LONG_SHOOT_POS));
+			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - LONG_SHOOT_POS));
 			if (fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK)
 					< AUTON_ANGLE_GAP && m_ramCase == -1) {
 				m_ramCase = 0;
@@ -1265,13 +1265,9 @@ public:
 				m_drvStraightPID->SetSetpoint(55.0);
 				m_drvStraightPID->Enable();
 			}
-			SmartDashboard::PutNumber("Arm Difference",
-					fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
+			SmartDashboard::PutNumber("Arm Difference",fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
 
-			if ((fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS)
-					< AUTON_ANGLE_GAP) && fabs(
-					m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint())
-					< 5) {
+			if ((fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS) < 20.0) && fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5) {
 				m_rEncode -> Reset();
 				m_lEncode -> Reset();
 				m_autonTime->Stop();
@@ -1308,18 +1304,13 @@ public:
 			m_drvStraightPID->SetSetpoint(-105.0);
 			m_drvStraightPID->Enable();
 
-			SmartDashboard::PutNumber("Arm Difference",
-					fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
-			if (fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK)
-					< AUTON_ANGLE_GAP) {
-				if (fabs(
-						m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint())
-						< 100 && m_ramCase == -1) {
+			SmartDashboard::PutNumber("Arm Difference", fabs(m_armEncoder->GetDistance() - FLOOR_PICKING_POS));
+			
+			if (fabs(m_armEncoder->GetDistance() - MED_SHOT_BACK) < AUTON_ANGLE_GAP) {
+				if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 100 && m_ramCase == -1) {
 					m_ramCase = 0;
 					m_roller->Set(0.0);
-				} else if (fabs(
-						m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint())
-						< 5 && m_ramCase >= 4) {
+				} else if (fabs(m_drvSource->PIDGet() - m_drvStraightPID->GetSetpoint()) < 5 && m_ramCase >= 4) {
 					m_rEncode -> Reset();
 					m_lEncode -> Reset();
 					m_drvStraightPID->Disable();
@@ -1707,10 +1698,8 @@ public:
 			m_shifters->Set(true);
 			m_autonDrive->Set(0.0, 30.0);
 			m_autonDrive->Enable();
-		} else if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(
-				m_driver->GetRawAxis(RIGHT_X)) > 0.2) {
-			m_robotDrive->ArcadeDrive(accelCap(-m_driver->GetRawAxis(LEFT_Y)),
-					-m_driver->GetRawAxis(RIGHT_X));
+		} else if (fabs(m_driver->GetRawAxis(LEFT_Y)) > 0.2 || fabs(m_driver->GetRawAxis(RIGHT_X)) > 0.2) {
+			m_robotDrive->ArcadeDrive(-m_driver->GetRawAxis(LEFT_Y), -m_driver->GetRawAxis(RIGHT_X));
 			m_driveRotate->PIDDisable();
 			// if (!m_driver->GetRawButton(BUTTON_START)) 
 			//	m_driveRotate->PIDDisable();
@@ -1833,8 +1822,7 @@ public:
 
 	void TeleopArm() {
 		// ----- PID -----
-		if (m_operator->GetRawButton(BUTTON_BACK) && m_operator->GetRawButton(
-				BUTTON_START))
+		if (m_operator->GetRawButton(BUTTON_BACK) && m_operator->GetRawButton(BUTTON_START))
 			m_armEncoder->Reset();
 		if (m_operator->GetRawButton(BUTTON_A)) {
 			// Floor Picking
@@ -1842,8 +1830,7 @@ public:
 			m_armPID->SetSetpoint(ApplyArmOffset(FLOOR_PICKING_POS));
 			m_armPID->Enable();
 
-		} else if (m_operator->GetRawButton(BUTTON_LB)
-				&& m_operator->GetRawButton(BUTTON_B)) {
+		} else if (m_operator->GetRawButton(BUTTON_LB) && m_operator->GetRawButton(BUTTON_B)) {
 			m_armPIDFlag = true;
 			m_armPID->SetSetpoint(ApplyArmOffset(GUARDED_SHOT_BACK));
 			m_armPID->Enable();
@@ -1889,9 +1876,7 @@ public:
 
 		}
 
-		if (m_armPID->IsEnabled() && !m_operator->GetRawButton(BUTTON_B)
-				&& fabs(m_armEncoder->GetDistance() - m_armPID->GetSetpoint())
-						< 15) {
+		if (m_armPID->IsEnabled() && !m_operator->GetRawButton(BUTTON_B) && !m_operator->GetRawButton(BUTTON_A) && fabs(m_armEncoder->GetDistance() - m_armPID->GetSetpoint()) < 15) {
 			m_armPID->SetPID(m_armPID->GetP(), 0.003, m_armPID->GetD());
 		} else {
 			m_armPID->SetPID(m_armPID->GetP(), ARM_I, m_armPID->GetD());
@@ -2137,14 +2122,10 @@ public:
 	}
 
 	void WatchArm() {
-		if (fabs(ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance())
-				< 100 && (m_operator->GetRawButton(BUTTON_B)
-				|| m_ds->IsAutonomous())) {
-			m_armPID->SetPID(
-					(ARM_P - .005) * (fabs(
-							(ApplyArmOffset(MED_SHOT_BACK)
-									- m_armEncoder->GetDistance()) / 100))
-							+ .005, 0, 0);
+		if (fabs(ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance()) < 100 && (m_operator->GetRawButton(BUTTON_B) || m_ds->IsAutonomous())) {
+			m_armPID->SetPID((ARM_P - .005) * (fabs((ApplyArmOffset(MED_SHOT_BACK) - m_armEncoder->GetDistance()) / 100)) + .005, 0, 0);
+		} else if (fabs(ApplyArmOffset(FLOOR_PICKING_POS) - m_armEncoder->GetDistance()) < 100 && (m_operator->GetRawButton(BUTTON_A))) {
+			m_armPID->SetPID((ARM_P - .005) * (fabs((ApplyArmOffset(FLOOR_PICKING_POS) - m_armEncoder->GetDistance()) / 100)) + .005, 0, 0); 
 		} else {
 			if (m_armPID->GetP() != ARM_P)
 				m_armPID->SetPID(ARM_P, m_armPID->GetI(), ARM_D);
